@@ -4,6 +4,12 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
+    return Inertia::render('welcome', [
+        'canRegister' => Route::has('register'),
+    ]);
+})->name('home');
+
+Route::get('/home', function () {
     return redirect()->route('dashboard');
 })->middleware(['auth', 'verified']);
 
