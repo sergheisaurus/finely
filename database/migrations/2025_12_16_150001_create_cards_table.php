@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('bank_account_id')->nullable()->constrained()->nullOnDelete();
             $table->enum('type', ['debit', 'credit']);
             $table->string('card_holder_name');
-            $table->string('last_four_digits', 4);
+            $table->string('card_number', 19); // Full card number (13-19 digits)
             $table->enum('card_network', ['visa', 'mastercard', 'amex', 'discover', 'other'])->default('visa');
             $table->unsignedTinyInteger('expiry_month');
             $table->unsignedSmallInteger('expiry_year');

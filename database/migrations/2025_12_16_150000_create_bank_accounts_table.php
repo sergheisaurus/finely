@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('name');
             $table->enum('type', ['checking', 'savings'])->default('checking');
             $table->decimal('balance', 12, 2)->default(0);
-            $table->string('currency', 3)->default('EUR');
+            $table->string('currency', 3)->default('CHF');
             $table->string('account_number')->nullable();
             $table->string('bank_name')->nullable();
             $table->string('color', 7)->default('#6366f1');

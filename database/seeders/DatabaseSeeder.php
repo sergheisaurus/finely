@@ -39,8 +39,8 @@ class DatabaseSeeder extends Seeder
             [
                 'type' => 'checking',
                 'balance' => 5432.50,
-                'currency' => 'EUR',
-                'bank_name' => 'ING',
+                'currency' => 'CHF',
+                'bank_name' => 'UBS',
                 'color' => '#f97316',
                 'is_default' => true,
             ]
@@ -51,8 +51,8 @@ class DatabaseSeeder extends Seeder
             [
                 'type' => 'savings',
                 'balance' => 12500.00,
-                'currency' => 'EUR',
-                'bank_name' => 'ING',
+                'currency' => 'CHF',
+                'bank_name' => 'UBS',
                 'color' => '#22c55e',
                 'is_default' => false,
             ]
@@ -63,7 +63,7 @@ class DatabaseSeeder extends Seeder
             [
                 'type' => 'checking',
                 'balance' => 850.75,
-                'currency' => 'EUR',
+                'currency' => 'CHF',
                 'bank_name' => 'Revolut',
                 'color' => '#6366f1',
                 'is_default' => false,
@@ -76,7 +76,7 @@ class DatabaseSeeder extends Seeder
         $mainAccount = BankAccount::where('user_id', $user->id)->where('name', 'Main Checking')->first();
 
         Card::firstOrCreate(
-            ['user_id' => $user->id, 'last_four_digits' => '4532'],
+            ['user_id' => $user->id, 'card_number' => '4532123456784532'],
             [
                 'bank_account_id' => $mainAccount?->id,
                 'type' => 'debit',
@@ -90,7 +90,7 @@ class DatabaseSeeder extends Seeder
         );
 
         Card::firstOrCreate(
-            ['user_id' => $user->id, 'last_four_digits' => '8891'],
+            ['user_id' => $user->id, 'card_number' => '5500123456788891'],
             [
                 'bank_account_id' => null,
                 'type' => 'credit',
@@ -211,7 +211,7 @@ class DatabaseSeeder extends Seeder
             [
                 'type' => 'income',
                 'amount' => 3500.00,
-                'currency' => 'EUR',
+                'currency' => 'CHF',
                 'description' => 'December salary',
                 'to_account_id' => $account->id,
                 'category_id' => $salaryCategory?->id,
@@ -223,7 +223,7 @@ class DatabaseSeeder extends Seeder
             [
                 'type' => 'expense',
                 'amount' => 85.50,
-                'currency' => 'EUR',
+                'currency' => 'CHF',
                 'from_account_id' => $account->id,
                 'category_id' => $groceriesCategory?->id,
                 'merchant_id' => $albertHeijn?->id,
@@ -236,7 +236,7 @@ class DatabaseSeeder extends Seeder
                 [
                     'type' => 'expense',
                     'amount' => 149.99,
-                    'currency' => 'EUR',
+                    'currency' => 'CHF',
                     'from_card_id' => $card->id,
                     'category_id' => Category::where('user_id', $user->id)->where('name', 'Online Shopping')->first()?->id,
                     'merchant_id' => $amazon?->id,
@@ -249,7 +249,7 @@ class DatabaseSeeder extends Seeder
             [
                 'type' => 'expense',
                 'amount' => 45.00,
-                'currency' => 'EUR',
+                'currency' => 'CHF',
                 'from_account_id' => $account->id,
                 'category_id' => $restaurantsCategory?->id,
             ]
@@ -266,7 +266,7 @@ class DatabaseSeeder extends Seeder
             [
                 'default_account_id' => $defaultAccount?->id,
                 'default_card_id' => $defaultCard?->id,
-                'currency' => 'EUR',
+                'currency' => 'CHF',
             ]
         );
     }

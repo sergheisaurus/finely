@@ -363,23 +363,23 @@ resources/js/components/
 
 ### Phase 1: Foundation (Week 1-2)
 **Backend:**
-- [ ] Add HasApiTokens trait to User model
-- [ ] Create migrations for all core tables
-- [ ] Create all models with relationships
-- [ ] Set up factories and seeders
+- [x] Add HasApiTokens trait to User model
+- [x] Create migrations for all core tables
+- [x] Create all models with relationships
+- [x] Set up factories and seeders
 
 **Frontend:**
-- [ ] Set up routing structure
-- [ ] Create basic layout with navigation
-- [ ] Set up API client utilities
-- [ ] Create color scheme and theme
+- [x] Set up routing structure
+- [x] Create basic layout with navigation
+- [x] Set up API client utilities
+- [x] Create color scheme and theme
 
 ### Phase 2: Bank Accounts & Cards (Week 2-3)
 **Backend:**
-- [ ] BankAccountController with CRUD + set-default
-- [ ] CardController with CRUD + set-default
-- [ ] API Resources for accounts and cards
-- [ ] Form Request validation
+- [x] BankAccountController with CRUD + set-default
+- [x] CardController with CRUD + set-default
+- [x] API Resources for accounts and cards
+- [x] Form Request validation
 
 **Frontend:**
 - [ ] Account list and card list pages
@@ -389,9 +389,9 @@ resources/js/components/
 
 ### Phase 3: Categories & Merchants (Week 3-4)
 **Backend:**
-- [ ] CategoryController with tree structure support
-- [ ] MerchantController with CRUD
-- [ ] API Resources
+- [x] CategoryController with tree structure support
+- [x] MerchantController with CRUD
+- [x] API Resources
 
 **Frontend:**
 - [ ] Category management page (tree view)
@@ -401,11 +401,11 @@ resources/js/components/
 
 ### Phase 4: Transactions & Journal (Week 4-6)
 **Backend:**
-- [ ] TransactionController with CRUD
-- [ ] TransactionService for complex logic
-- [ ] TransferService for account-to-account transfers
-- [ ] Attachment handling (placeholder)
-- [ ] Transaction filtering and search
+- [x] TransactionController with CRUD
+- [x] TransactionService for complex logic
+- [x] TransferService for account-to-account transfers
+- [x] Attachment handling (placeholder)
+- [x] Transaction filtering and search
 
 **Frontend:**
 - [ ] Transaction creation modal/form
@@ -417,10 +417,10 @@ resources/js/components/
 
 ### Phase 5: Credit Card Payments (Week 6-7)
 **Backend:**
-- [ ] CardPaymentService
-- [ ] Pay balance endpoint with validation
-- [ ] Update card balance logic
-- [ ] Create payment transaction record
+- [x] CardPaymentService
+- [x] Pay balance endpoint with validation
+- [x] Update card balance logic
+- [x] Create payment transaction record
 
 **Frontend:**
 - [ ] Payment due indicators on cards
@@ -429,12 +429,12 @@ resources/js/components/
 
 ### Phase 6: User Preferences & Defaults (Week 7)
 **Backend:**
-- [ ] UserPreference model and migration
-- [ ] PreferenceController
-- [ ] Apply defaults in transaction creation
+- [x] UserPreference model and migration
+- [x] PreferenceController
+- [x] Apply defaults in transaction creation
 
 **Frontend:**
-- [ ] Preferences settings page
+- [x] Preferences settings page
 - [ ] Remember default payment method in forms
 - [ ] Theme switcher integration
 

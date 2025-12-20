@@ -18,7 +18,7 @@ class StoreCardRequest extends FormRequest
             'bank_account_id' => ['nullable', 'exists:bank_accounts,id'],
             'type' => ['required', Rule::in(['debit', 'credit'])],
             'card_holder_name' => ['required', 'string', 'max:255'],
-            'last_four_digits' => ['required', 'string', 'size:4', 'regex:/^\d{4}$/'],
+            'card_number' => ['required', 'string', 'min:13', 'max:19', 'regex:/^\d+$/'],
             'card_network' => ['required', Rule::in(['visa', 'mastercard', 'amex', 'discover', 'other'])],
             'expiry_month' => ['required', 'integer', 'between:1,12'],
             'expiry_year' => ['required', 'integer', 'min:'.date('Y')],

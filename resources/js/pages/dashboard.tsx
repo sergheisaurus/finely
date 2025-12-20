@@ -3,6 +3,7 @@ import { TransactionList } from '@/components/finance/transaction-list';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
+import api from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
@@ -10,9 +11,11 @@ import type { BankAccount, Transaction } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import {
     ArrowDownLeft,
+    ArrowRight,
     ArrowUpRight,
     CreditCard,
     Plus,
+    Sparkles,
     TrendingUp,
     Wallet,
 } from 'lucide-react';
@@ -38,11 +41,8 @@ export default function Dashboard() {
 
     const fetchAccounts = async () => {
         try {
-            const response = await fetch('/api/accounts', {
-                headers: { Accept: 'application/json' },
-            });
-            const data = await response.json();
-            setAccounts(data.data);
+            const response = await api.get('/accounts');
+            setAccounts(response.data.data);
         } catch (error) {
             console.error('Failed to fetch accounts:', error);
         }
@@ -50,21 +50,17 @@ export default function Dashboard() {
 
     const fetchRecentTransactions = async () => {
         try {
-            const response = await fetch(
-                '/api/transactions?per_page=5&sort_by=transaction_date&sort_dir=desc',
-                {
-                    headers: { Accept: 'application/json' },
-                },
+            const response = await api.get(
+                '/transactions?per_page=5&sort_by=transaction_date&sort_dir=desc',
             );
-            const data = await response.json();
-            setTransactions(data.data);
+            setTransactions(response.data.data);
         } catch (error) {
             console.error('Failed to fetch transactions:', error);
         }
     };
 
     const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-    const currency = accounts[0]?.currency || 'EUR';
+    const currency = accounts[0]?.currency || 'CHF';
 
     const income = transactions
         .filter((t) => t.type === 'income')
@@ -77,134 +73,170 @@ export default function Dashboard() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
-            <div className="space-y-6 p-6">
-                <div className="flex items-center justify-between">
+            <div className="space-y-6 p-4 md:p-6">
+                {/* Header */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up">
                     <div>
-                        <h1 className="text-3xl font-bold">Dashboard</h1>
+                        <h1 className="text-2xl font-bold md:text-3xl bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">
+                            Welcome back
+                        </h1>
                         <p className="text-muted-foreground">
-                            Welcome back! Here's your financial overview
+                            Here's your financial overview
                         </p>
                     </div>
-                    <Button onClick={() => router.visit('/journal')}>
+                    <Button
+                        onClick={() => router.visit('/journal/create')}
+                        className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30"
+                    >
                         <Plus className="mr-2 h-4 w-4" />
                         New Transaction
                     </Button>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <StatsCard
-                        title="Total Balance"
-                        value={formatCurrency(totalBalance, currency)}
-                        description="Across all accounts"
-                        icon={Wallet}
-                        isLoading={isLoading}
-                    />
-                    <StatsCard
-                        title="Income (Recent)"
-                        value={formatCurrency(income, currency)}
-                        description="Last 5 transactions"
-                        icon={ArrowDownLeft}
-                        isLoading={isLoading}
-                    />
-                    <StatsCard
-                        title="Expenses (Recent)"
-                        value={formatCurrency(expenses, currency)}
-                        description="Last 5 transactions"
-                        icon={ArrowUpRight}
-                        isLoading={isLoading}
-                    />
-                    <StatsCard
-                        title="Net Flow"
-                        value={formatCurrency(income - expenses, currency)}
-                        description="Income minus expenses"
-                        icon={TrendingUp}
-                        trend={{
-                            value: income > expenses ? '+' : '-',
-                            isPositive: income > expenses,
-                        }}
-                        isLoading={isLoading}
-                    />
+                {/* Stats Cards */}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="animate-fade-in-up stagger-1 opacity-0">
+                        <StatsCard
+                            title="Total Balance"
+                            value={formatCurrency(totalBalance, currency)}
+                            description="Across all accounts"
+                            icon={Wallet}
+                            isLoading={isLoading}
+                            className="hover-lift card-glow"
+                        />
+                    </div>
+                    <div className="animate-fade-in-up stagger-2 opacity-0">
+                        <StatsCard
+                            title="Income (Recent)"
+                            value={formatCurrency(income, currency)}
+                            description="Last 5 transactions"
+                            icon={ArrowDownLeft}
+                            isLoading={isLoading}
+                            className="hover-lift"
+                        />
+                    </div>
+                    <div className="animate-fade-in-up stagger-3 opacity-0">
+                        <StatsCard
+                            title="Expenses (Recent)"
+                            value={formatCurrency(expenses, currency)}
+                            description="Last 5 transactions"
+                            icon={ArrowUpRight}
+                            isLoading={isLoading}
+                            className="hover-lift"
+                        />
+                    </div>
+                    <div className="animate-fade-in-up stagger-4 opacity-0">
+                        <StatsCard
+                            title="Net Flow"
+                            value={formatCurrency(income - expenses, currency)}
+                            description="Income minus expenses"
+                            icon={TrendingUp}
+                            trend={{
+                                value: income > expenses ? '+' : '-',
+                                isPositive: income > expenses,
+                            }}
+                            isLoading={isLoading}
+                            className="hover-lift"
+                        />
+                    </div>
                 </div>
 
+                {/* Main Content */}
                 <div className="grid gap-6 lg:grid-cols-2">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Bank Accounts</CardTitle>
+                    {/* Bank Accounts */}
+                    <Card className="animate-fade-in-up stagger-5 opacity-0 overflow-hidden">
+                        <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-900 dark:to-slate-800/50">
+                            <div className="flex items-center gap-2">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                                    <Wallet className="h-4 w-4 text-blue-500" />
+                                </div>
+                                <CardTitle className="text-lg">Bank Accounts</CardTitle>
+                            </div>
                             <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => router.visit('/accounts')}
+                                className="text-muted-foreground hover:text-foreground"
                             >
                                 View All
+                                <ArrowRight className="ml-1 h-4 w-4" />
                             </Button>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-4">
                             {isLoading ? (
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                     {[1, 2, 3].map((i) => (
                                         <div
                                             key={i}
-                                            className="h-16 animate-pulse rounded-lg bg-muted"
+                                            className="h-16 animate-pulse rounded-xl bg-muted"
                                         />
                                     ))}
                                 </div>
                             ) : accounts.length === 0 ? (
-                                <div className="py-8 text-center">
+                                <div className="py-12 text-center">
+                                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                                        <Wallet className="h-8 w-8 text-muted-foreground" />
+                                    </div>
                                     <p className="text-sm text-muted-foreground">
                                         No accounts yet
                                     </p>
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        className="mt-2"
+                                        className="mt-4"
                                         onClick={() =>
                                             router.visit('/accounts/create')
                                         }
                                     >
+                                        <Plus className="mr-2 h-4 w-4" />
                                         Create Account
                                     </Button>
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    {accounts.slice(0, 3).map((account) => (
+                                    {accounts.slice(0, 4).map((account, index) => (
                                         <div
                                             key={account.id}
-                                            className="flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                                            className="group flex cursor-pointer items-center justify-between rounded-xl border border-transparent p-3 transition-all duration-200 hover:border-border hover:bg-muted/50 hover:shadow-sm"
                                             onClick={() =>
                                                 router.visit(
                                                     `/accounts/${account.id}`,
                                                 )
                                             }
+                                            style={{
+                                                animationDelay: `${index * 0.1}s`,
+                                            }}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div
-                                                    className="h-10 w-10 rounded-lg"
+                                                    className="flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
                                                     style={{
-                                                        backgroundColor:
-                                                            account.color,
+                                                        backgroundColor: account.color,
                                                     }}
-                                                />
+                                                >
+                                                    <Wallet className="h-5 w-5 text-white" />
+                                                </div>
                                                 <div>
                                                     <p className="font-medium">
                                                         {account.name}
                                                     </p>
                                                     <p className="text-sm text-muted-foreground">
-                                                        {account.bank_name ||
-                                                            account.type}
+                                                        {account.bank_name || account.type}
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <p className="font-semibold">
+                                                <p className="font-semibold tabular-nums">
                                                     {formatCurrency(
                                                         account.balance,
                                                         account.currency,
                                                     )}
                                                 </p>
                                                 {account.is_default && (
-                                                    <p className="text-xs text-muted-foreground">
+                                                    <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                                                        <Sparkles className="h-3 w-3" />
                                                         Default
-                                                    </p>
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>
@@ -214,38 +246,48 @@ export default function Dashboard() {
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Recent Transactions</CardTitle>
+                    {/* Recent Transactions */}
+                    <Card className="animate-fade-in-up stagger-6 opacity-0 overflow-hidden">
+                        <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-900 dark:to-slate-800/50">
+                            <div className="flex items-center gap-2">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
+                                    <TrendingUp className="h-4 w-4 text-emerald-500" />
+                                </div>
+                                <CardTitle className="text-lg">Recent Transactions</CardTitle>
+                            </div>
                             <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => router.visit('/journal')}
+                                className="text-muted-foreground hover:text-foreground"
                             >
                                 View All
+                                <ArrowRight className="ml-1 h-4 w-4" />
                             </Button>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="p-4">
                             <TransactionList
                                 transactions={transactions}
                                 isLoading={isLoading}
-                                onTransactionClick={(transaction) => {
-                                    console.log('Transaction:', transaction);
-                                }}
+                                onTransactionClick={(transaction) =>
+                                    router.visit(`/journal/${transaction.id}/edit`)
+                                }
                             />
                         </CardContent>
                     </Card>
                 </div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Quick Actions</CardTitle>
+                {/* Quick Actions */}
+                <Card className="animate-fade-in-up opacity-0" style={{ animationDelay: '0.7s' }}>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">Quick Actions</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-3">
                             <Button
                                 variant="outline"
-                                onClick={() => router.visit('/journal')}
+                                onClick={() => router.visit('/journal/create')}
+                                className="hover-lift transition-all"
                             >
                                 <Plus className="mr-2 h-4 w-4" />
                                 New Transaction
@@ -253,16 +295,18 @@ export default function Dashboard() {
                             <Button
                                 variant="outline"
                                 onClick={() => router.visit('/accounts/create')}
+                                className="hover-lift transition-all"
                             >
                                 <Wallet className="mr-2 h-4 w-4" />
                                 Add Account
                             </Button>
                             <Button
                                 variant="outline"
-                                onClick={() => router.visit('/cards')}
+                                onClick={() => router.visit('/cards/create')}
+                                className="hover-lift transition-all"
                             >
                                 <CreditCard className="mr-2 h-4 w-4" />
-                                Manage Cards
+                                Add Card
                             </Button>
                         </div>
                     </CardContent>

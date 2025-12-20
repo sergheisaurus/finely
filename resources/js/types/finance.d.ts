@@ -19,7 +19,7 @@ export interface Card {
     bank_account_id?: number;
     type: 'debit' | 'credit';
     card_holder_name: string;
-    last_four_digits: string;
+    card_number: string;
     card_network: 'visa' | 'mastercard' | 'amex' | 'discover' | 'other';
     expiry_month: number;
     expiry_year: number;
@@ -31,6 +31,7 @@ export interface Card {
     payment_due_day?: number;
     billing_cycle_day?: number;
     color: string;
+    currency: string;
     is_default: boolean;
     bank_account?: BankAccount;
     created_at: string;

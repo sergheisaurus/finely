@@ -18,6 +18,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('journal/index');
     })->name('journal');
 
+    Route::get('journal/create', function () {
+        return Inertia::render('journal/create');
+    })->name('journal.create');
+
+    Route::get('journal/{id}/edit', function ($id) {
+        return Inertia::render('journal/edit', ['transactionId' => $id]);
+    })->name('journal.edit');
+
     // Bank Accounts
     Route::get('accounts', function () {
         return Inertia::render('accounts/index');
@@ -39,6 +47,44 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('cards', function () {
         return Inertia::render('cards/index');
     })->name('cards.index');
+
+    Route::get('cards/create', function () {
+        return Inertia::render('cards/create');
+    })->name('cards.create');
+
+    Route::get('cards/{id}', function ($id) {
+        return Inertia::render('cards/view', ['cardId' => $id]);
+    })->name('cards.view');
+
+    Route::get('cards/{id}/edit', function ($id) {
+        return Inertia::render('cards/edit', ['cardId' => $id]);
+    })->name('cards.edit');
+
+    // Categories
+    Route::get('categories', function () {
+        return Inertia::render('categories/index');
+    })->name('categories.index');
+
+    Route::get('categories/create', function () {
+        return Inertia::render('categories/create');
+    })->name('categories.create');
+
+    Route::get('categories/{id}/edit', function ($id) {
+        return Inertia::render('categories/edit', ['categoryId' => $id]);
+    })->name('categories.edit');
+
+    // Merchants
+    Route::get('merchants', function () {
+        return Inertia::render('merchants/index');
+    })->name('merchants.index');
+
+    Route::get('merchants/create', function () {
+        return Inertia::render('merchants/create');
+    })->name('merchants.create');
+
+    Route::get('merchants/{id}/edit', function ($id) {
+        return Inertia::render('merchants/edit', ['merchantId' => $id]);
+    })->name('merchants.edit');
 });
 
 require __DIR__.'/settings.php';

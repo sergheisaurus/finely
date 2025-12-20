@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
             $table->foreignId('default_account_id')->nullable()->constrained('bank_accounts')->nullOnDelete();
             $table->foreignId('default_card_id')->nullable()->constrained('cards')->nullOnDelete();
-            $table->string('currency', 3)->default('EUR');
+            $table->string('currency', 3)->default('CHF');
             $table->timestamps();
         });
     }

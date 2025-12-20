@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->enum('type', ['income', 'expense', 'transfer', 'card_payment']);
             $table->decimal('amount', 12, 2);
-            $table->string('currency', 3)->default('EUR');
+            $table->string('currency', 3)->default('CHF');
             $table->string('title');
             $table->text('description')->nullable();
             $table->date('transaction_date');

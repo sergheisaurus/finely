@@ -6,12 +6,16 @@ interface TransactionListProps {
     transactions: Transaction[];
     isLoading?: boolean;
     onTransactionClick?: (transaction: Transaction) => void;
+    onEdit?: (transaction: Transaction) => void;
+    onDelete?: (transaction: Transaction) => void;
 }
 
 export function TransactionList({
     transactions,
     isLoading,
     onTransactionClick,
+    onEdit,
+    onDelete,
 }: TransactionListProps) {
     if (isLoading) {
         return (
@@ -41,6 +45,8 @@ export function TransactionList({
                     key={transaction.id}
                     transaction={transaction}
                     onClick={() => onTransactionClick?.(transaction)}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
                 />
             ))}
         </div>

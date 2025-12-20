@@ -2,24 +2,26 @@ import { AccountBadge } from '@/components/finance/account-badge';
 import { CategoryBadge } from '@/components/finance/category-badge';
 import { MerchantBadge } from '@/components/finance/merchant-badge';
 import { TransactionTypeBadge } from '@/components/finance/transaction-type-badge';
+import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate } from '@/lib/format';
 import type { Transaction } from '@/types/finance';
-import { ArrowRight, FileText } from 'lucide-react';
+import { ArrowRight, Edit, FileText, Trash2 } from 'lucide-react';
 
 interface TransactionItemProps {
     transaction: Transaction;
     onClick?: () => void;
+    onEdit?: (transaction: Transaction) => void;
+    onDelete?: (transaction: Transaction) => void;
 }
 
-export function TransactionItem({ transaction, onClick }: TransactionItemProps) {
+export function TransactionItem({ transaction, onClick, onEdit, onDelete }: TransactionItemProps) {
     const isIncome = transaction.type === 'income';
     const isExpense = transaction.type === 'expense';
     const isTransfer = transaction.type === 'transfer';
 
     return (
         <div
-            className="flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50"
-            onClick={onClick}
+            className="flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50"
         >
             {/* Date */}
             <div className="flex flex-col items-center">
@@ -99,6 +101,36 @@ export function TransactionItem({ transaction, onClick }: TransactionItemProps) 
                     {formatDate(transaction.transaction_date)}
                 </p>
             </div>
+
+            {/* Actions */}
+            {(onEdit || onDelete) && (
+                <div className="flex gap-1">
+                    {onEdit && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit(transaction);
+                            }}
+                        >
+                            <Edit className="h-4 w-4" />
+                        </Button>
+                    )}
+                    {onDelete && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(transaction);
+                            }}
+                        >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

@@ -20,7 +20,7 @@ export function AmountInput({
     label,
     value = 0,
     onChange,
-    currency = 'EUR',
+    currency = 'CHF',
     error,
     required,
     disabled,

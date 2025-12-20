@@ -17,7 +17,7 @@ class Card extends Model
         'bank_account_id',
         'type',
         'card_holder_name',
-        'last_four_digits',
+        'card_number',
         'card_network',
         'expiry_month',
         'expiry_year',
@@ -32,6 +32,7 @@ class Card extends Model
     protected function casts(): array
     {
         return [
+            'card_number' => 'encrypted', // Encrypt card numbers for security
             'expiry_month' => 'integer',
             'expiry_year' => 'integer',
             'credit_limit' => 'decimal:2',

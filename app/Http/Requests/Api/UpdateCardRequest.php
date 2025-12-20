@@ -18,7 +18,7 @@ class UpdateCardRequest extends FormRequest
             'bank_account_id' => ['nullable', 'exists:bank_accounts,id'],
             'type' => ['sometimes', Rule::in(['debit', 'credit'])],
             'card_holder_name' => ['sometimes', 'string', 'max:255'],
-            'last_four_digits' => ['sometimes', 'string', 'size:4', 'regex:/^\d{4}$/'],
+            'card_number' => ['sometimes', 'string', 'min:13', 'max:19', 'regex:/^\d+$/'],
             'card_network' => ['sometimes', Rule::in(['visa', 'mastercard', 'amex', 'discover', 'other'])],
             'expiry_month' => ['sometimes', 'integer', 'between:1,12'],
             'expiry_year' => ['sometimes', 'integer', 'min:'.date('Y')],

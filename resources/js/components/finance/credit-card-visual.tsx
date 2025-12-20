@@ -1,8 +1,10 @@
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card as CardUI } from '@/components/ui/card';
 import type { Card } from '@/types/finance';
-import { CreditCard } from 'lucide-react';
+import { Copy, CreditCard } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface CreditCardVisualProps {
     card: Card;
@@ -30,6 +32,29 @@ export function CreditCardVisual({
         card.type === 'credit' &&
         card.payment_due_day &&
         new Date().getDate() > card.payment_due_day;
+
+    const formatCardNumber = (number?: string) => {
+        if (!number) return '•••• •••• •••• ••••';
+        return number.replace(/(\d{4})/g, '$1 ').trim();
+    };
+
+    const copyCardDetails = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!card.card_number) {
+            toast.error('Card number not available');
+            return;
+        }
+
+        const details = `Card Number: ${card.card_number}
+Card Holder: ${card.card_holder_name}
+Expiry: ${String(card.expiry_month).padStart(2, '0')}/${card.expiry_year}
+Network: ${card.card_network}`;
+
+        navigator.clipboard.writeText(details);
+        toast.success('Card details copied!', {
+            description: 'Card information copied to clipboard',
+        });
+    };
 
     return (
         <div
@@ -63,11 +88,22 @@ export function CreditCardVisual({
                                         : 'Credit Card'}
                                 </p>
                             </div>
-                            {isPastDue && (
-                                <Badge variant="destructive" className="text-xs">
-                                    Payment Due
-                                </Badge>
-                            )}
+                            <div className="flex gap-1">
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 hover:bg-white/20"
+                                    onClick={copyCardDetails}
+                                    title="Copy card details"
+                                >
+                                    <Copy className="h-4 w-4" />
+                                </Button>
+                                {isPastDue && (
+                                    <Badge variant="destructive" className="text-xs">
+                                        Payment Due
+                                    </Badge>
+                                )}
+                            </div>
                         </div>
 
                         {/* Chip */}
@@ -78,11 +114,8 @@ export function CreditCardVisual({
 
                         {/* Card Number */}
                         <div>
-                            <div className="mb-1 flex gap-3 font-mono text-lg font-semibold tracking-wider">
-                                <span>••••</span>
-                                <span>••••</span>
-                                <span>••••</span>
-                                <span>{card.last_four_digits}</span>
+                            <div className="mb-1 font-mono text-lg font-semibold tracking-wider">
+                                {formatCardNumber(card.card_number)}
                             </div>
                         </div>
 
