@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BankAccount extends Model
@@ -66,5 +67,15 @@ class BankAccount extends Model
         } else {
             $this->decrement('balance', $amount);
         }
+    }
+
+    public function subscriptions(): MorphMany
+    {
+        return $this->morphMany(Subscription::class, 'payment_method');
+    }
+
+    public function recurringIncomes(): HasMany
+    {
+        return $this->hasMany(RecurringIncome::class, 'to_account_id');
     }
 }

@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\CardController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\MerchantController;
 use App\Http\Controllers\Api\PreferenceController;
+use App\Http\Controllers\Api\RecurringIncomeController;
+use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\TransferController;
 use Illuminate\Http\Request;
@@ -43,4 +45,20 @@ Route::middleware('auth:sanctum')->group(function () {
     // User Preferences
     Route::get('preferences', [PreferenceController::class, 'show']);
     Route::put('preferences', [PreferenceController::class, 'update']);
+
+    // Subscriptions
+    Route::get('subscriptions/upcoming', [SubscriptionController::class, 'upcoming']);
+    Route::get('subscriptions/stats', [SubscriptionController::class, 'stats']);
+    Route::apiResource('subscriptions', SubscriptionController::class);
+    Route::post('subscriptions/{subscription}/toggle', [SubscriptionController::class, 'toggle']);
+    Route::post('subscriptions/{subscription}/process', [SubscriptionController::class, 'process']);
+    Route::get('subscriptions/{subscription}/transactions', [SubscriptionController::class, 'transactions']);
+
+    // Recurring Incomes
+    Route::get('recurring-incomes/upcoming', [RecurringIncomeController::class, 'upcoming']);
+    Route::get('recurring-incomes/stats', [RecurringIncomeController::class, 'stats']);
+    Route::apiResource('recurring-incomes', RecurringIncomeController::class);
+    Route::post('recurring-incomes/{recurring_income}/toggle', [RecurringIncomeController::class, 'toggle']);
+    Route::post('recurring-incomes/{recurring_income}/mark-received', [RecurringIncomeController::class, 'markReceived']);
+    Route::get('recurring-incomes/{recurring_income}/transactions', [RecurringIncomeController::class, 'transactions']);
 });

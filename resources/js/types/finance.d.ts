@@ -115,3 +115,98 @@ export interface UserPreference {
     created_at: string;
     updated_at: string;
 }
+
+export type BillingCycle = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+export type IncomeFrequency = 'weekly' | 'bi_weekly' | 'monthly' | 'quarterly' | 'yearly';
+
+export interface Subscription {
+    id: number;
+    merchant_id?: number;
+    category_id?: number;
+    payment_method_type?: 'bank_account' | 'card';
+    payment_method_id?: number;
+    name: string;
+    description?: string;
+    amount: number;
+    currency: string;
+    billing_cycle: BillingCycle;
+    billing_day?: number;
+    billing_month?: number;
+    start_date: string;
+    end_date?: string;
+    last_billed_date?: string;
+    next_billing_date?: string;
+    is_active: boolean;
+    auto_create_transaction: boolean;
+    reminder_days_before: number;
+    color?: string;
+    icon?: string;
+
+    // Computed fields
+    is_overdue: boolean;
+    is_due_soon: boolean;
+    monthly_equivalent: number;
+    yearly_total: number;
+
+    // Relationships
+    merchant?: Merchant;
+    category?: Category;
+    payment_method?: BankAccount | Card;
+    transactions_count?: number;
+
+    created_at: string;
+    updated_at: string;
+}
+
+export interface RecurringIncome {
+    id: number;
+    category_id?: number;
+    to_account_id?: number;
+    name: string;
+    description?: string;
+    source?: string;
+    amount: number;
+    currency: string;
+    frequency: IncomeFrequency;
+    payment_day?: number;
+    payment_month?: number;
+    start_date: string;
+    end_date?: string;
+    last_received_date?: string;
+    next_expected_date?: string;
+    is_active: boolean;
+    auto_create_transaction: boolean;
+    reminder_days_before: number;
+    color?: string;
+    icon?: string;
+
+    // Computed fields
+    is_overdue: boolean;
+    is_expected_soon: boolean;
+    monthly_equivalent: number;
+    yearly_total: number;
+
+    // Relationships
+    category?: Category;
+    to_account?: BankAccount;
+    transactions_count?: number;
+
+    created_at: string;
+    updated_at: string;
+}
+
+export interface SubscriptionStats {
+    active_count: number;
+    monthly_total: number;
+    yearly_total: number;
+    upcoming_this_week: number;
+    overdue_count: number;
+}
+
+export interface RecurringIncomeStats {
+    active_count: number;
+    monthly_total: number;
+    yearly_total: number;
+    expected_this_week: number;
+    overdue_count: number;
+}

@@ -91,6 +91,40 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('merchants/{id}/edit', function ($id) {
         return Inertia::render('merchants/edit', ['merchantId' => $id]);
     })->name('merchants.edit');
+
+    // Subscriptions
+    Route::get('subscriptions', function () {
+        return Inertia::render('subscriptions/index');
+    })->name('subscriptions.index');
+
+    Route::get('subscriptions/create', function () {
+        return Inertia::render('subscriptions/create');
+    })->name('subscriptions.create');
+
+    Route::get('subscriptions/{id}', function ($id) {
+        return Inertia::render('subscriptions/view', ['subscriptionId' => $id]);
+    })->name('subscriptions.view');
+
+    Route::get('subscriptions/{id}/edit', function ($id) {
+        return Inertia::render('subscriptions/edit', ['subscriptionId' => $id]);
+    })->name('subscriptions.edit');
+
+    // Recurring Income
+    Route::get('income', function () {
+        return Inertia::render('income/index');
+    })->name('income.index');
+
+    Route::get('income/create', function () {
+        return Inertia::render('income/create');
+    })->name('income.create');
+
+    Route::get('income/{id}', function ($id) {
+        return Inertia::render('income/view', ['incomeId' => $id]);
+    })->name('income.view');
+
+    Route::get('income/{id}/edit', function ($id) {
+        return Inertia::render('income/edit', ['incomeId' => $id]);
+    })->name('income.edit');
 });
 
 require __DIR__.'/settings.php';
