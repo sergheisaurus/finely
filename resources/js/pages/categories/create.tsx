@@ -21,7 +21,7 @@ import { type BreadcrumbItem } from '@/types';
 import type { Category } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import { FolderTree } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -48,11 +48,7 @@ export default function CategoryCreate() {
     const [icon, setIcon] = useState('');
     const [color, setColor] = useState('#3b82f6');
 
-    useEffect(() => {
-        fetchCategories();
-    }, []);
-
-    const fetchCategories = async () => {
+    const fetchCategories = useCallback(async () => {
         try {
             const response = await api.get('/categories');
             setCategories(response.data.data);
@@ -61,7 +57,11 @@ export default function CategoryCreate() {
         } finally {
             setIsLoadingData(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchCategories();
+    }, [fetchCategories]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -69,7 +69,7 @@ export default function CategoryCreate() {
         setErrors({});
 
         try {
-            const payload: any = {
+            const payload: Record<string, unknown> = {
                 name,
                 type,
                 color,
@@ -78,16 +78,17 @@ export default function CategoryCreate() {
             if (parentId) payload.parent_id = parseInt(parentId);
             if (icon) payload.icon = icon;
 
-            const response = await api.post('/categories', payload);
+            await api.post('/categories', payload);
 
             toast.success('Category created successfully!', {
                 description: `${name} has been added to your categories.`,
             });
 
             router.visit('/categories');
-        } catch (error: any) {
-            if (error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            if (err.response?.data?.errors) {
+                setErrors(err.response.data.errors);
             } else {
                 console.error('Failed to create category:', error);
                 toast.error('Failed to create category', {
@@ -156,7 +157,7 @@ export default function CategoryCreate() {
                                     <Label htmlFor="type">Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: any) =>
+                                        onValueChange={(value: 'income' | 'expense') =>
                                             setType(value)
                                         }
                                     >

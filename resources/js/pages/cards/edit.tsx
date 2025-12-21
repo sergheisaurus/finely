@@ -16,7 +16,7 @@ import { type BreadcrumbItem } from '@/types';
 import type { BankAccount, Card } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import { CreditCard } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface CardEditProps {
@@ -75,13 +75,7 @@ export default function CardEdit({ cardId }: CardEditProps) {
         },
     ];
 
-    useEffect(() => {
-        Promise.all([fetchCard(), fetchAccounts()]).finally(() =>
-            setIsLoadingData(false),
-        );
-    }, [cardId]);
-
-    const fetchCard = async () => {
+    const fetchCard = useCallback(async () => {
         try {
             const response = await api.get(`/cards/${cardId}`);
             const data = response.data.data;
@@ -104,16 +98,22 @@ export default function CardEdit({ cardId }: CardEditProps) {
         } catch (error) {
             console.error('Failed to fetch card:', error);
         }
-    };
+    }, [cardId]);
 
-    const fetchAccounts = async () => {
+    const fetchAccounts = useCallback(async () => {
         try {
             const response = await api.get('/accounts');
             setAccounts(response.data.data);
         } catch (error) {
             console.error('Failed to fetch accounts:', error);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        Promise.all([fetchCard(), fetchAccounts()]).finally(() =>
+            setIsLoadingData(false),
+        );
+    }, [fetchCard, fetchAccounts]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -121,7 +121,7 @@ export default function CardEdit({ cardId }: CardEditProps) {
         setErrors({});
 
         try {
-            const payload: any = {
+            const payload: Record<string, unknown> = {
                 type,
                 card_holder_name: cardHolderName,
                 card_number: cardNumber,
@@ -155,9 +155,10 @@ export default function CardEdit({ cardId }: CardEditProps) {
             });
 
             router.visit(`/cards/${cardId}`);
-        } catch (error: any) {
-            if (error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            if (err.response?.data?.errors) {
+                setErrors(err.response.data.errors);
             } else {
                 console.error('Failed to update card:', error);
             }
@@ -226,7 +227,7 @@ export default function CardEdit({ cardId }: CardEditProps) {
                                     <Label htmlFor="type">Card Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: any) => setType(value)}
+                                        onValueChange={(value: 'debit' | 'credit') => setType(value)}
                                     >
                                         <SelectTrigger>
                                             <SelectValue />

@@ -16,7 +16,7 @@ import { type BreadcrumbItem } from '@/types';
 import type { BankAccount } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import { CreditCard } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -66,11 +66,7 @@ export default function CardCreate() {
     const [color, setColor] = useState(colorOptions[0]);
     const [isDefault, setIsDefault] = useState(false);
 
-    useEffect(() => {
-        fetchAccounts();
-    }, []);
-
-    const fetchAccounts = async () => {
+    const fetchAccounts = useCallback(async () => {
         try {
             const response = await api.get('/accounts');
             setAccounts(response.data.data);
@@ -86,7 +82,11 @@ export default function CardCreate() {
         } finally {
             setIsLoadingData(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchAccounts();
+    }, [fetchAccounts]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -94,7 +94,7 @@ export default function CardCreate() {
         setErrors({});
 
         try {
-            const payload: any = {
+            const payload: Record<string, unknown> = {
                 type,
                 card_holder_name: cardHolderName,
                 card_number: cardNumber,
@@ -128,9 +128,10 @@ export default function CardCreate() {
             });
 
             router.visit(`/cards/${response.data.data.id}`);
-        } catch (error: any) {
-            if (error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            if (err.response?.data?.errors) {
+                setErrors(err.response.data.errors);
             } else {
                 console.error('Failed to create card:', error);
             }
@@ -173,7 +174,7 @@ export default function CardCreate() {
                                     <Label htmlFor="type">Card Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: any) => setType(value)}
+                                        onValueChange={(value: 'debit' | 'credit') => setType(value)}
                                     >
                                         <SelectTrigger>
                                             <SelectValue />

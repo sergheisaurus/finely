@@ -21,7 +21,7 @@ import { type BreadcrumbItem } from '@/types';
 import type { Category } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import { FolderTree } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface CategoryEditProps {
@@ -53,13 +53,7 @@ export default function CategoryEdit({ categoryId }: CategoryEditProps) {
         },
     ];
 
-    useEffect(() => {
-        Promise.all([fetchCategory(), fetchCategories()]).finally(() =>
-            setIsLoadingData(false),
-        );
-    }, [categoryId]);
-
-    const fetchCategory = async () => {
+    const fetchCategory = useCallback(async () => {
         try {
             const response = await api.get(`/categories/${categoryId}`);
             const data = response.data.data;
@@ -74,16 +68,22 @@ export default function CategoryEdit({ categoryId }: CategoryEditProps) {
             toast.error('Failed to load category');
             router.visit('/categories');
         }
-    };
+    }, [categoryId]);
 
-    const fetchCategories = async () => {
+    const fetchCategories = useCallback(async () => {
         try {
             const response = await api.get('/categories');
             setCategories(response.data.data);
         } catch (error) {
             console.error('Failed to fetch categories:', error);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        Promise.all([fetchCategory(), fetchCategories()]).finally(() =>
+            setIsLoadingData(false),
+        );
+    }, [fetchCategory, fetchCategories]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -91,7 +91,7 @@ export default function CategoryEdit({ categoryId }: CategoryEditProps) {
         setErrors({});
 
         try {
-            const payload: any = {
+            const payload: Record<string, unknown> = {
                 name,
                 type,
                 color,
@@ -116,9 +116,10 @@ export default function CategoryEdit({ categoryId }: CategoryEditProps) {
             });
 
             router.visit('/categories');
-        } catch (error: any) {
-            if (error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            if (err.response?.data?.errors) {
+                setErrors(err.response.data.errors);
             } else {
                 console.error('Failed to update category:', error);
                 toast.error('Failed to update category', {
@@ -217,7 +218,7 @@ export default function CategoryEdit({ categoryId }: CategoryEditProps) {
                                     <Label htmlFor="type">Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: any) =>
+                                        onValueChange={(value: 'income' | 'expense') =>
                                             setType(value)
                                         }
                                     >

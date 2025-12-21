@@ -48,7 +48,7 @@ export default function MerchantCreate() {
         setErrors({});
 
         try {
-            const payload: any = {
+            const payload: Record<string, unknown> = {
                 name,
                 type,
             };
@@ -62,9 +62,10 @@ export default function MerchantCreate() {
             });
 
             router.visit('/merchants');
-        } catch (error: any) {
-            if (error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            if (err.response?.data?.errors) {
+                setErrors(err.response.data.errors);
             } else {
                 console.error('Failed to create merchant:', error);
                 toast.error('Failed to create merchant', {
@@ -117,7 +118,7 @@ export default function MerchantCreate() {
                                     <Label htmlFor="type">Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: any) =>
+                                        onValueChange={(value: 'company' | 'person') =>
                                             setType(value)
                                         }
                                     >

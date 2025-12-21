@@ -25,7 +25,7 @@ import { type BreadcrumbItem } from '@/types';
 import type { BankAccount, Card, Transaction } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import { Banknote, Copy, CreditCard, Edit, Star, Trash2, Wallet } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface CardViewProps {
@@ -55,22 +55,16 @@ export default function CardView({ cardId }: CardViewProps) {
         },
     ];
 
-    useEffect(() => {
-        Promise.all([fetchCard(), fetchTransactions(), fetchAccounts()]).finally(() =>
-            setIsLoading(false),
-        );
-    }, [cardId]);
-
-    const fetchCard = async () => {
+    const fetchCard = useCallback(async () => {
         try {
             const response = await api.get(`/cards/${cardId}`);
             setCard(response.data.data);
         } catch (error) {
             console.error('Failed to fetch card:', error);
         }
-    };
+    }, [cardId]);
 
-    const fetchTransactions = async () => {
+    const fetchTransactions = useCallback(async () => {
         try {
             const response = await api.get(
                 `/transactions?card_id=${cardId}&per_page=10&sort_by=transaction_date&sort_dir=desc`,
@@ -79,9 +73,9 @@ export default function CardView({ cardId }: CardViewProps) {
         } catch (error) {
             console.error('Failed to fetch transactions:', error);
         }
-    };
+    }, [cardId]);
 
-    const fetchAccounts = async () => {
+    const fetchAccounts = useCallback(async () => {
         try {
             const response = await api.get('/accounts');
             setAccounts(response.data.data);
@@ -95,7 +89,13 @@ export default function CardView({ cardId }: CardViewProps) {
         } catch (error) {
             console.error('Failed to fetch accounts:', error);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        Promise.all([fetchCard(), fetchTransactions(), fetchAccounts()]).finally(() =>
+            setIsLoading(false),
+        );
+    }, [fetchCard, fetchTransactions, fetchAccounts]);
 
     const handleSetDefault = async () => {
         if (!card) return;
@@ -181,10 +181,11 @@ Network: ${card.card_network}`;
             setShowPayDialog(false);
             setPayAmount('0');
             await Promise.all([fetchCard(), fetchTransactions()]);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to pay balance:', error);
+            const err = error as { response?: { data?: { message?: string } } };
             toast.error('Payment failed', {
-                description: error.response?.data?.message || 'Please try again.',
+                description: err.response?.data?.message || 'Please try again.',
             });
         } finally {
             setIsPayingBalance(false);

@@ -22,7 +22,7 @@ import type {
 } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import { Filter, Plus, Search, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -35,7 +35,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function JournalIndex() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [accounts, setAccounts] = useState<BankAccount[]>([]);
-    const [cards, setCards] = useState<Card[]>([]);
+    const [, setCards] = useState<Card[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [merchants, setMerchants] = useState<Merchant[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -55,30 +55,7 @@ export default function JournalIndex() {
     const [lastPage, setLastPage] = useState(1);
     const [perPage] = useState(15);
 
-    useEffect(() => {
-        Promise.all([
-            fetchTransactions(),
-            fetchAccounts(),
-            fetchCards(),
-            fetchCategories(),
-            fetchMerchants(),
-        ]).finally(() => setIsLoading(false));
-    }, []);
-
-    useEffect(() => {
-        fetchTransactions();
-    }, [
-        search,
-        typeFilter,
-        categoryFilter,
-        merchantFilter,
-        accountFilter,
-        dateFrom,
-        dateTo,
-        currentPage,
-    ]);
-
-    const fetchTransactions = async () => {
+    const fetchTransactions = useCallback(async () => {
         try {
             const params = new URLSearchParams();
             params.append('page', currentPage.toString());
@@ -104,43 +81,57 @@ export default function JournalIndex() {
         } catch (error) {
             console.error('Failed to fetch transactions:', error);
         }
-    };
+    }, [search, typeFilter, categoryFilter, merchantFilter, accountFilter, dateFrom, dateTo, currentPage, perPage]);
 
-    const fetchAccounts = async () => {
+    const fetchAccounts = useCallback(async () => {
         try {
             const response = await api.get('/accounts');
             setAccounts(response.data.data);
         } catch (error) {
             console.error('Failed to fetch accounts:', error);
         }
-    };
+    }, []);
 
-    const fetchCards = async () => {
+    const fetchCards = useCallback(async () => {
         try {
             const response = await api.get('/cards');
             setCards(response.data.data);
         } catch (error) {
             console.error('Failed to fetch cards:', error);
         }
-    };
+    }, [setCards]);
 
-    const fetchCategories = async () => {
+    const fetchCategories = useCallback(async () => {
         try {
             const response = await api.get('/categories');
             setCategories(response.data.data);
         } catch (error) {
             console.error('Failed to fetch categories:', error);
         }
-    };
+    }, []);
 
-    const fetchMerchants = async () => {
+    const fetchMerchants = useCallback(async () => {
         try {
             const response = await api.get('/merchants');
             setMerchants(response.data.data);
         } catch (error) {
             console.error('Failed to fetch merchants:', error);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const loadData = async () => {
+            await Promise.all([
+                fetchTransactions(),
+                fetchAccounts(),
+                fetchCards(),
+                fetchCategories(),
+                fetchMerchants(),
+            ]);
+            setIsLoading(false);
+        };
+        loadData();
+    }, [fetchTransactions, fetchAccounts, fetchCards, fetchCategories, fetchMerchants]);
 
     const handleEdit = (transaction: Transaction) => {
         router.visit(`/journal/${transaction.id}/edit`);

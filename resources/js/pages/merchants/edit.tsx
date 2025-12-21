@@ -20,7 +20,7 @@ import { type BreadcrumbItem } from '@/types';
 import type { Merchant } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import { Building2, User } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface MerchantEditProps {
@@ -49,11 +49,7 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
         },
     ];
 
-    useEffect(() => {
-        fetchMerchant();
-    }, [merchantId]);
-
-    const fetchMerchant = async () => {
+    const fetchMerchant = useCallback(async () => {
         try {
             const response = await api.get(`/merchants/${merchantId}`);
             const data = response.data.data;
@@ -68,7 +64,11 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
         } finally {
             setIsLoadingData(false);
         }
-    };
+    }, [merchantId]);
+
+    useEffect(() => {
+        fetchMerchant();
+    }, [fetchMerchant]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -76,7 +76,7 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
         setErrors({});
 
         try {
-            const payload: any = {
+            const payload: Record<string, unknown> = {
                 name,
                 type,
             };
@@ -94,9 +94,10 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
             });
 
             router.visit('/merchants');
-        } catch (error: any) {
-            if (error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            if (err.response?.data?.errors) {
+                setErrors(err.response.data.errors);
             } else {
                 console.error('Failed to update merchant:', error);
                 toast.error('Failed to update merchant', {
@@ -186,7 +187,7 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
                                     <Label htmlFor="type">Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: any) =>
+                                        onValueChange={(value: 'company' | 'person') =>
                                             setType(value)
                                         }
                                     >

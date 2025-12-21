@@ -16,7 +16,7 @@ import { type BreadcrumbItem } from '@/types';
 import type { BankAccount } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import { Building2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface AccountEditProps {
@@ -65,11 +65,7 @@ export default function AccountEdit({ accountId }: AccountEditProps) {
         },
     ];
 
-    useEffect(() => {
-        fetchAccount();
-    }, [accountId]);
-
-    const fetchAccount = async () => {
+    const fetchAccount = useCallback(async () => {
         try {
             const response = await api.get(`/accounts/${accountId}`);
             const data = response.data.data;
@@ -87,7 +83,11 @@ export default function AccountEdit({ accountId }: AccountEditProps) {
         } finally {
             setIsFetching(false);
         }
-    };
+    }, [accountId]);
+
+    useEffect(() => {
+        fetchAccount();
+    }, [fetchAccount]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -111,9 +111,10 @@ export default function AccountEdit({ accountId }: AccountEditProps) {
             });
 
             router.visit(`/accounts/${accountId}`);
-        } catch (error: any) {
-            if (error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            if (err.response?.data?.errors) {
+                setErrors(err.response.data.errors);
             } else {
                 console.error('Failed to update account:', error);
             }
@@ -197,7 +198,7 @@ export default function AccountEdit({ accountId }: AccountEditProps) {
                                     <Label htmlFor="type">Account Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: any) =>
+                                        onValueChange={(value: 'checking' | 'savings') =>
                                             setType(value)
                                         }
                                     >

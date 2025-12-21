@@ -21,7 +21,8 @@ export function TransactionItem({ transaction, onClick, onEdit, onDelete }: Tran
 
     return (
         <div
-            className="flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50"
+            className={`flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50 ${onClick ? 'cursor-pointer' : ''}`}
+            onClick={onClick}
         >
             {/* Date */}
             <div className="flex flex-col items-center">

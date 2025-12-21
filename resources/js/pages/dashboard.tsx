@@ -21,7 +21,7 @@ import {
     TrendingUp,
     Wallet,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -37,25 +37,16 @@ export default function Dashboard() {
     const [upcomingIncome, setUpcomingIncome] = useState<RecurringIncome[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        Promise.all([
-            fetchAccounts(),
-            fetchRecentTransactions(),
-            fetchUpcomingSubscriptions(),
-            fetchUpcomingIncome(),
-        ]).finally(() => setIsLoading(false));
-    }, []);
-
-    const fetchAccounts = async () => {
+    const fetchAccounts = useCallback(async () => {
         try {
             const response = await api.get('/accounts');
             setAccounts(response.data.data);
         } catch (error) {
             console.error('Failed to fetch accounts:', error);
         }
-    };
+    }, []);
 
-    const fetchRecentTransactions = async () => {
+    const fetchRecentTransactions = useCallback(async () => {
         try {
             const response = await api.get(
                 '/transactions?per_page=5&sort_by=transaction_date&sort_dir=desc',
@@ -64,25 +55,38 @@ export default function Dashboard() {
         } catch (error) {
             console.error('Failed to fetch transactions:', error);
         }
-    };
+    }, []);
 
-    const fetchUpcomingSubscriptions = async () => {
+    const fetchUpcomingSubscriptions = useCallback(async () => {
         try {
             const response = await api.get('/subscriptions/upcoming?days=14');
             setUpcomingSubscriptions(response.data.data);
         } catch (error) {
             console.error('Failed to fetch subscriptions:', error);
         }
-    };
+    }, []);
 
-    const fetchUpcomingIncome = async () => {
+    const fetchUpcomingIncome = useCallback(async () => {
         try {
             const response = await api.get('/recurring-incomes/upcoming?days=14');
             setUpcomingIncome(response.data.data);
         } catch (error) {
             console.error('Failed to fetch income:', error);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const loadData = async () => {
+            await Promise.all([
+                fetchAccounts(),
+                fetchRecentTransactions(),
+                fetchUpcomingSubscriptions(),
+                fetchUpcomingIncome(),
+            ]);
+            setIsLoading(false);
+        };
+        loadData();
+    }, [fetchAccounts, fetchRecentTransactions, fetchUpcomingSubscriptions, fetchUpcomingIncome]);
 
     const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
     const currency = accounts[0]?.currency || 'CHF';

@@ -8,7 +8,7 @@ import { type BreadcrumbItem } from '@/types';
 import type { Card as CardType } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import { CreditCard, Plus, Star } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -22,11 +22,7 @@ export default function CardsIndex() {
     const [userCards, setUserCards] = useState<CardType[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        fetchCards();
-    }, []);
-
-    const fetchCards = async () => {
+    const fetchCards = useCallback(async () => {
         try {
             const response = await api.get('/cards');
             setUserCards(response.data.data);
@@ -35,7 +31,11 @@ export default function CardsIndex() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchCards();
+    }, [fetchCards]);
 
     const handleSetDefault = async (cardId: number) => {
         try {
@@ -47,26 +47,6 @@ export default function CardsIndex() {
             });
         } catch (error) {
             console.error('Failed to set default card:', error);
-        }
-    };
-
-    const handleDelete = async (cardId: number) => {
-        const card = userCards.find(c => c.id === cardId);
-        const cardIdentifier = card?.card_number
-            ? `ending in ${card.card_number.slice(-4)}`
-            : '';
-        if (!confirm(`Are you sure you want to delete ${card?.card_holder_name} ${cardIdentifier}?`)) {
-            return;
-        }
-
-        try {
-            await api.delete(`/cards/${cardId}`);
-            toast.success('Card deleted!', {
-                description: `${card?.card_holder_name} ${cardIdentifier} has been removed.`,
-            });
-            await fetchCards();
-        } catch (error) {
-            console.error('Failed to delete card:', error);
         }
     };
 

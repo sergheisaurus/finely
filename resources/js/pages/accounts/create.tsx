@@ -76,9 +76,10 @@ export default function AccountsCreate() {
             });
 
             router.visit(`/accounts/${response.data.data.id}`);
-        } catch (error: any) {
-            if (error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            if (err.response?.data?.errors) {
+                setErrors(err.response.data.errors);
             } else {
                 console.error('Failed to create account:', error);
             }
@@ -127,7 +128,7 @@ export default function AccountsCreate() {
                                     <Label htmlFor="type">Account Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: any) =>
+                                        onValueChange={(value: 'checking' | 'savings') =>
                                             setType(value)
                                         }
                                     >

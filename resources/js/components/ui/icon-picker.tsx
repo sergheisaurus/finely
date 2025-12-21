@@ -87,7 +87,7 @@ import {
     Wrench,
     Zap,
 } from 'lucide-react';
-import { useState } from 'react';
+import { createElement, useState } from 'react';
 
 // Icon categories for better organization
 const iconCategories = {
@@ -215,7 +215,7 @@ export function IconPicker({ value, onChange, color = '#3b82f6' }: IconPickerPro
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState('');
 
-    const SelectedIcon = value ? getIconByName(value) : null;
+    const selectedIcon = value ? getIconByName(value) : null;
 
     const filteredCategories = search
         ? {
@@ -241,12 +241,12 @@ export function IconPicker({ value, onChange, color = '#3b82f6' }: IconPickerPro
                         !value && 'text-muted-foreground'
                     )}
                 >
-                    {SelectedIcon ? (
+                    {selectedIcon ? (
                         <div
                             className="flex h-12 w-12 items-center justify-center rounded-lg"
                             style={{ backgroundColor: color }}
                         >
-                            <SelectedIcon className="h-6 w-6 text-white" />
+                            {createElement(selectedIcon, { className: 'h-6 w-6 text-white' })}
                         </div>
                     ) : (
                         <div className="flex flex-col items-center gap-1">

@@ -9,7 +9,7 @@ import { type BreadcrumbItem } from '@/types';
 import type { BankAccount, Card, Transaction } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import { Building2, CreditCard, Edit, Star, Trash2, Wallet } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 interface AccountViewProps {
@@ -33,22 +33,16 @@ export default function AccountView({ accountId }: AccountViewProps) {
         },
     ];
 
-    useEffect(() => {
-        Promise.all([fetchAccount(), fetchTransactions(), fetchLinkedCards()]).finally(
-            () => setIsLoading(false),
-        );
-    }, [accountId]);
-
-    const fetchAccount = async () => {
+    const fetchAccount = useCallback(async () => {
         try {
             const response = await api.get(`/accounts/${accountId}`);
             setAccount(response.data.data);
         } catch (error) {
             console.error('Failed to fetch account:', error);
         }
-    };
+    }, [accountId]);
 
-    const fetchTransactions = async () => {
+    const fetchTransactions = useCallback(async () => {
         try {
             const response = await api.get(
                 `/transactions?account_id=${accountId}&per_page=10&sort_by=transaction_date&sort_dir=desc`,
@@ -57,9 +51,9 @@ export default function AccountView({ accountId }: AccountViewProps) {
         } catch (error) {
             console.error('Failed to fetch transactions:', error);
         }
-    };
+    }, [accountId]);
 
-    const fetchLinkedCards = async () => {
+    const fetchLinkedCards = useCallback(async () => {
         try {
             const response = await api.get(
                 `/cards?bank_account_id=${accountId}`,
@@ -68,7 +62,15 @@ export default function AccountView({ accountId }: AccountViewProps) {
         } catch (error) {
             console.error('Failed to fetch cards:', error);
         }
-    };
+    }, [accountId]);
+
+    useEffect(() => {
+        const loadData = async () => {
+            await Promise.all([fetchAccount(), fetchTransactions(), fetchLinkedCards()]);
+            setIsLoading(false);
+        };
+        loadData();
+    }, [fetchAccount, fetchTransactions, fetchLinkedCards]);
 
     const handleSetDefault = async () => {
         if (!account) return;

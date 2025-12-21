@@ -72,6 +72,7 @@ export default function TransactionEdit({ transactionId }: TransactionEditProps)
             fetchCategories(),
             fetchMerchants(),
         ]).finally(() => setIsLoadingData(false));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [transactionId]);
 
     const fetchTransaction = async () => {
@@ -164,7 +165,7 @@ export default function TransactionEdit({ transactionId }: TransactionEditProps)
         setErrors({});
 
         try {
-            const payload: any = {
+            const payload: Record<string, unknown> = {
                 type,
                 amount: parseFloat(amount) || 0,
                 currency,
@@ -247,9 +248,10 @@ export default function TransactionEdit({ transactionId }: TransactionEditProps)
             });
 
             router.visit(journal().url);
-        } catch (error: any) {
-            if (error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            if (err.response?.data?.errors) {
+                setErrors(err.response.data.errors);
             } else {
                 console.error('Failed to update transaction:', error);
                 toast.error('Failed to update transaction', {
@@ -325,7 +327,7 @@ export default function TransactionEdit({ transactionId }: TransactionEditProps)
                                     <Label htmlFor="type">Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: any) => setType(value)}
+                                        onValueChange={(value: TransactionType) => setType(value)}
                                     >
                                         <SelectTrigger>
                                             <SelectValue />
@@ -419,7 +421,7 @@ export default function TransactionEdit({ transactionId }: TransactionEditProps)
                                             </Label>
                                             <Select
                                                 value={paymentMethod}
-                                                onValueChange={(value: any) =>
+                                                onValueChange={(value: 'account' | 'card') =>
                                                     setPaymentMethod(value)
                                                 }
                                             >
@@ -549,7 +551,7 @@ export default function TransactionEdit({ transactionId }: TransactionEditProps)
                                             </Label>
                                             <Select
                                                 value={paymentMethod}
-                                                onValueChange={(value: any) =>
+                                                onValueChange={(value: 'account' | 'card') =>
                                                     setPaymentMethod(value)
                                                 }
                                             >
