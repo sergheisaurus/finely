@@ -12,7 +12,7 @@ import {
 import { dashboard, journal } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookText, CalendarClock, CreditCard, FolderTree, LayoutGrid, Store, TrendingUp, Wallet } from 'lucide-react';
+import { BookText, CalendarClock, CreditCard, FileText, FolderTree, LayoutGrid, Store, TrendingUp, Wallet } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -55,6 +55,11 @@ const mainNavItems: NavItem[] = [
         title: 'Income',
         href: { url: '/income', method: 'get' },
         icon: TrendingUp,
+    },
+    {
+        title: 'Invoices',
+        href: { url: '/invoices', method: 'get' },
+        icon: FileText,
     },
 ];
 

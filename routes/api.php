@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\BankAccountController;
 use App\Http\Controllers\Api\CardController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\MerchantController;
 use App\Http\Controllers\Api\PreferenceController;
 use App\Http\Controllers\Api\RecurringIncomeController;
@@ -61,4 +62,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('recurring-incomes/{recurring_income}/toggle', [RecurringIncomeController::class, 'toggle']);
     Route::post('recurring-incomes/{recurring_income}/mark-received', [RecurringIncomeController::class, 'markReceived']);
     Route::get('recurring-incomes/{recurring_income}/transactions', [RecurringIncomeController::class, 'transactions']);
+
+    // Invoices
+    Route::get('invoices/stats', [InvoiceController::class, 'stats']);
+    Route::get('invoices/upcoming', [InvoiceController::class, 'upcoming']);
+    Route::get('invoices/overdue', [InvoiceController::class, 'overdue']);
+    Route::post('invoices/parse-qr', [InvoiceController::class, 'parseQr']);
+    Route::apiResource('invoices', InvoiceController::class);
+    Route::post('invoices/{invoice}/pay', [InvoiceController::class, 'pay']);
+    Route::post('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel']);
+    Route::get('invoices/{invoice}/transactions', [InvoiceController::class, 'transactions']);
+    Route::post('invoices/{invoice}/attachments', [InvoiceController::class, 'uploadAttachment']);
+    Route::delete('invoices/{invoice}/attachments/{attachment}', [InvoiceController::class, 'deleteAttachment']);
 });

@@ -125,6 +125,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('income/{id}/edit', function ($id) {
         return Inertia::render('income/edit', ['incomeId' => $id]);
     })->name('income.edit');
+
+    // Invoices
+    Route::get('invoices', function () {
+        return Inertia::render('invoices/index');
+    })->name('invoices.index');
+
+    Route::get('invoices/create', function () {
+        return Inertia::render('invoices/create');
+    })->name('invoices.create');
+
+    Route::get('invoices/{id}', function ($id) {
+        return Inertia::render('invoices/view', ['invoiceId' => $id]);
+    })->name('invoices.view');
+
+    Route::get('invoices/{id}/edit', function ($id) {
+        return Inertia::render('invoices/edit', ['invoiceId' => $id]);
+    })->name('invoices.edit');
 });
 
 require __DIR__.'/settings.php';

@@ -92,4 +92,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(RecurringIncome::class);
     }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
 }

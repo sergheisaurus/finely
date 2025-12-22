@@ -210,3 +210,111 @@ export interface RecurringIncomeStats {
     expected_this_week: number;
     overdue_count: number;
 }
+
+// Invoice Types
+export type InvoiceStatus = 'pending' | 'paid' | 'overdue' | 'cancelled';
+export type InvoiceFrequency = 'monthly' | 'quarterly' | 'yearly';
+
+export interface Invoice {
+    id: number;
+    merchant_id?: number;
+    category_id?: number;
+    invoice_number?: string;
+    reference?: string;
+    amount: number;
+    currency: string;
+    issue_date: string;
+    due_date?: string;
+    paid_date?: string;
+    status: InvoiceStatus;
+
+    // Recurring settings
+    is_recurring: boolean;
+    frequency?: InvoiceFrequency;
+    billing_day?: number;
+    next_due_date?: string;
+    times_paid: number;
+
+    // QR data
+    qr_data?: SwissQrData;
+    qr_raw_text?: string;
+    creditor_name?: string;
+    creditor_iban?: string;
+    payment_reference?: string;
+
+    // Notes and visual
+    notes?: string;
+    color?: string;
+    icon?: string;
+
+    // Computed fields
+    is_overdue: boolean;
+    is_pending: boolean;
+    is_paid: boolean;
+    days_until_due?: number;
+    days_overdue?: number;
+
+    // Relationships
+    merchant?: Merchant;
+    category?: Category;
+    items?: InvoiceItem[];
+    attachments?: InvoiceAttachment[];
+    items_count?: number;
+    attachments_count?: number;
+    transactions_count?: number;
+
+    created_at: string;
+    updated_at: string;
+}
+
+export interface InvoiceItem {
+    id: number;
+    invoice_id: number;
+    description: string;
+    quantity: number;
+    unit_price: number;
+    amount: number;
+    sort_order: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface InvoiceAttachment {
+    id: number;
+    invoice_id: number;
+    file_path: string;
+    file_name: string;
+    file_type?: string;
+    file_size?: number;
+    formatted_size: string;
+    is_primary: boolean;
+    url: string;
+    is_image: boolean;
+    is_pdf: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface SwissQrData {
+    type: string;
+    version: string;
+    iban: string;
+    creditor_name: string;
+    creditor_address?: string;
+    amount?: number;
+    currency: string;
+    reference_type: 'QRR' | 'SCOR' | 'NON';
+    reference?: string;
+    message?: string;
+}
+
+export interface InvoiceStats {
+    total_count: number;
+    pending_count: number;
+    paid_count: number;
+    overdue_count: number;
+    pending_total: number;
+    overdue_total: number;
+    recurring_count: number;
+    upcoming_this_week: number;
+}
