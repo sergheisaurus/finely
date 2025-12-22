@@ -142,6 +142,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('invoices/{id}/edit', function ($id) {
         return Inertia::render('invoices/edit', ['invoiceId' => $id]);
     })->name('invoices.edit');
+
+    // Budgets
+    Route::get('budgets', function () {
+        return Inertia::render('budgets/index');
+    })->name('budgets.index');
+
+    Route::get('budgets/create', function () {
+        return Inertia::render('budgets/create');
+    })->name('budgets.create');
+
+    Route::get('budgets/{id}', function ($id) {
+        return Inertia::render('budgets/view', ['budgetId' => $id]);
+    })->name('budgets.view');
+
+    Route::get('budgets/{id}/edit', function ($id) {
+        return Inertia::render('budgets/edit', ['budgetId' => $id]);
+    })->name('budgets.edit');
 });
 
 require __DIR__.'/settings.php';

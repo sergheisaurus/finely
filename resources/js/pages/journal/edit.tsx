@@ -1,4 +1,5 @@
 import { AmountInput } from '@/components/finance/amount-input';
+import { BudgetIndicator } from '@/components/finance/budget-indicator';
 import { Button } from '@/components/ui/button';
 import { Card as CardUI, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -538,6 +539,16 @@ export default function TransactionEdit({ transactionId }: TransactionEditProps)
                                                     ))}
                                                 </SelectContent>
                                             </Select>
+                                        </div>
+
+                                        {/* Budget Indicator */}
+                                        <div className="md:col-span-2">
+                                            <BudgetIndicator
+                                                categoryId={categoryId ? parseInt(categoryId) : null}
+                                                transactionAmount={parseFloat(amount) || 0}
+                                                transactionType={type}
+                                                currency={currency}
+                                            />
                                         </div>
                                     </>
                                 )}

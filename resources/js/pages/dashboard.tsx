@@ -1,3 +1,5 @@
+import { BudgetAlert } from '@/components/finance/budget-alert';
+import { BudgetProgressCard } from '@/components/finance/budget-progress';
 import { StatsCard } from '@/components/finance/stats-card';
 import { TransactionList } from '@/components/finance/transaction-list';
 import { Button } from '@/components/ui/button';
@@ -8,7 +10,7 @@ import api from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import type { BankAccount, RecurringIncome, Subscription, Transaction } from '@/types/finance';
+import type { BankAccount, Budget, RecurringIncome, Subscription, Transaction } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import {
     ArrowDownLeft,
@@ -16,6 +18,7 @@ import {
     ArrowUpRight,
     CalendarClock,
     CreditCard,
+    PiggyBank,
     Plus,
     Sparkles,
     TrendingUp,
@@ -35,6 +38,8 @@ export default function Dashboard() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [upcomingSubscriptions, setUpcomingSubscriptions] = useState<Subscription[]>([]);
     const [upcomingIncome, setUpcomingIncome] = useState<RecurringIncome[]>([]);
+    const [budgets, setBudgets] = useState<Budget[]>([]);
+    const [budgetsAtRisk, setBudgetsAtRisk] = useState<Budget[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchAccounts = useCallback(async () => {
@@ -75,6 +80,24 @@ export default function Dashboard() {
         }
     }, []);
 
+    const fetchBudgets = useCallback(async () => {
+        try {
+            const response = await api.get('/budgets?is_active=1&per_page=5');
+            setBudgets(response.data.data || []);
+        } catch (error) {
+            console.error('Failed to fetch budgets:', error);
+        }
+    }, []);
+
+    const fetchBudgetsAtRisk = useCallback(async () => {
+        try {
+            const response = await api.get('/budgets/health');
+            setBudgetsAtRisk(response.data.data || []);
+        } catch (error) {
+            console.error('Failed to fetch budgets at risk:', error);
+        }
+    }, []);
+
     useEffect(() => {
         const loadData = async () => {
             await Promise.all([
@@ -82,11 +105,13 @@ export default function Dashboard() {
                 fetchRecentTransactions(),
                 fetchUpcomingSubscriptions(),
                 fetchUpcomingIncome(),
+                fetchBudgets(),
+                fetchBudgetsAtRisk(),
             ]);
             setIsLoading(false);
         };
         loadData();
-    }, [fetchAccounts, fetchRecentTransactions, fetchUpcomingSubscriptions, fetchUpcomingIncome]);
+    }, [fetchAccounts, fetchRecentTransactions, fetchUpcomingSubscriptions, fetchUpcomingIncome, fetchBudgets, fetchBudgetsAtRisk]);
 
     const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
     const currency = accounts[0]?.currency || 'CHF';
@@ -121,6 +146,11 @@ export default function Dashboard() {
                         New Transaction
                     </Button>
                 </div>
+
+                {/* Budget Alerts */}
+                {budgetsAtRisk.length > 0 && (
+                    <BudgetAlert budgets={budgetsAtRisk} className="animate-fade-in-up" />
+                )}
 
                 {/* Stats Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -297,6 +327,40 @@ export default function Dashboard() {
                             </CardContent>
                         </Card>
                     </div>
+                )}
+
+                {/* Budget Overview */}
+                {budgets.length > 0 && (
+                    <Card className="animate-fade-in-up stagger-5 opacity-0 overflow-hidden">
+                        <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-900 dark:to-slate-800/50">
+                            <div className="flex items-center gap-2">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10">
+                                    <PiggyBank className="h-4 w-4 text-indigo-500" />
+                                </div>
+                                <CardTitle className="text-lg">Budget Overview</CardTitle>
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => router.visit('/budgets')}
+                                className="text-muted-foreground hover:text-foreground"
+                            >
+                                View All
+                                <ArrowRight className="ml-1 h-4 w-4" />
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                {budgets.slice(0, 6).map((budget) => (
+                                    <BudgetProgressCard
+                                        key={budget.id}
+                                        budget={budget}
+                                        onClick={() => router.visit(`/budgets/${budget.id}`)}
+                                    />
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
                 )}
 
                 {/* Main Content */}

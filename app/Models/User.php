@@ -97,4 +97,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Invoice::class);
     }
+
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(Budget::class);
+    }
 }

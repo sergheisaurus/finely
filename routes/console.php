@@ -10,3 +10,7 @@ Artisan::command('inspire', function () {
 
 // Schedule invoice processing to run daily
 Schedule::command('invoices:process')->daily();
+
+// Schedule budget processing
+Schedule::command('budgets:process-rollovers')->daily();
+Schedule::command('budgets:update-spending')->hourly();

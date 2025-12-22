@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\BankAccountController;
+use App\Http\Controllers\Api\BudgetController;
 use App\Http\Controllers\Api\CardController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\InvoiceController;
@@ -74,4 +75,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('invoices/{invoice}/transactions', [InvoiceController::class, 'transactions']);
     Route::post('invoices/{invoice}/attachments', [InvoiceController::class, 'uploadAttachment']);
     Route::delete('invoices/{invoice}/attachments/{attachment}', [InvoiceController::class, 'deleteAttachment']);
+
+    // Budgets
+    Route::get('budgets/stats', [BudgetController::class, 'stats']);
+    Route::get('budgets/health', [BudgetController::class, 'health']);
+    Route::get('budgets/for-category', [BudgetController::class, 'forCategory']);
+    Route::apiResource('budgets', BudgetController::class);
+    Route::post('budgets/{budget}/toggle', [BudgetController::class, 'toggle']);
+    Route::post('budgets/{budget}/refresh', [BudgetController::class, 'refresh']);
+    Route::get('budgets/{budget}/breakdown', [BudgetController::class, 'breakdown']);
+    Route::get('budgets/{budget}/comparison', [BudgetController::class, 'comparison']);
+    Route::get('budgets/{budget}/check-impact', [BudgetController::class, 'checkImpact']);
 });

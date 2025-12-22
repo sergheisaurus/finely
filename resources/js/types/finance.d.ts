@@ -318,3 +318,106 @@ export interface InvoiceStats {
     recurring_count: number;
     upcoming_this_week: number;
 }
+
+// Budget Types
+export type BudgetPeriod = 'monthly' | 'quarterly' | 'yearly';
+export type BudgetHealth = 'healthy' | 'warning' | 'danger' | 'exceeded';
+
+export interface Budget {
+    id: number;
+    category_id: number | null;
+    name: string;
+    description: string | null;
+    amount: number;
+    currency: string;
+    period: BudgetPeriod;
+    start_date: string;
+    end_date: string | null;
+    current_period_start: string;
+    current_period_end: string;
+    current_period_spent: number;
+    rollover_unused: boolean;
+    rollover_amount: number;
+    alert_threshold: number;
+    alert_sent: boolean;
+    is_active: boolean;
+    color: string | null;
+    icon: string | null;
+
+    // Computed fields
+    effective_budget: number;
+    remaining_amount: number;
+    spent_percentage: number;
+    is_over_budget: boolean;
+    is_near_limit: boolean;
+    budget_health: BudgetHealth;
+    health_color: string;
+    daily_avg_spent: number;
+    daily_avg_remaining: number;
+    days_left_in_period: number;
+    projected_spending: number;
+    will_exceed: boolean;
+
+    // Relationships
+    category?: Category;
+
+    created_at: string;
+    updated_at: string;
+}
+
+export interface BudgetStats {
+    active_count: number;
+    total_budgeted: number;
+    total_spent: number;
+    total_remaining: number;
+    over_budget_count: number;
+    warning_count: number;
+    overall_percentage: number;
+}
+
+export interface BudgetBreakdown {
+    id: number | null;
+    name: string;
+    icon?: string | null;
+    color?: string | null;
+    image_url?: string | null;
+    amount: number;
+    count: number;
+}
+
+export interface BudgetHealthDetails {
+    status: BudgetHealth;
+    color: string;
+    percentage: number;
+    spent: number;
+    remaining: number;
+    effective_budget: number;
+    daily_avg_spent: number;
+    daily_avg_remaining: number;
+    projected_spending: number;
+    will_exceed: boolean;
+    days_left: number;
+}
+
+export interface BudgetComparison {
+    has_previous: boolean;
+    previous_period_start?: string;
+    previous_period_end?: string;
+    previous_spending: number;
+    current_spending: number;
+    difference: number;
+    percentage_change: number;
+    trend: 'up' | 'down' | 'flat';
+}
+
+export interface BudgetImpact {
+    current_spent: number;
+    transaction_amount: number;
+    projected_spent: number;
+    projected_remaining: number;
+    projected_percentage: number;
+    effective_budget: number;
+    currently_over_budget: boolean;
+    will_be_over_budget: boolean;
+    exceeds_by: number;
+}
