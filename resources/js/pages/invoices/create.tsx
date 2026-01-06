@@ -1,9 +1,11 @@
+import { CategorySelect } from '@/components/finance/category-select';
+import { MerchantSelect } from '@/components/finance/merchant-select';
 import { Button } from '@/components/ui/button';
 import {
-    Card as CardUI,
     CardContent,
     CardHeader,
     CardTitle,
+    Card as CardUI,
 } from '@/components/ui/card';
 import { IconPicker } from '@/components/ui/icon-picker';
 import { Input } from '@/components/ui/input';
@@ -20,7 +22,12 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { type BreadcrumbItem } from '@/types';
-import type { Category, InvoiceFrequency, Merchant, SwissQrData } from '@/types/finance';
+import type {
+    Category,
+    InvoiceFrequency,
+    Merchant,
+    SwissQrData,
+} from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useRef, useState } from 'react';
@@ -102,6 +109,18 @@ export default function InvoiceCreate() {
         }
     };
 
+    const handleCategoryCreated = (newCategory: Category) => {
+        setCategories((prev) =>
+            [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)),
+        );
+    };
+
+    const handleMerchantCreated = (newMerchant: Merchant) => {
+        setMerchants((prev) =>
+            [...prev, newMerchant].sort((a, b) => a.name.localeCompare(b.name)),
+        );
+    };
+
     const handleParseQr = async () => {
         if (!qrText.trim()) {
             toast.error('Please enter QR code data');
@@ -131,7 +150,8 @@ export default function InvoiceCreate() {
         } catch (error: unknown) {
             console.error('Failed to parse QR:', error);
             const err = error as { response?: { data?: { message?: string } } };
-            const message = err.response?.data?.message || 'Failed to parse QR code';
+            const message =
+                err.response?.data?.message || 'Failed to parse QR code';
             toast.error(message);
         } finally {
             setIsParsing(false);
@@ -179,7 +199,9 @@ export default function InvoiceCreate() {
         } catch (error: unknown) {
             console.error('Failed to extract QR from file:', error);
             const err = error as { response?: { data?: { message?: string } } };
-            const message = err.response?.data?.message || 'Failed to extract QR code from file. Try a smaller image or paste the QR text instead.';
+            const message =
+                err.response?.data?.message ||
+                'Failed to extract QR code from file. Try a smaller image or paste the QR text instead.';
             toast.error(message);
         } finally {
             setIsParsing(false);
@@ -230,7 +252,9 @@ export default function InvoiceCreate() {
 
             router.visit('/invoices');
         } catch (error: unknown) {
-            const err = error as { response?: { data?: { errors?: Record<string, string[]> } } };
+            const err = error as {
+                response?: { data?: { errors?: Record<string, string[]> } };
+            };
             if (err.response?.data?.errors) {
                 const flatErrors: Record<string, string> = {};
                 for (const [key, messages] of Object.entries(
@@ -254,7 +278,7 @@ export default function InvoiceCreate() {
             <Head title="Create Invoice" />
             <div className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
                 <div className="animate-fade-in-up">
-                    <h1 className="text-2xl font-bold md:text-3xl bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">
+                    <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold text-transparent md:text-3xl dark:from-white dark:to-slate-400">
                         Add Invoice
                     </h1>
                     <p className="text-muted-foreground">
@@ -318,14 +342,19 @@ export default function InvoiceCreate() {
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={() => fileInputRef.current?.click()}
+                                    onClick={() =>
+                                        fileInputRef.current?.click()
+                                    }
                                     disabled={isParsing}
                                     className="w-full"
                                 >
-                                    {isParsing ? 'Extracting...' : 'Upload & Extract QR Code'}
+                                    {isParsing
+                                        ? 'Extracting...'
+                                        : 'Upload & Extract QR Code'}
                                 </Button>
                                 <p className="text-xs text-muted-foreground">
-                                    Upload an image containing a Swiss QR-Invoice (max 2MB)
+                                    Upload an image containing a Swiss
+                                    QR-Invoice (max 2MB)
                                 </p>
                             </div>
 
@@ -339,12 +368,19 @@ export default function InvoiceCreate() {
                                                 className="flex-shrink-0"
                                             />
                                         )}
-                                        <div className="text-sm space-y-1 flex-1">
-                                            <p className="font-semibold text-green-600 dark:text-green-400 mb-2">
+                                        <div className="flex-1 space-y-1 text-sm">
+                                            <p className="mb-2 font-semibold text-green-600 dark:text-green-400">
                                                 ✓ QR Code Parsed Successfully
                                             </p>
-                                            <p><strong>Creditor:</strong> {qrData.creditor_name || 'Not specified'}</p>
-                                            <p><strong>IBAN:</strong> {qrData.iban || 'Not specified'}</p>
+                                            <p>
+                                                <strong>Creditor:</strong>{' '}
+                                                {qrData.creditor_name ||
+                                                    'Not specified'}
+                                            </p>
+                                            <p>
+                                                <strong>IBAN:</strong>{' '}
+                                                {qrData.iban || 'Not specified'}
+                                            </p>
                                             <p>
                                                 <strong>Amount:</strong>{' '}
                                                 {qrData.amount
@@ -352,15 +388,22 @@ export default function InvoiceCreate() {
                                                     : `Not specified (${qrData.currency})`}
                                             </p>
                                             {qrData.reference && (
-                                                <p><strong>Reference:</strong> {qrData.reference}</p>
+                                                <p>
+                                                    <strong>Reference:</strong>{' '}
+                                                    {qrData.reference}
+                                                </p>
                                             )}
                                             {qrData.message && (
-                                                <p><strong>Message:</strong> {qrData.message}</p>
+                                                <p>
+                                                    <strong>Message:</strong>{' '}
+                                                    {qrData.message}
+                                                </p>
                                             )}
                                         </div>
                                     </div>
-                                    <p className="text-xs text-muted-foreground mt-3">
-                                        Form fields have been auto-filled with the extracted data.
+                                    <p className="mt-3 text-xs text-muted-foreground">
+                                        Form fields have been auto-filled with
+                                        the extracted data.
                                     </p>
                                 </div>
                             )}
@@ -381,11 +424,15 @@ export default function InvoiceCreate() {
                                     <Input
                                         id="invoiceNumber"
                                         value={invoiceNumber}
-                                        onChange={(e) => setInvoiceNumber(e.target.value)}
+                                        onChange={(e) =>
+                                            setInvoiceNumber(e.target.value)
+                                        }
                                         placeholder="e.g., INV-2024-001"
                                     />
                                     {errors.invoice_number && (
-                                        <p className="text-sm text-red-500">{errors.invoice_number}</p>
+                                        <p className="text-sm text-red-500">
+                                            {errors.invoice_number}
+                                        </p>
                                     )}
                                 </div>
 
@@ -394,7 +441,9 @@ export default function InvoiceCreate() {
                                     <Input
                                         id="reference"
                                         value={reference}
-                                        onChange={(e) => setReference(e.target.value)}
+                                        onChange={(e) =>
+                                            setReference(e.target.value)
+                                        }
                                         placeholder="External reference"
                                     />
                                 </div>
@@ -409,26 +458,41 @@ export default function InvoiceCreate() {
                                         step="0.01"
                                         min="0"
                                         value={amount}
-                                        onChange={(e) => setAmount(e.target.value)}
+                                        onChange={(e) =>
+                                            setAmount(e.target.value)
+                                        }
                                         placeholder="0.00"
                                         required
                                     />
                                     {errors.amount && (
-                                        <p className="text-sm text-red-500">{errors.amount}</p>
+                                        <p className="text-sm text-red-500">
+                                            {errors.amount}
+                                        </p>
                                     )}
                                 </div>
 
                                 <div className="space-y-2">
                                     <Label htmlFor="currency">Currency</Label>
-                                    <Select value={currency} onValueChange={setCurrency}>
+                                    <Select
+                                        value={currency}
+                                        onValueChange={setCurrency}
+                                    >
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="CHF">CHF</SelectItem>
-                                            <SelectItem value="EUR">EUR</SelectItem>
-                                            <SelectItem value="USD">USD</SelectItem>
-                                            <SelectItem value="GBP">GBP</SelectItem>
+                                            <SelectItem value="CHF">
+                                                CHF
+                                            </SelectItem>
+                                            <SelectItem value="EUR">
+                                                EUR
+                                            </SelectItem>
+                                            <SelectItem value="USD">
+                                                USD
+                                            </SelectItem>
+                                            <SelectItem value="GBP">
+                                                GBP
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -436,12 +500,16 @@ export default function InvoiceCreate() {
 
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-2">
-                                    <Label htmlFor="issueDate">Issue Date *</Label>
+                                    <Label htmlFor="issueDate">
+                                        Issue Date *
+                                    </Label>
                                     <Input
                                         id="issueDate"
                                         type="date"
                                         value={issueDate}
-                                        onChange={(e) => setIssueDate(e.target.value)}
+                                        onChange={(e) =>
+                                            setIssueDate(e.target.value)
+                                        }
                                         required
                                     />
                                 </div>
@@ -452,7 +520,9 @@ export default function InvoiceCreate() {
                                         id="dueDate"
                                         type="date"
                                         value={dueDate}
-                                        onChange={(e) => setDueDate(e.target.value)}
+                                        onChange={(e) =>
+                                            setDueDate(e.target.value)
+                                        }
                                     />
                                 </div>
                             </div>
@@ -477,11 +547,15 @@ export default function InvoiceCreate() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="creditorName">Creditor Name</Label>
+                                <Label htmlFor="creditorName">
+                                    Creditor Name
+                                </Label>
                                 <Input
                                     id="creditorName"
                                     value={creditorName}
-                                    onChange={(e) => setCreditorName(e.target.value)}
+                                    onChange={(e) =>
+                                        setCreditorName(e.target.value)
+                                    }
                                     placeholder="Company or person name"
                                 />
                             </div>
@@ -492,17 +566,23 @@ export default function InvoiceCreate() {
                                     <Input
                                         id="creditorIban"
                                         value={creditorIban}
-                                        onChange={(e) => setCreditorIban(e.target.value)}
+                                        onChange={(e) =>
+                                            setCreditorIban(e.target.value)
+                                        }
                                         placeholder="CH..."
                                     />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="paymentReference">Payment Reference</Label>
+                                    <Label htmlFor="paymentReference">
+                                        Payment Reference
+                                    </Label>
                                     <Input
                                         id="paymentReference"
                                         value={paymentReference}
-                                        onChange={(e) => setPaymentReference(e.target.value)}
+                                        onChange={(e) =>
+                                            setPaymentReference(e.target.value)
+                                        }
                                         placeholder="QR reference"
                                     />
                                 </div>
@@ -519,34 +599,27 @@ export default function InvoiceCreate() {
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="merchant">Merchant</Label>
-                                    <Select value={merchantId} onValueChange={setMerchantId}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select merchant" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {merchants.map((m) => (
-                                                <SelectItem key={m.id} value={m.id.toString()}>
-                                                    {m.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <MerchantSelect
+                                        value={merchantId}
+                                        onValueChange={setMerchantId}
+                                        merchants={merchants}
+                                        onMerchantCreated={
+                                            handleMerchantCreated
+                                        }
+                                    />
                                 </div>
 
                                 <div className="space-y-2">
                                     <Label htmlFor="category">Category</Label>
-                                    <Select value={categoryId} onValueChange={setCategoryId}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select category" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {categories.map((c) => (
-                                                <SelectItem key={c.id} value={c.id.toString()}>
-                                                    {c.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <CategorySelect
+                                        value={categoryId}
+                                        onValueChange={setCategoryId}
+                                        categories={categories}
+                                        type="expense"
+                                        onCategoryCreated={
+                                            handleCategoryCreated
+                                        }
+                                    />
                                 </div>
                             </div>
                         </CardContent>
@@ -560,9 +633,12 @@ export default function InvoiceCreate() {
                         <CardContent className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <Label htmlFor="isRecurring">Recurring Invoice</Label>
+                                    <Label htmlFor="isRecurring">
+                                        Recurring Invoice
+                                    </Label>
                                     <p className="text-sm text-muted-foreground">
-                                        Enable for bills you pay with the same QR code every period
+                                        Enable for bills you pay with the same
+                                        QR code every period
                                     </p>
                                 </div>
                                 <Switch
@@ -573,19 +649,28 @@ export default function InvoiceCreate() {
                             </div>
 
                             {isRecurring && (
-                                <div className="grid gap-4 sm:grid-cols-2 animate-fade-in-up">
+                                <div className="animate-fade-in-up grid gap-4 sm:grid-cols-2">
                                     <div className="space-y-2">
-                                        <Label htmlFor="frequency">Frequency</Label>
+                                        <Label htmlFor="frequency">
+                                            Frequency
+                                        </Label>
                                         <Select
                                             value={frequency}
-                                            onValueChange={(v) => setFrequency(v as InvoiceFrequency)}
+                                            onValueChange={(v) =>
+                                                setFrequency(
+                                                    v as InvoiceFrequency,
+                                                )
+                                            }
                                         >
                                             <SelectTrigger>
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {frequencies.map((f) => (
-                                                    <SelectItem key={f.value} value={f.value}>
+                                                    <SelectItem
+                                                        key={f.value}
+                                                        value={f.value}
+                                                    >
                                                         {f.label}
                                                     </SelectItem>
                                                 ))}
@@ -594,14 +679,18 @@ export default function InvoiceCreate() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="billingDay">Billing Day</Label>
+                                        <Label htmlFor="billingDay">
+                                            Billing Day
+                                        </Label>
                                         <Input
                                             id="billingDay"
                                             type="number"
                                             min="1"
                                             max="31"
                                             value={billingDay}
-                                            onChange={(e) => setBillingDay(e.target.value)}
+                                            onChange={(e) =>
+                                                setBillingDay(e.target.value)
+                                            }
                                         />
                                     </div>
                                 </div>
@@ -623,12 +712,16 @@ export default function InvoiceCreate() {
                                             id="color"
                                             type="color"
                                             value={color}
-                                            onChange={(e) => setColor(e.target.value)}
+                                            onChange={(e) =>
+                                                setColor(e.target.value)
+                                            }
                                             className="h-10 w-14 p-1"
                                         />
                                         <Input
                                             value={color}
-                                            onChange={(e) => setColor(e.target.value)}
+                                            onChange={(e) =>
+                                                setColor(e.target.value)
+                                            }
                                             className="flex-1"
                                         />
                                     </div>
@@ -636,14 +729,17 @@ export default function InvoiceCreate() {
 
                                 <div className="space-y-2">
                                     <Label>Icon</Label>
-                                    <IconPicker value={icon} onChange={setIcon} />
+                                    <IconPicker
+                                        value={icon}
+                                        onChange={setIcon}
+                                    />
                                 </div>
                             </div>
                         </CardContent>
                     </CardUI>
 
                     {/* Actions */}
-                    <div className="flex gap-4 animate-fade-in-up stagger-7 opacity-0">
+                    <div className="animate-fade-in-up stagger-7 flex gap-4 opacity-0">
                         <Button
                             type="button"
                             variant="outline"

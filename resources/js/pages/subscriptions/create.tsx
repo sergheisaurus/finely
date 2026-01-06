@@ -1,9 +1,11 @@
+import { CategorySelect } from '@/components/finance/category-select';
+import { MerchantSelect } from '@/components/finance/merchant-select';
 import { Button } from '@/components/ui/button';
 import {
-    Card as CardUI,
     CardContent,
     CardHeader,
     CardTitle,
+    Card as CardUI,
 } from '@/components/ui/card';
 import { IconPicker } from '@/components/ui/icon-picker';
 import { Input } from '@/components/ui/input';
@@ -109,6 +111,18 @@ export default function SubscriptionCreate() {
         }
     };
 
+    const handleCategoryCreated = (newCategory: Category) => {
+        setCategories((prev) =>
+            [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)),
+        );
+    };
+
+    const handleMerchantCreated = (newMerchant: Merchant) => {
+        setMerchants((prev) =>
+            [...prev, newMerchant].sort((a, b) => a.name.localeCompare(b.name)),
+        );
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -146,7 +160,9 @@ export default function SubscriptionCreate() {
 
             router.visit('/subscriptions');
         } catch (error: unknown) {
-            const err = error as { response?: { data?: { errors?: Record<string, string[]> } } };
+            const err = error as {
+                response?: { data?: { errors?: Record<string, string[]> } };
+            };
             if (err.response?.data?.errors) {
                 const flatErrors: Record<string, string> = {};
                 for (const [key, messages] of Object.entries(
@@ -171,7 +187,7 @@ export default function SubscriptionCreate() {
             <Head title="Create Subscription" />
             <div className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
                 <div className="animate-fade-in-up">
-                    <h1 className="text-2xl font-bold md:text-3xl bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">
+                    <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold text-transparent md:text-3xl dark:from-white dark:to-slate-400">
                         New Subscription
                     </h1>
                     <p className="text-muted-foreground">
@@ -192,7 +208,9 @@ export default function SubscriptionCreate() {
                                     <Input
                                         id="name"
                                         value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={(e) =>
+                                            setName(e.target.value)
+                                        }
                                         placeholder="e.g., Netflix, Spotify, Gym Membership"
                                         required
                                     />
@@ -211,7 +229,9 @@ export default function SubscriptionCreate() {
                                         step="0.01"
                                         min="0.01"
                                         value={amount}
-                                        onChange={(e) => setAmount(e.target.value)}
+                                        onChange={(e) =>
+                                            setAmount(e.target.value)
+                                        }
                                         placeholder="0.00"
                                         required
                                     />
@@ -224,31 +244,49 @@ export default function SubscriptionCreate() {
 
                                 <div className="space-y-2">
                                     <Label htmlFor="currency">Currency</Label>
-                                    <Select value={currency} onValueChange={setCurrency}>
+                                    <Select
+                                        value={currency}
+                                        onValueChange={setCurrency}
+                                    >
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="CHF">CHF</SelectItem>
-                                            <SelectItem value="EUR">EUR</SelectItem>
-                                            <SelectItem value="USD">USD</SelectItem>
-                                            <SelectItem value="GBP">GBP</SelectItem>
+                                            <SelectItem value="CHF">
+                                                CHF
+                                            </SelectItem>
+                                            <SelectItem value="EUR">
+                                                EUR
+                                            </SelectItem>
+                                            <SelectItem value="USD">
+                                                USD
+                                            </SelectItem>
+                                            <SelectItem value="GBP">
+                                                GBP
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="billing_cycle">Billing Cycle *</Label>
+                                    <Label htmlFor="billing_cycle">
+                                        Billing Cycle *
+                                    </Label>
                                     <Select
                                         value={billingCycle}
-                                        onValueChange={(v) => setBillingCycle(v as BillingCycle)}
+                                        onValueChange={(v) =>
+                                            setBillingCycle(v as BillingCycle)
+                                        }
                                     >
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {billingCycles.map((cycle) => (
-                                                <SelectItem key={cycle.value} value={cycle.value}>
+                                                <SelectItem
+                                                    key={cycle.value}
+                                                    value={cycle.value}
+                                                >
                                                     {cycle.label}
                                                 </SelectItem>
                                             ))}
@@ -269,37 +307,51 @@ export default function SubscriptionCreate() {
                                         min={billingCycle === 'weekly' ? 0 : 1}
                                         max={billingCycle === 'weekly' ? 6 : 31}
                                         value={billingDay}
-                                        onChange={(e) => setBillingDay(e.target.value)}
+                                        onChange={(e) =>
+                                            setBillingDay(e.target.value)
+                                        }
                                     />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="start_date">Start Date *</Label>
+                                    <Label htmlFor="start_date">
+                                        Start Date *
+                                    </Label>
                                     <Input
                                         id="start_date"
                                         type="date"
                                         value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
+                                        onChange={(e) =>
+                                            setStartDate(e.target.value)
+                                        }
                                         required
                                     />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="end_date">End Date (Optional)</Label>
+                                    <Label htmlFor="end_date">
+                                        End Date (Optional)
+                                    </Label>
                                     <Input
                                         id="end_date"
                                         type="date"
                                         value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
+                                        onChange={(e) =>
+                                            setEndDate(e.target.value)
+                                        }
                                     />
                                 </div>
 
                                 <div className="space-y-2 md:col-span-2">
-                                    <Label htmlFor="description">Description</Label>
+                                    <Label htmlFor="description">
+                                        Description
+                                    </Label>
                                     <Textarea
                                         id="description"
                                         value={description}
-                                        onChange={(e) => setDescription(e.target.value)}
+                                        onChange={(e) =>
+                                            setDescription(e.target.value)
+                                        }
                                         placeholder="Additional notes..."
                                         rows={2}
                                     />
@@ -317,40 +369,27 @@ export default function SubscriptionCreate() {
                             <div className="grid gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="merchant">Merchant</Label>
-                                    <Select value={merchantId} onValueChange={setMerchantId}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select merchant" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {merchants.map((merchant) => (
-                                                <SelectItem
-                                                    key={merchant.id}
-                                                    value={merchant.id.toString()}
-                                                >
-                                                    {merchant.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <MerchantSelect
+                                        value={merchantId}
+                                        onValueChange={setMerchantId}
+                                        merchants={merchants}
+                                        onMerchantCreated={
+                                            handleMerchantCreated
+                                        }
+                                    />
                                 </div>
 
                                 <div className="space-y-2">
                                     <Label htmlFor="category">Category</Label>
-                                    <Select value={categoryId} onValueChange={setCategoryId}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select category" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {categories.map((category) => (
-                                                <SelectItem
-                                                    key={category.id}
-                                                    value={category.id.toString()}
-                                                >
-                                                    {category.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <CategorySelect
+                                        value={categoryId}
+                                        onValueChange={setCategoryId}
+                                        categories={categories}
+                                        type="expense"
+                                        onCategoryCreated={
+                                            handleCategoryCreated
+                                        }
+                                    />
                                 </div>
                             </div>
                         </CardContent>
@@ -368,7 +407,12 @@ export default function SubscriptionCreate() {
                                     <Select
                                         value={paymentMethodType}
                                         onValueChange={(v) => {
-                                            setPaymentMethodType(v as 'bank_account' | 'card' | '');
+                                            setPaymentMethodType(
+                                                v as
+                                                    | 'bank_account'
+                                                    | 'card'
+                                                    | '',
+                                            );
                                             setPaymentMethodId('');
                                         }}
                                     >
@@ -379,7 +423,9 @@ export default function SubscriptionCreate() {
                                             <SelectItem value="bank_account">
                                                 Bank Account
                                             </SelectItem>
-                                            <SelectItem value="card">Card</SelectItem>
+                                            <SelectItem value="card">
+                                                Card
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -387,7 +433,8 @@ export default function SubscriptionCreate() {
                                 {paymentMethodType && (
                                     <div className="space-y-2">
                                         <Label>
-                                            {paymentMethodType === 'bank_account'
+                                            {paymentMethodType ===
+                                            'bank_account'
                                                 ? 'Account'
                                                 : 'Card'}
                                         </Label>
@@ -399,22 +446,32 @@ export default function SubscriptionCreate() {
                                                 <SelectValue placeholder="Select..." />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {paymentMethodType === 'bank_account'
-                                                    ? accounts.map((account) => (
-                                                          <SelectItem
-                                                              key={account.id}
-                                                              value={account.id.toString()}
-                                                          >
-                                                              {account.name}
-                                                          </SelectItem>
-                                                      ))
+                                                {paymentMethodType ===
+                                                'bank_account'
+                                                    ? accounts.map(
+                                                          (account) => (
+                                                              <SelectItem
+                                                                  key={
+                                                                      account.id
+                                                                  }
+                                                                  value={account.id.toString()}
+                                                              >
+                                                                  {account.name}
+                                                              </SelectItem>
+                                                          ),
+                                                      )
                                                     : cards.map((card) => (
                                                           <SelectItem
                                                               key={card.id}
                                                               value={card.id.toString()}
                                                           >
-                                                              {card.card_holder_name} ****
-                                                              {card.card_number.slice(-4)}
+                                                              {
+                                                                  card.card_holder_name
+                                                              }{' '}
+                                                              ****
+                                                              {card.card_number.slice(
+                                                                  -4,
+                                                              )}
                                                           </SelectItem>
                                                       ))}
                                             </SelectContent>
@@ -439,12 +496,16 @@ export default function SubscriptionCreate() {
                                             id="color"
                                             type="color"
                                             value={color}
-                                            onChange={(e) => setColor(e.target.value)}
+                                            onChange={(e) =>
+                                                setColor(e.target.value)
+                                            }
                                             className="h-10 w-20 cursor-pointer"
                                         />
                                         <Input
                                             value={color}
-                                            onChange={(e) => setColor(e.target.value)}
+                                            onChange={(e) =>
+                                                setColor(e.target.value)
+                                            }
                                             placeholder="#8b5cf6"
                                             className="flex-1"
                                         />
@@ -453,7 +514,10 @@ export default function SubscriptionCreate() {
 
                                 <div className="space-y-2">
                                     <Label>Icon</Label>
-                                    <IconPicker value={icon} onChange={setIcon} />
+                                    <IconPicker
+                                        value={icon}
+                                        onChange={setIcon}
+                                    />
                                 </div>
                             </div>
                         </CardContent>
@@ -472,14 +536,18 @@ export default function SubscriptionCreate() {
                                         Track this subscription
                                     </p>
                                 </div>
-                                <Switch checked={isActive} onCheckedChange={setIsActive} />
+                                <Switch
+                                    checked={isActive}
+                                    onCheckedChange={setIsActive}
+                                />
                             </div>
 
                             <div className="flex items-center justify-between">
                                 <div className="space-y-0.5">
                                     <Label>Auto-create Transactions</Label>
                                     <p className="text-sm text-muted-foreground">
-                                        Automatically create expense transactions
+                                        Automatically create expense
+                                        transactions
                                     </p>
                                 </div>
                                 <Switch
@@ -489,21 +557,25 @@ export default function SubscriptionCreate() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="reminder_days">Reminder (days before)</Label>
+                                <Label htmlFor="reminder_days">
+                                    Reminder (days before)
+                                </Label>
                                 <Input
                                     id="reminder_days"
                                     type="number"
                                     min="0"
                                     max="30"
                                     value={reminderDaysBefore}
-                                    onChange={(e) => setReminderDaysBefore(e.target.value)}
+                                    onChange={(e) =>
+                                        setReminderDaysBefore(e.target.value)
+                                    }
                                     className="w-32"
                                 />
                             </div>
                         </CardContent>
                     </CardUI>
 
-                    <div className="flex gap-4 animate-fade-in-up stagger-6 opacity-0">
+                    <div className="animate-fade-in-up stagger-6 flex gap-4 opacity-0">
                         <Button
                             type="button"
                             variant="outline"
@@ -517,7 +589,9 @@ export default function SubscriptionCreate() {
                             disabled={isSubmitting}
                             className="bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600"
                         >
-                            {isSubmitting ? 'Creating...' : 'Create Subscription'}
+                            {isSubmitting
+                                ? 'Creating...'
+                                : 'Create Subscription'}
                         </Button>
                     </div>
                 </form>

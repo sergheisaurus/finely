@@ -1,9 +1,10 @@
+import { CategorySelect } from '@/components/finance/category-select';
 import { Button } from '@/components/ui/button';
 import {
-    Card as CardUI,
     CardContent,
     CardHeader,
     CardTitle,
+    Card as CardUI,
 } from '@/components/ui/card';
 import { IconPicker } from '@/components/ui/icon-picker';
 import { Input } from '@/components/ui/input';
@@ -119,6 +120,12 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
         fetchData();
     }, [fetchData]);
 
+    const handleCategoryCreated = (newCategory: Category) => {
+        setCategories((prev) =>
+            [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)),
+        );
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -149,7 +156,9 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
             toast.success('Income updated!');
             router.visit(`/income/${incomeId}`);
         } catch (error: unknown) {
-            const err = error as { response?: { data?: { errors?: Record<string, string[]> } } };
+            const err = error as {
+                response?: { data?: { errors?: Record<string, string[]> } };
+            };
             if (err.response?.data?.errors) {
                 const flatErrors: Record<string, string> = {};
                 for (const [key, messages] of Object.entries(
@@ -186,7 +195,7 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
             <Head title={`Edit ${name}`} />
             <div className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
                 <div className="animate-fade-in-up">
-                    <h1 className="text-2xl font-bold md:text-3xl bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">
+                    <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold text-transparent md:text-3xl dark:from-white dark:to-slate-400">
                         Edit Income
                     </h1>
                     <p className="text-muted-foreground">Update {name}</p>
@@ -205,7 +214,9 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
                                     <Input
                                         id="name"
                                         value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={(e) =>
+                                            setName(e.target.value)
+                                        }
                                         required
                                     />
                                     {errors.name && (
@@ -220,7 +231,9 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
                                     <Input
                                         id="source"
                                         value={source}
-                                        onChange={(e) => setSource(e.target.value)}
+                                        onChange={(e) =>
+                                            setSource(e.target.value)
+                                        }
                                     />
                                 </div>
 
@@ -232,38 +245,58 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
                                         step="0.01"
                                         min="0.01"
                                         value={amount}
-                                        onChange={(e) => setAmount(e.target.value)}
+                                        onChange={(e) =>
+                                            setAmount(e.target.value)
+                                        }
                                         required
                                     />
                                 </div>
 
                                 <div className="space-y-2">
                                     <Label htmlFor="currency">Currency</Label>
-                                    <Select value={currency} onValueChange={setCurrency}>
+                                    <Select
+                                        value={currency}
+                                        onValueChange={setCurrency}
+                                    >
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="CHF">CHF</SelectItem>
-                                            <SelectItem value="EUR">EUR</SelectItem>
-                                            <SelectItem value="USD">USD</SelectItem>
-                                            <SelectItem value="GBP">GBP</SelectItem>
+                                            <SelectItem value="CHF">
+                                                CHF
+                                            </SelectItem>
+                                            <SelectItem value="EUR">
+                                                EUR
+                                            </SelectItem>
+                                            <SelectItem value="USD">
+                                                USD
+                                            </SelectItem>
+                                            <SelectItem value="GBP">
+                                                GBP
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="frequency">Frequency *</Label>
+                                    <Label htmlFor="frequency">
+                                        Frequency *
+                                    </Label>
                                     <Select
                                         value={frequency}
-                                        onValueChange={(v) => setFrequency(v as IncomeFrequency)}
+                                        onValueChange={(v) =>
+                                            setFrequency(v as IncomeFrequency)
+                                        }
                                     >
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {frequencies.map((freq) => (
-                                                <SelectItem key={freq.value} value={freq.value}>
+                                                <SelectItem
+                                                    key={freq.value}
+                                                    value={freq.value}
+                                                >
                                                     {freq.label}
                                                 </SelectItem>
                                             ))}
@@ -272,24 +305,32 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="payment_day">Payment Day</Label>
+                                    <Label htmlFor="payment_day">
+                                        Payment Day
+                                    </Label>
                                     <Input
                                         id="payment_day"
                                         type="number"
                                         min="1"
                                         max="31"
                                         value={paymentDay}
-                                        onChange={(e) => setPaymentDay(e.target.value)}
+                                        onChange={(e) =>
+                                            setPaymentDay(e.target.value)
+                                        }
                                     />
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="start_date">Start Date *</Label>
+                                    <Label htmlFor="start_date">
+                                        Start Date *
+                                    </Label>
                                     <Input
                                         id="start_date"
                                         type="date"
                                         value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
+                                        onChange={(e) =>
+                                            setStartDate(e.target.value)
+                                        }
                                         required
                                     />
                                 </div>
@@ -300,16 +341,22 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
                                         id="end_date"
                                         type="date"
                                         value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
+                                        onChange={(e) =>
+                                            setEndDate(e.target.value)
+                                        }
                                     />
                                 </div>
 
                                 <div className="space-y-2 md:col-span-2">
-                                    <Label htmlFor="description">Description</Label>
+                                    <Label htmlFor="description">
+                                        Description
+                                    </Label>
                                     <Textarea
                                         id="description"
                                         value={description}
-                                        onChange={(e) => setDescription(e.target.value)}
+                                        onChange={(e) =>
+                                            setDescription(e.target.value)
+                                        }
                                         rows={2}
                                     />
                                 </div>
@@ -326,26 +373,23 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
                             <div className="grid gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label>Category</Label>
-                                    <Select value={categoryId} onValueChange={setCategoryId}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select category" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {categories.map((category) => (
-                                                <SelectItem
-                                                    key={category.id}
-                                                    value={category.id.toString()}
-                                                >
-                                                    {category.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <CategorySelect
+                                        value={categoryId}
+                                        onValueChange={setCategoryId}
+                                        categories={categories}
+                                        type="income"
+                                        onCategoryCreated={
+                                            handleCategoryCreated
+                                        }
+                                    />
                                 </div>
 
                                 <div className="space-y-2">
                                     <Label>Deposit Account</Label>
-                                    <Select value={toAccountId} onValueChange={setToAccountId}>
+                                    <Select
+                                        value={toAccountId}
+                                        onValueChange={setToAccountId}
+                                    >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select account" />
                                         </SelectTrigger>
@@ -379,12 +423,16 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
                                             id="color"
                                             type="color"
                                             value={color}
-                                            onChange={(e) => setColor(e.target.value)}
+                                            onChange={(e) =>
+                                                setColor(e.target.value)
+                                            }
                                             className="h-10 w-20 cursor-pointer"
                                         />
                                         <Input
                                             value={color}
-                                            onChange={(e) => setColor(e.target.value)}
+                                            onChange={(e) =>
+                                                setColor(e.target.value)
+                                            }
                                             className="flex-1"
                                         />
                                     </div>
@@ -392,7 +440,10 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
 
                                 <div className="space-y-2">
                                     <Label>Icon</Label>
-                                    <IconPicker value={icon} onChange={setIcon} />
+                                    <IconPicker
+                                        value={icon}
+                                        onChange={setIcon}
+                                    />
                                 </div>
                             </div>
                         </CardContent>
@@ -411,7 +462,10 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
                                         Track this income source
                                     </p>
                                 </div>
-                                <Switch checked={isActive} onCheckedChange={setIsActive} />
+                                <Switch
+                                    checked={isActive}
+                                    onCheckedChange={setIsActive}
+                                />
                             </div>
 
                             <div className="flex items-center justify-between">
@@ -429,7 +483,7 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
                         </CardContent>
                     </CardUI>
 
-                    <div className="flex gap-4 animate-fade-in-up stagger-5 opacity-0">
+                    <div className="animate-fade-in-up stagger-5 flex gap-4 opacity-0">
                         <Button
                             type="button"
                             variant="outline"

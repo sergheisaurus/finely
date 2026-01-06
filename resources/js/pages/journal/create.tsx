@@ -1,7 +1,14 @@
 import { AmountInput } from '@/components/finance/amount-input';
 import { BudgetIndicator } from '@/components/finance/budget-indicator';
+import { CategorySelect } from '@/components/finance/category-select';
+import { MerchantSelect } from '@/components/finance/merchant-select';
 import { Button } from '@/components/ui/button';
-import { Card as CardUI, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    CardContent,
+    CardHeader,
+    CardTitle,
+    Card as CardUI,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -143,6 +150,18 @@ export default function TransactionCreate() {
         }
     };
 
+    const handleCategoryCreated = (newCategory: Category) => {
+        setCategories((prev) =>
+            [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)),
+        );
+    };
+
+    const handleMerchantCreated = (newMerchant: Merchant) => {
+        setMerchants((prev) =>
+            [...prev, newMerchant].sort((a, b) => a.name.localeCompare(b.name)),
+        );
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -160,7 +179,8 @@ export default function TransactionCreate() {
 
             // Add type-specific fields
             if (type === 'expense') {
-                if (fromAccountId) payload.from_account_id = parseInt(fromAccountId);
+                if (fromAccountId)
+                    payload.from_account_id = parseInt(fromAccountId);
                 if (fromCardId) payload.from_card_id = parseInt(fromCardId);
                 if (categoryId) payload.category_id = parseInt(categoryId);
                 if (merchantId) payload.merchant_id = parseInt(merchantId);
@@ -170,10 +190,12 @@ export default function TransactionCreate() {
                 if (categoryId) payload.category_id = parseInt(categoryId);
                 if (merchantId) payload.merchant_id = parseInt(merchantId);
             } else if (type === 'transfer') {
-                if (fromAccountId) payload.from_account_id = parseInt(fromAccountId);
+                if (fromAccountId)
+                    payload.from_account_id = parseInt(fromAccountId);
                 if (toAccountId) payload.to_account_id = parseInt(toAccountId);
             } else if (type === 'card_payment') {
-                if (fromAccountId) payload.from_account_id = parseInt(fromAccountId);
+                if (fromAccountId)
+                    payload.from_account_id = parseInt(fromAccountId);
                 if (toCardId) payload.to_card_id = parseInt(toCardId);
             }
 
@@ -185,7 +207,9 @@ export default function TransactionCreate() {
 
             router.visit(journal().url);
         } catch (error: unknown) {
-            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            const err = error as {
+                response?: { data?: { errors?: Record<string, string> } };
+            };
             if (err.response?.data?.errors) {
                 setErrors(err.response.data.errors);
             } else {
@@ -206,13 +230,6 @@ export default function TransactionCreate() {
             </AppLayout>
         );
     }
-
-    // Filter categories by type
-    const filteredCategories = categories.filter((cat) => {
-        if (type === 'income') return cat.type === 'income';
-        if (type === 'expense') return cat.type === 'expense';
-        return false;
-    });
 
     // Get credit cards only for card payment
     const creditCards = cards.filter((card) => card.type === 'credit');
@@ -239,7 +256,9 @@ export default function TransactionCreate() {
                                 <Label htmlFor="type">Transaction Type *</Label>
                                 <Select
                                     value={type}
-                                    onValueChange={(value: TransactionType) => setType(value)}
+                                    onValueChange={(value: TransactionType) =>
+                                        setType(value)
+                                    }
                                 >
                                     <SelectTrigger>
                                         <SelectValue />
@@ -248,7 +267,9 @@ export default function TransactionCreate() {
                                         <SelectItem value="expense">
                                             Expense
                                         </SelectItem>
-                                        <SelectItem value="income">Income</SelectItem>
+                                        <SelectItem value="income">
+                                            Income
+                                        </SelectItem>
                                         <SelectItem value="transfer">
                                             Transfer
                                         </SelectItem>
@@ -322,7 +343,9 @@ export default function TransactionCreate() {
                                     <Input
                                         id="title"
                                         value={title}
-                                        onChange={(e) => setTitle(e.target.value)}
+                                        onChange={(e) =>
+                                            setTitle(e.target.value)
+                                        }
                                         placeholder="e.g., Grocery shopping"
                                         required
                                     />
@@ -335,7 +358,9 @@ export default function TransactionCreate() {
 
                                 {/* Transaction Date */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="transaction_date">Date *</Label>
+                                    <Label htmlFor="transaction_date">
+                                        Date *
+                                    </Label>
                                     <Input
                                         id="transaction_date"
                                         type="date"
@@ -361,9 +386,9 @@ export default function TransactionCreate() {
                                             </Label>
                                             <Select
                                                 value={paymentMethod}
-                                                onValueChange={(value: 'account' | 'card') =>
-                                                    setPaymentMethod(value)
-                                                }
+                                                onValueChange={(
+                                                    value: 'account' | 'card',
+                                                ) => setPaymentMethod(value)}
                                             >
                                                 <SelectTrigger>
                                                     <SelectValue />
@@ -386,20 +411,28 @@ export default function TransactionCreate() {
                                                 </Label>
                                                 <Select
                                                     value={fromAccountId}
-                                                    onValueChange={setFromAccountId}
+                                                    onValueChange={
+                                                        setFromAccountId
+                                                    }
                                                 >
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select account" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {accounts.map((account) => (
-                                                            <SelectItem
-                                                                key={account.id}
-                                                                value={account.id.toString()}
-                                                            >
-                                                                {account.name}
-                                                            </SelectItem>
-                                                        ))}
+                                                        {accounts.map(
+                                                            (account) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        account.id
+                                                                    }
+                                                                    value={account.id.toString()}
+                                                                >
+                                                                    {
+                                                                        account.name
+                                                                    }
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
                                                     </SelectContent>
                                                 </Select>
                                                 {errors.from_account_id && (
@@ -415,7 +448,9 @@ export default function TransactionCreate() {
                                                 </Label>
                                                 <Select
                                                     value={fromCardId}
-                                                    onValueChange={setFromCardId}
+                                                    onValueChange={
+                                                        setFromCardId
+                                                    }
                                                 >
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select card" />
@@ -426,7 +461,9 @@ export default function TransactionCreate() {
                                                                 key={card.id}
                                                                 value={card.id.toString()}
                                                             >
-                                                                {card.card_holder_name}
+                                                                {
+                                                                    card.card_holder_name
+                                                                }
                                                                 {card.card_number
                                                                     ? ` - •••• ${card.card_number.slice(-4)}`
                                                                     : ''}
@@ -443,67 +480,51 @@ export default function TransactionCreate() {
                                         )}
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="category">Category</Label>
-                                            <Select
+                                            <Label htmlFor="category">
+                                                Category
+                                            </Label>
+                                            <CategorySelect
                                                 value={categoryId}
                                                 onValueChange={setCategoryId}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select category" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {filteredCategories.map(
-                                                        (category) => (
-                                                            <SelectItem
-                                                                key={category.id}
-                                                                value={category.id.toString()}
-                                                            >
-                                                                {category.parent && '└ '}
-                                                                {category.name}
-                                                            </SelectItem>
-                                                        ),
-                                                    )}
-                                                </SelectContent>
-                                            </Select>
-                                            {errors.category_id && (
-                                                <p className="text-sm text-red-500">
-                                                    {errors.category_id}
-                                                </p>
-                                            )}
+                                                categories={categories}
+                                                type={
+                                                    type === 'income'
+                                                        ? 'income'
+                                                        : 'expense'
+                                                }
+                                                error={errors.category_id}
+                                                onCategoryCreated={
+                                                    handleCategoryCreated
+                                                }
+                                            />
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="merchant">Merchant</Label>
-                                            <Select
+                                            <Label htmlFor="merchant">
+                                                Merchant
+                                            </Label>
+                                            <MerchantSelect
                                                 value={merchantId}
                                                 onValueChange={setMerchantId}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select merchant" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {merchants.map((merchant) => (
-                                                        <SelectItem
-                                                            key={merchant.id}
-                                                            value={merchant.id.toString()}
-                                                        >
-                                                            {merchant.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            {errors.merchant_id && (
-                                                <p className="text-sm text-red-500">
-                                                    {errors.merchant_id}
-                                                </p>
-                                            )}
+                                                merchants={merchants}
+                                                error={errors.merchant_id}
+                                                onMerchantCreated={
+                                                    handleMerchantCreated
+                                                }
+                                            />
                                         </div>
 
                                         {/* Budget Indicator */}
                                         <div className="md:col-span-2">
                                             <BudgetIndicator
-                                                categoryId={categoryId ? parseInt(categoryId) : null}
-                                                transactionAmount={parseFloat(amount) || 0}
+                                                categoryId={
+                                                    categoryId
+                                                        ? parseInt(categoryId)
+                                                        : null
+                                                }
+                                                transactionAmount={
+                                                    parseFloat(amount) || 0
+                                                }
                                                 transactionType={type}
                                                 currency={currency}
                                             />
@@ -519,9 +540,9 @@ export default function TransactionCreate() {
                                             </Label>
                                             <Select
                                                 value={paymentMethod}
-                                                onValueChange={(value: 'account' | 'card') =>
-                                                    setPaymentMethod(value)
-                                                }
+                                                onValueChange={(
+                                                    value: 'account' | 'card',
+                                                ) => setPaymentMethod(value)}
                                             >
                                                 <SelectTrigger>
                                                     <SelectValue />
@@ -544,20 +565,28 @@ export default function TransactionCreate() {
                                                 </Label>
                                                 <Select
                                                     value={toAccountId}
-                                                    onValueChange={setToAccountId}
+                                                    onValueChange={
+                                                        setToAccountId
+                                                    }
                                                 >
                                                     <SelectTrigger>
                                                         <SelectValue placeholder="Select account" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {accounts.map((account) => (
-                                                            <SelectItem
-                                                                key={account.id}
-                                                                value={account.id.toString()}
-                                                            >
-                                                                {account.name}
-                                                            </SelectItem>
-                                                        ))}
+                                                        {accounts.map(
+                                                            (account) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        account.id
+                                                                    }
+                                                                    value={account.id.toString()}
+                                                                >
+                                                                    {
+                                                                        account.name
+                                                                    }
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
                                                     </SelectContent>
                                                 </Select>
                                                 {errors.to_account_id && (
@@ -584,7 +613,9 @@ export default function TransactionCreate() {
                                                                 key={card.id}
                                                                 value={card.id.toString()}
                                                             >
-                                                                {card.card_holder_name}
+                                                                {
+                                                                    card.card_holder_name
+                                                                }
                                                                 {card.card_number
                                                                     ? ` - •••• ${card.card_number.slice(-4)}`
                                                                     : ''}
@@ -601,60 +632,38 @@ export default function TransactionCreate() {
                                         )}
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="category">Category</Label>
-                                            <Select
+                                            <Label htmlFor="category">
+                                                Category
+                                            </Label>
+                                            <CategorySelect
                                                 value={categoryId}
                                                 onValueChange={setCategoryId}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select category" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {filteredCategories.map(
-                                                        (category) => (
-                                                            <SelectItem
-                                                                key={category.id}
-                                                                value={category.id.toString()}
-                                                            >
-                                                                {category.parent && '└ '}
-                                                                {category.name}
-                                                            </SelectItem>
-                                                        ),
-                                                    )}
-                                                </SelectContent>
-                                            </Select>
-                                            {errors.category_id && (
-                                                <p className="text-sm text-red-500">
-                                                    {errors.category_id}
-                                                </p>
-                                            )}
+                                                categories={categories}
+                                                type={
+                                                    type === 'income'
+                                                        ? 'income'
+                                                        : 'expense'
+                                                }
+                                                error={errors.category_id}
+                                                onCategoryCreated={
+                                                    handleCategoryCreated
+                                                }
+                                            />
                                         </div>
 
                                         <div className="space-y-2">
-                                            <Label htmlFor="merchant">Merchant</Label>
-                                            <Select
+                                            <Label htmlFor="merchant">
+                                                Merchant
+                                            </Label>
+                                            <MerchantSelect
                                                 value={merchantId}
                                                 onValueChange={setMerchantId}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select merchant" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {merchants.map((merchant) => (
-                                                        <SelectItem
-                                                            key={merchant.id}
-                                                            value={merchant.id.toString()}
-                                                        >
-                                                            {merchant.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            {errors.merchant_id && (
-                                                <p className="text-sm text-red-500">
-                                                    {errors.merchant_id}
-                                                </p>
-                                            )}
+                                                merchants={merchants}
+                                                error={errors.merchant_id}
+                                                onMerchantCreated={
+                                                    handleMerchantCreated
+                                                }
+                                            />
                                         </div>
                                     </>
                                 )}
@@ -775,7 +784,9 @@ export default function TransactionCreate() {
                                                             key={card.id}
                                                             value={card.id.toString()}
                                                         >
-                                                            {card.card_holder_name}
+                                                            {
+                                                                card.card_holder_name
+                                                            }
                                                             {card.card_number
                                                                 ? ` - ${card.card_number.replace(/(\d{4})/g, '$1 ').trim()}`
                                                                 : ''}
@@ -801,7 +812,9 @@ export default function TransactionCreate() {
                                 <Textarea
                                     id="description"
                                     value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
+                                    onChange={(e) =>
+                                        setDescription(e.target.value)
+                                    }
                                     placeholder="Add additional details..."
                                     rows={3}
                                 />
@@ -824,7 +837,9 @@ export default function TransactionCreate() {
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? 'Creating...' : 'Create Transaction'}
+                            {isSubmitting
+                                ? 'Creating...'
+                                : 'Create Transaction'}
                         </Button>
                     </div>
                 </form>
