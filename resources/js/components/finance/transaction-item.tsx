@@ -1,4 +1,5 @@
 import { AccountBadge } from '@/components/finance/account-badge';
+import { CardBadge } from '@/components/finance/card-badge';
 import { CategoryBadge } from '@/components/finance/category-badge';
 import { MerchantBadge } from '@/components/finance/merchant-badge';
 import { TransactionTypeBadge } from '@/components/finance/transaction-type-badge';
@@ -14,10 +15,16 @@ interface TransactionItemProps {
     onDelete?: (transaction: Transaction) => void;
 }
 
-export function TransactionItem({ transaction, onClick, onEdit, onDelete }: TransactionItemProps) {
+export function TransactionItem({
+    transaction,
+    onClick,
+    onEdit,
+    onDelete,
+}: TransactionItemProps) {
     const isIncome = transaction.type === 'income';
     const isExpense = transaction.type === 'expense';
     const isTransfer = transaction.type === 'transfer';
+    const isCardPayment = transaction.type === 'card_payment';
 
     return (
         <div
@@ -45,7 +52,7 @@ export function TransactionItem({ transaction, onClick, onEdit, onDelete }: Tran
                 </div>
 
                 {transaction.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-1">
+                    <p className="line-clamp-1 text-sm text-muted-foreground">
                         {transaction.description}
                     </p>
                 )}
@@ -59,28 +66,65 @@ export function TransactionItem({ transaction, onClick, onEdit, onDelete }: Tran
                     )}
 
                     {/* Show accounts/cards involved */}
-                    {isTransfer && transaction.from_account && transaction.to_account && (
-                        <div className="flex items-center gap-1">
-                            <AccountBadge account={transaction.from_account} />
-                            <ArrowRight className="h-3 w-3" />
-                            <AccountBadge account={transaction.to_account} />
-                        </div>
+                    {isTransfer &&
+                        transaction.from_account &&
+                        transaction.to_account && (
+                            <div className="flex items-center gap-1">
+                                <AccountBadge
+                                    account={transaction.from_account}
+                                />
+                                <ArrowRight className="h-3 w-3" />
+                                <AccountBadge
+                                    account={transaction.to_account}
+                                />
+                            </div>
+                        )}
+
+                    {isCardPayment &&
+                        transaction.from_account &&
+                        transaction.to_card && (
+                            <div className="flex items-center gap-1">
+                                <AccountBadge
+                                    account={transaction.from_account}
+                                />
+                                <ArrowRight className="h-3 w-3" />
+                                <CardBadge card={transaction.to_card} />
+                            </div>
+                        )}
+
+                    {isExpense && (
+                        <>
+                            {transaction.from_account && (
+                                <AccountBadge
+                                    account={transaction.from_account}
+                                />
+                            )}
+                            {transaction.from_card && (
+                                <CardBadge card={transaction.from_card} />
+                            )}
+                        </>
                     )}
 
-                    {isExpense && transaction.from_account && (
-                        <AccountBadge account={transaction.from_account} />
+                    {isIncome && (
+                        <>
+                            {transaction.to_account && (
+                                <AccountBadge
+                                    account={transaction.to_account}
+                                />
+                            )}
+                            {transaction.to_card && (
+                                <CardBadge card={transaction.to_card} />
+                            )}
+                        </>
                     )}
 
-                    {isIncome && transaction.to_account && (
-                        <AccountBadge account={transaction.to_account} />
-                    )}
-
-                    {transaction.attachments_count && transaction.attachments_count > 0 && (
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <FileText className="h-3 w-3" />
-                            {transaction.attachments_count}
-                        </span>
-                    )}
+                    {transaction.attachments_count &&
+                        transaction.attachments_count > 0 && (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <FileText className="h-3 w-3" />
+                                {transaction.attachments_count}
+                            </span>
+                        )}
                 </div>
             </div>
 

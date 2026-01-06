@@ -8,6 +8,7 @@ import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
+import { Sliders } from 'lucide-react';
 import { type PropsWithChildren } from 'react';
 
 const sidebarNavItems: NavItem[] = [
@@ -15,6 +16,11 @@ const sidebarNavItems: NavItem[] = [
         title: 'Profile',
         href: edit(),
         icon: null,
+    },
+    {
+        title: 'Preferences',
+        href: { url: '/settings/preferences', method: 'get' },
+        icon: Sliders,
     },
     {
         title: 'Password',

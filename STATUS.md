@@ -8,112 +8,66 @@
 - ✅ 36 API endpoints (fully tested)
 - ✅ Authentication with Sanctum
 - ✅ Authorization policies
-- ✅ **56 tests passing** (including 15 API tests)
+- ✅ **62 tests passing** (including 21 API tests)
 
-### Frontend Components (80%)
+### Frontend Components (90%)
 - ✅ TypeScript types for all models
 - ✅ Utility functions (currency, dates)
 - ✅ AmountInput component
 - ✅ CreditCardVisual (3D flip card)
-- ✅ Transaction display components
+- ✅ Transaction display components (List, Item, Badges)
 - ✅ Stats cards for dashboard
-- ✅ Badge components (Account, Category, Merchant, Type)
+- ✅ Badge components (Account, Card, Category, Merchant, Type)
 - ✅ 3D CSS utilities
+- ✅ Card payment dialog
 
-### Pages (30%)
-- ✅ **Dashboard** - Working with real API data
-  - Shows total balance across accounts
-  - Recent income/expenses
-  - Account list with click-through
-  - Recent transactions
-  - Quick actions
+### Pages (80%)
+- ✅ **Dashboard** - Overview, stats, charts, quick actions
+- ✅ **Journal** - Transaction list with filters, search, pagination
+- ✅ **Accounts** - List, Create, Edit, View (CRUD complete)
+- ✅ **Cards** - List, Create, Edit, View (CRUD complete)
+- ✅ **Transaction Creation** - Full page form with dynamic fields
+- ✅ **Card Details** - View with payment functionality
 
 ### Routing
-- ✅ Cleaned up default Laravel pages
-- ✅ Home redirects to dashboard
-- ✅ Routes configured for:
-  - `/dashboard` - Dashboard (WORKING)
-  - `/journal` - Transactions list
-  - `/accounts` - Account management
-  - `/accounts/create` - New account
-  - `/accounts/:id` - View account
-  - `/accounts/:id/edit` - Edit account
-  - `/cards` - Card management
+- ✅ Dashboard (`/dashboard`)
+- ✅ Journal (`/journal`, `/journal/create`, `/journal/:id/edit`)
+- ✅ Accounts (`/accounts`, `/accounts/create`, `/accounts/:id`, `/accounts/:id/edit`)
+- ✅ Cards (`/cards`, `/cards/create`, `/cards/:id`, `/cards/:id/edit`)
 
 ## 🚧 TODO - Next Steps
 
-### Critical for MVP (Remaining ~12-15 hours)
+### 1. User Preferences & Settings (Priority)
+- Create `/resources/js/pages/settings/preferences.tsx`
+- Manage default currency
+- Manage default payment methods
+- Theme switcher (Light/Dark/System)
+- Update navigation to include settings
 
-**1. Journal Page** (3-4 hours)
-Create `/resources/js/pages/journal/index.tsx`:
-- Transaction list with pagination
-- Filters (type, date range, category, merchant)
-- Search functionality
-- "New Transaction" button → modal
+### 2. Categories & Merchants Management
+- Category management page (tree view)
+- Merchant management page
+- CRUD operations for both
 
-**2. Accounts CRUD** (4-5 hours)
-- `/resources/js/pages/accounts/index.tsx` - List page
-- `/resources/js/pages/accounts/create.tsx` - Create form
-- `/resources/js/pages/accounts/[id]/view.tsx` - Detail page
-- `/resources/js/pages/accounts/[id]/edit.tsx` - Edit form
-
-**3. Transaction Modal** (2-3 hours)
-- Create/edit transaction form
-- Type selection (income/expense/transfer)
-- Account/card selection
-- Category selection
-- Merchant selection
-- Amount input
-- Date picker
-- Submit → API
-
-**4. Navigation Update** (1 hour)
-Update sidebar in `/resources/js/layouts/app-sidebar-layout.tsx`:
-- Add Dashboard link
-- Add Journal link
-- Add Accounts link
-- Add Cards link
-
-## 🎯 How to Continue
-
-### Option A: Build Remaining Pages Now
-I can continue building:
-1. Journal page (transaction list with filters)
-2. Complete Accounts CRUD
-3. Transaction creation modal
-
-This will give you a **fully functional MVP** for managing accounts and transactions.
-
-### Option B: Test What's Built
-You can test the Dashboard now:
-1. Run `npm run dev` and `php artisan serve`
-2. Login at `/login`
-3. Visit `/dashboard`
-4. See your seeded data (3 accounts, 4 transactions)
-
-### Option C: You Build From Here
-Use the components and patterns from Dashboard to build:
-- Journal page (similar to Dashboard's transaction list)
-- Accounts pages (follow CRUD pattern)
+### 3. Polish & Refinement
+- Add "Transaction Modal" for quick entry (optional, page exists)
+- Enhanced error handling
+- Loading states refinement
 
 ## 📊 Progress Metrics
 
 - **Backend**: 100% ✅
-- **Components**: 80% ✅
-- **Pages**: 30% (1/3 critical pages done)
-- **Overall MVP**: ~60% complete
+- **Components**: 90% ✅
+- **Pages**: 80% ✅
+- **Overall MVP**: ~90% complete
 
 ## 🚀 What Works Right Now
 
-Run the app and see:
-1. **Dashboard** with real data from API
-2. **Stats cards** showing balance, income, expenses
-3. **Account list** (clickable but target pages not built yet)
-4. **Transaction list** with proper formatting
-5. **Quick actions** buttons (navigate but pages not built)
+1. **Full Financial Tracking**: Create accounts, cards, and record income/expenses.
+2. **Dashboard**: Real-time overview of your financial health.
+3. **Card Management**: Track credit card limits, payments, and details.
+4. **Journal**: Filterable history of all transactions.
 
 ## Next Immediate Task
 
-**Build the Journal page** - It's the most important page after Dashboard. It will show all transactions with filtering and be the entry point for creating new transactions.
-
-Would you like me to continue building the Journal and Accounts pages now?
+**Build the Preferences Page** - Allow users to customize their experience (default currency, theme, etc.).
