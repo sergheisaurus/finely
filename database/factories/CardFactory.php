@@ -21,7 +21,7 @@ class CardFactory extends Factory
             'bank_account_id' => $type === 'debit' ? BankAccount::factory() : null,
             'type' => $type,
             'card_holder_name' => fake()->name(),
-            'last_four_digits' => fake()->numerify('####'),
+            'card_number' => fake()->numerify('################'),
             'card_network' => fake()->randomElement(['visa', 'mastercard', 'amex']),
             'expiry_month' => fake()->numberBetween(1, 12),
             'expiry_year' => $expiryYear,

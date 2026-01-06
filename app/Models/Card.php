@@ -74,6 +74,11 @@ class Card extends Model
         return $this->type === 'debit';
     }
 
+    public function getLastFourDigitsAttribute(): string
+    {
+        return substr($this->card_number, -4);
+    }
+
     public function getAvailableCreditAttribute(): ?float
     {
         if (! $this->isCredit() || $this->credit_limit === null) {

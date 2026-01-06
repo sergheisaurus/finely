@@ -14,6 +14,7 @@ class CardResource extends JsonResource
             'bank_account_id' => $this->bank_account_id,
             'type' => $this->type,
             'card_holder_name' => $this->card_holder_name,
+            'card_number' => $this->card_number,
             'last_four_digits' => $this->last_four_digits,
             'card_network' => $this->card_network,
             'expiry_month' => $this->expiry_month,
