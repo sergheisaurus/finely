@@ -26,6 +26,10 @@ class CardController extends Controller
             $query->where('type', $request->type);
         }
 
+        if ($request->has('bank_account_id')) {
+            $query->where('bank_account_id', $request->bank_account_id);
+        }
+
         $cards = $query->orderBy('is_default', 'desc')
             ->orderBy('type')
             ->orderBy('card_holder_name')

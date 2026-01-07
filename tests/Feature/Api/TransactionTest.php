@@ -29,6 +29,29 @@ test('user can list their transactions', function () {
         ->assertJsonCount(3, 'data');
 });
 
+test('user can filter transactions by account', function () {
+    $account2 = BankAccount::factory()->create(['user_id' => $this->user->id]);
+
+    Transaction::factory()->create([
+        'user_id' => $this->user->id,
+        'from_account_id' => $this->account->id,
+        'title' => 'Account 1 Transaction',
+    ]);
+
+    Transaction::factory()->create([
+        'user_id' => $this->user->id,
+        'from_account_id' => $account2->id,
+        'title' => 'Account 2 Transaction',
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->getJson("/api/transactions?account_id={$this->account->id}");
+
+    $response->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.title', 'Account 1 Transaction');
+});
+
 test('user can create an expense transaction', function () {
     $response = $this->actingAs($this->user)
         ->postJson('/api/transactions', [

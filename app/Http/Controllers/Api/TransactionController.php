@@ -32,6 +32,22 @@ class TransactionController extends Controller
             $query->where('merchant_id', $request->merchant_id);
         }
 
+        if ($request->has('account_id')) {
+            $accountId = $request->account_id;
+            $query->where(function ($q) use ($accountId) {
+                $q->where('from_account_id', $accountId)
+                    ->orWhere('to_account_id', $accountId);
+            });
+        }
+
+        if ($request->has('card_id')) {
+            $cardId = $request->card_id;
+            $query->where(function ($q) use ($cardId) {
+                $q->where('from_card_id', $cardId)
+                    ->orWhere('to_card_id', $cardId);
+            });
+        }
+
         if ($request->has('from_date')) {
             $query->where('transaction_date', '>=', $request->from_date);
         }

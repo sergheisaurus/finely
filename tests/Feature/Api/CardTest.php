@@ -19,6 +19,32 @@ test('user can list their cards', function () {
         ->assertJsonCount(3, 'data');
 });
 
+test('user can filter cards by bank account', function () {
+    $account1 = BankAccount::factory()->create(['user_id' => $this->user->id]);
+    $account2 = BankAccount::factory()->create(['user_id' => $this->user->id]);
+
+    Card::factory()->create([
+        'user_id' => $this->user->id,
+        'bank_account_id' => $account1->id,
+        'type' => 'debit',
+        'card_holder_name' => 'Card 1',
+    ]);
+
+    Card::factory()->create([
+        'user_id' => $this->user->id,
+        'bank_account_id' => $account2->id,
+        'type' => 'debit',
+        'card_holder_name' => 'Card 2',
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->getJson("/api/cards?bank_account_id={$account1->id}");
+
+    $response->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.card_holder_name', 'Card 1');
+});
+
 test('user can create a card', function () {
     $bankAccount = BankAccount::factory()->create(['user_id' => $this->user->id]);
 
