@@ -151,7 +151,9 @@ export function OverviewTab({ apiFilters }: OverviewTabProps) {
                 ]}
                 xAxisKey="period"
                 isLoading={isLoading}
-                valueFormatter={(value) => formatCurrency(value, 'CHF')}
+                valueFormatter={(value) =>
+                    formatCurrency(Number(value || 0), 'CHF')
+                }
             />
 
             {/* Top Categories and Merchants */}
@@ -163,7 +165,9 @@ export function OverviewTab({ apiFilters }: OverviewTabProps) {
                     dataKey="total"
                     nameKey="name"
                     isLoading={isLoading}
-                    valueFormatter={(value) => formatCurrency(value, 'CHF')}
+                    valueFormatter={(value) =>
+                        formatCurrency(Number(value || 0), 'CHF')
+                    }
                 />
 
                 <BarChartCard
@@ -175,7 +179,9 @@ export function OverviewTab({ apiFilters }: OverviewTabProps) {
                     ]}
                     xAxisKey="name"
                     isLoading={isLoading}
-                    valueFormatter={(value) => formatCurrency(value, 'CHF')}
+                    valueFormatter={(value) =>
+                        formatCurrency(Number(value || 0), 'CHF')
+                    }
                     height={300}
                 />
             </div>

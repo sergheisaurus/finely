@@ -101,7 +101,9 @@ export function SpendingTab({ apiFilters }: SpendingTabProps) {
                 dataKey="total"
                 nameKey="name"
                 isLoading={isLoading}
-                valueFormatter={(value) => formatCurrency(value, 'CHF')}
+                valueFormatter={(value) =>
+                    formatCurrency(Number(value || 0), 'CHF')
+                }
                 height={400}
             />
         </div>

@@ -44,6 +44,7 @@ export default function Preferences() {
 
     // Form state
     const [currency, setCurrency] = useState('CHF');
+    const [theme, setTheme] = useState('system');
     const [defaultAccountId, setDefaultAccountId] = useState<string>('none');
     const [defaultCardId, setDefaultCardId] = useState<string>('none');
 
@@ -63,6 +64,7 @@ export default function Preferences() {
                 // Set form defaults
                 const pref = prefRes.data.data;
                 setCurrency(pref.currency || 'CHF');
+                setTheme(pref.theme || 'system');
                 setDefaultAccountId(
                     pref.default_account_id?.toString() || 'none',
                 );
@@ -83,6 +85,7 @@ export default function Preferences() {
         try {
             const payload: Record<string, unknown> = {
                 currency,
+                theme,
                 default_account_id:
                     defaultAccountId === 'none'
                         ? null
@@ -164,6 +167,29 @@ export default function Preferences() {
                                 <p className="text-xs text-muted-foreground">
                                     This will be the default currency for new
                                     transactions.
+                                </p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="theme">Appearance</Label>
+                                <Select value={theme} onValueChange={setTheme}>
+                                    <SelectTrigger id="theme">
+                                        <SelectValue placeholder="Select theme" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="system">
+                                            System
+                                        </SelectItem>
+                                        <SelectItem value="light">
+                                            Light
+                                        </SelectItem>
+                                        <SelectItem value="dark">
+                                            Dark
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-xs text-muted-foreground">
+                                    Choose your preferred color theme.
                                 </p>
                             </div>
 

@@ -96,7 +96,9 @@ export function IncomeTab({ apiFilters }: IncomeTabProps) {
                 ]}
                 xAxisKey="period"
                 isLoading={isLoading}
-                valueFormatter={(value) => formatCurrency(value, 'CHF')}
+                valueFormatter={(value) =>
+                    formatCurrency(Number(value || 0), 'CHF')
+                }
             />
         </div>
     );
