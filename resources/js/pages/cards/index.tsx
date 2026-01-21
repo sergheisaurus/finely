@@ -39,7 +39,7 @@ export default function CardsIndex() {
 
     const handleSetDefault = async (cardId: number) => {
         try {
-            const card = userCards.find(c => c.id === cardId);
+            const card = userCards.find((c) => c.id === cardId);
             await api.post(`/cards/${cardId}/set-default`);
             await fetchCards();
             toast.success('Default card updated!', {
@@ -57,9 +57,9 @@ export default function CardsIndex() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Cards" />
             <div className="space-y-6 p-4 md:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up">
+                <div className="animate-fade-in-up flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold md:text-3xl bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">
+                        <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold text-transparent md:text-3xl dark:from-white dark:to-slate-400">
                             Cards
                         </h1>
                         <p className="text-muted-foreground">
@@ -68,7 +68,7 @@ export default function CardsIndex() {
                     </div>
                     <Button
                         onClick={() => router.visit('/cards/create')}
-                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg shadow-purple-500/25 transition-all hover:shadow-xl hover:shadow-purple-500/30"
+                        className="bg-gradient-to-r from-purple-500 to-pink-500 shadow-lg shadow-purple-500/25 transition-all hover:from-purple-600 hover:to-pink-600 hover:shadow-xl hover:shadow-purple-500/30"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         Add Card
@@ -76,7 +76,7 @@ export default function CardsIndex() {
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <Card className="animate-fade-in-up stagger-1 opacity-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-1 hover-lift bg-gradient-to-br from-blue-500 to-blue-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -87,12 +87,12 @@ export default function CardsIndex() {
                                         {userCards.length}
                                     </p>
                                 </div>
-                                <CreditCard className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <CreditCard className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-2 opacity-0 bg-gradient-to-br from-green-500 to-green-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-2 hover-lift bg-gradient-to-br from-green-500 to-green-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -103,12 +103,12 @@ export default function CardsIndex() {
                                         {debitCards.length}
                                     </p>
                                 </div>
-                                <CreditCard className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <CreditCard className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-3 opacity-0 bg-gradient-to-br from-purple-500 to-purple-600 text-white hover-lift sm:col-span-2 lg:col-span-1">
+                    <Card className="animate-fade-in-up stagger-3 hover-lift bg-gradient-to-br from-purple-500 to-purple-600 text-white opacity-0 sm:col-span-2 lg:col-span-1">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -119,14 +119,14 @@ export default function CardsIndex() {
                                         {creditCards.length}
                                     </p>
                                 </div>
-                                <CreditCard className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <CreditCard className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
                 {isLoading ? (
-                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 animate-fade-in-up stagger-4 opacity-0">
+                    <div className="animate-fade-in-up stagger-4 grid gap-6 opacity-0 sm:grid-cols-2 lg:grid-cols-3">
                         {[1, 2, 3].map((i) => (
                             <div
                                 key={i}
@@ -135,7 +135,7 @@ export default function CardsIndex() {
                         ))}
                     </div>
                 ) : userCards.length === 0 ? (
-                    <Card className="animate-fade-in-up stagger-4 opacity-0 overflow-hidden">
+                    <Card className="animate-fade-in-up stagger-4 overflow-hidden opacity-0">
                         <CardContent className="p-12 text-center">
                             <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50">
                                 <CreditCard className="h-10 w-10 text-purple-500" />
@@ -158,18 +158,15 @@ export default function CardsIndex() {
                 ) : (
                     <>
                         {creditCards.length > 0 && (
-                            <div className="space-y-4 animate-fade-in-up stagger-4 opacity-0">
+                            <div className="animate-fade-in-up stagger-4 space-y-4 opacity-0">
                                 <h2 className="text-xl font-bold md:text-2xl">
                                     Credit Cards
                                 </h2>
                                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                                     {creditCards.map((card) => (
-                                        <div
-                                            key={card.id}
-                                            className="relative"
-                                        >
+                                        <div key={card.id} className="relative">
                                             {card.is_default && (
-                                                <div className="absolute -right-2 -top-2 z-10 rounded-full bg-yellow-400 p-2">
+                                                <div className="absolute -top-2 -right-2 z-10 rounded-full bg-yellow-400 p-2">
                                                     <Star className="h-4 w-4 fill-white text-white" />
                                                 </div>
                                             )}
@@ -232,18 +229,15 @@ export default function CardsIndex() {
                         )}
 
                         {debitCards.length > 0 && (
-                            <div className="space-y-4 animate-fade-in-up stagger-5 opacity-0">
+                            <div className="animate-fade-in-up stagger-5 space-y-4 opacity-0">
                                 <h2 className="text-xl font-bold md:text-2xl">
                                     Debit Cards
                                 </h2>
                                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                                     {debitCards.map((card) => (
-                                        <div
-                                            key={card.id}
-                                            className="relative"
-                                        >
+                                        <div key={card.id} className="relative">
                                             {card.is_default && (
-                                                <div className="absolute -right-2 -top-2 z-10 rounded-full bg-yellow-400 p-2">
+                                                <div className="absolute -top-2 -right-2 z-10 rounded-full bg-yellow-400 p-2">
                                                     <Star className="h-4 w-4 fill-white text-white" />
                                                 </div>
                                             )}

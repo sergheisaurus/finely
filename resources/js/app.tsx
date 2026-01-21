@@ -1,6 +1,7 @@
 import '../css/app.css';
 
 import { Toaster } from '@/components/ui/sonner';
+import { AiChatProvider } from '@/context/ai-chat-context';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { StrictMode } from 'react';
@@ -21,8 +22,10 @@ createInertiaApp({
 
         root.render(
             <StrictMode>
-                <App {...props} />
-                <Toaster richColors position="top-right" />
+                <AiChatProvider>
+                    <App {...props} />
+                    <Toaster richColors position="top-right" />
+                </AiChatProvider>
             </StrictMode>,
         );
     },

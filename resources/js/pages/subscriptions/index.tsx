@@ -106,9 +106,9 @@ export default function SubscriptionsIndex() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Subscriptions" />
             <div className="space-y-6 p-4 md:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up">
+                <div className="animate-fade-in-up flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold md:text-3xl bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">
+                        <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold text-transparent md:text-3xl dark:from-white dark:to-slate-400">
                             Subscriptions
                         </h1>
                         <p className="text-muted-foreground">
@@ -117,7 +117,7 @@ export default function SubscriptionsIndex() {
                     </div>
                     <Button
                         onClick={() => router.visit('/subscriptions/create')}
-                        className="bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 shadow-lg shadow-violet-500/25 transition-all hover:shadow-xl hover:shadow-violet-500/30"
+                        className="bg-gradient-to-r from-violet-500 to-purple-500 shadow-lg shadow-violet-500/25 transition-all hover:from-violet-600 hover:to-purple-600 hover:shadow-xl hover:shadow-violet-500/30"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         Add Subscription
@@ -126,7 +126,7 @@ export default function SubscriptionsIndex() {
 
                 {/* Stats Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <Card className="animate-fade-in-up stagger-1 opacity-0 bg-gradient-to-br from-violet-500 to-purple-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-1 hover-lift bg-gradient-to-br from-violet-500 to-purple-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -137,12 +137,12 @@ export default function SubscriptionsIndex() {
                                         {stats?.active_count ?? 0}
                                     </p>
                                 </div>
-                                <CalendarClock className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <CalendarClock className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-2 opacity-0 bg-gradient-to-br from-blue-500 to-cyan-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-2 hover-lift bg-gradient-to-br from-blue-500 to-cyan-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -156,12 +156,12 @@ export default function SubscriptionsIndex() {
                                         )}
                                     </p>
                                 </div>
-                                <RefreshCw className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <RefreshCw className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-3 opacity-0 bg-gradient-to-br from-amber-500 to-orange-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-3 hover-lift bg-gradient-to-br from-amber-500 to-orange-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -175,12 +175,12 @@ export default function SubscriptionsIndex() {
                                         )}
                                     </p>
                                 </div>
-                                <CalendarClock className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <CalendarClock className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-4 opacity-0 bg-gradient-to-br from-red-500 to-rose-600 text-white hover-lift sm:col-span-2 lg:col-span-1">
+                    <Card className="animate-fade-in-up stagger-4 hover-lift bg-gradient-to-br from-red-500 to-rose-600 text-white opacity-0 sm:col-span-2 lg:col-span-1">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -191,14 +191,14 @@ export default function SubscriptionsIndex() {
                                         {stats?.upcoming_this_week ?? 0}
                                     </p>
                                 </div>
-                                <AlertCircle className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <AlertCircle className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
                 {isLoading ? (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-in-up stagger-5 opacity-0">
+                    <div className="animate-fade-in-up stagger-5 grid gap-4 opacity-0 sm:grid-cols-2 lg:grid-cols-3">
                         {[1, 2, 3, 4, 5, 6].map((i) => (
                             <div
                                 key={i}
@@ -207,7 +207,7 @@ export default function SubscriptionsIndex() {
                         ))}
                     </div>
                 ) : subscriptions.length === 0 ? (
-                    <Card className="animate-fade-in-up stagger-5 opacity-0 overflow-hidden">
+                    <Card className="animate-fade-in-up stagger-5 overflow-hidden opacity-0">
                         <CardContent className="p-12 text-center">
                             <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/50 dark:to-purple-900/50">
                                 <CalendarClock className="h-10 w-10 text-violet-500" />
@@ -232,7 +232,7 @@ export default function SubscriptionsIndex() {
                 ) : (
                     <>
                         {activeSubscriptions.length > 0 && (
-                            <div className="space-y-4 animate-fade-in-up stagger-5 opacity-0">
+                            <div className="animate-fade-in-up stagger-5 space-y-4 opacity-0">
                                 <h2 className="text-xl font-bold md:text-2xl">
                                     Active Subscriptions
                                 </h2>
@@ -250,8 +250,8 @@ export default function SubscriptionsIndex() {
                         )}
 
                         {pausedSubscriptions.length > 0 && (
-                            <div className="space-y-4 animate-fade-in-up stagger-6 opacity-0">
-                                <h2 className="text-xl font-bold md:text-2xl text-muted-foreground">
+                            <div className="animate-fade-in-up stagger-6 space-y-4 opacity-0">
+                                <h2 className="text-xl font-bold text-muted-foreground md:text-2xl">
                                     Paused Subscriptions
                                 </h2>
                                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -284,7 +284,7 @@ function SubscriptionCard({
 }) {
     return (
         <Card
-            className={`group transition-all duration-200 hover:shadow-md hover-lift overflow-hidden ${
+            className={`group hover-lift overflow-hidden transition-all duration-200 hover:shadow-md ${
                 !subscription.is_active ? 'opacity-60' : ''
             }`}
         >
@@ -305,7 +305,9 @@ function SubscriptionCard({
                             />
                         </div>
                         <div>
-                            <h3 className="font-semibold">{subscription.name}</h3>
+                            <h3 className="font-semibold">
+                                {subscription.name}
+                            </h3>
                             <p className="text-sm text-muted-foreground">
                                 {billingCycleLabels[subscription.billing_cycle]}
                             </p>
@@ -319,7 +321,12 @@ function SubscriptionCard({
                             )}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                            ~{formatCurrency(subscription.monthly_equivalent, subscription.currency)}/mo
+                            ~
+                            {formatCurrency(
+                                subscription.monthly_equivalent,
+                                subscription.currency,
+                            )}
+                            /mo
                         </p>
                     </div>
                 </div>
@@ -338,7 +345,10 @@ function SubscriptionCard({
                             </span>
                         ) : (
                             <span className="text-xs text-muted-foreground">
-                                Next: {new Date(subscription.next_billing_date).toLocaleDateString()}
+                                Next:{' '}
+                                {new Date(
+                                    subscription.next_billing_date,
+                                ).toLocaleDateString()}
                             </span>
                         )}
                     </div>
@@ -364,7 +374,9 @@ function SubscriptionCard({
                         variant="ghost"
                         size="sm"
                         onClick={() =>
-                            router.visit(`/subscriptions/${subscription.id}/edit`)
+                            router.visit(
+                                `/subscriptions/${subscription.id}/edit`,
+                            )
                         }
                     >
                         <Edit className="h-4 w-4" />

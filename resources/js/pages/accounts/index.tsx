@@ -47,7 +47,7 @@ export default function AccountsIndex() {
 
     const handleSetDefault = async (accountId: number) => {
         try {
-            const account = bankAccounts.find(acc => acc.id === accountId);
+            const account = bankAccounts.find((acc) => acc.id === accountId);
             await api.post(`/accounts/${accountId}/set-default`);
             await fetchAccounts();
             toast.success('Default account updated!', {
@@ -59,7 +59,7 @@ export default function AccountsIndex() {
     };
 
     const handleDelete = async (accountId: number) => {
-        const account = bankAccounts.find(acc => acc.id === accountId);
+        const account = bankAccounts.find((acc) => acc.id === accountId);
         if (!confirm(`Are you sure you want to delete ${account?.name}?`)) {
             return;
         }
@@ -85,9 +85,9 @@ export default function AccountsIndex() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Bank Accounts" />
             <div className="space-y-6 p-4 md:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up">
+                <div className="animate-fade-in-up flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold md:text-3xl bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">
+                        <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold text-transparent md:text-3xl dark:from-white dark:to-slate-400">
                             Bank Accounts
                         </h1>
                         <p className="text-muted-foreground">
@@ -96,7 +96,7 @@ export default function AccountsIndex() {
                     </div>
                     <Button
                         onClick={() => router.visit('/accounts/create')}
-                        className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 shadow-lg shadow-blue-500/25 transition-all hover:shadow-xl hover:shadow-blue-500/30"
+                        className="bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/25 transition-all hover:from-blue-600 hover:to-cyan-600 hover:shadow-xl hover:shadow-blue-500/30"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         Add Account
@@ -104,23 +104,23 @@ export default function AccountsIndex() {
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <Card className="animate-fade-in-up stagger-1 opacity-0 bg-gradient-to-br from-blue-500 to-blue-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-1 hover-lift bg-gradient-to-br from-blue-500 to-blue-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium opacity-90">
                                         Total Balance
                                     </p>
-                                    <p className="mt-2 text-2xl font-bold md:text-3xl tabular-nums">
+                                    <p className="mt-2 text-2xl font-bold tabular-nums md:text-3xl">
                                         {formatCurrency(totalBalance, currency)}
                                     </p>
                                 </div>
-                                <PiggyBank className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <PiggyBank className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-2 opacity-0 bg-gradient-to-br from-green-500 to-green-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-2 hover-lift bg-gradient-to-br from-green-500 to-green-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -131,12 +131,12 @@ export default function AccountsIndex() {
                                         {bankAccounts.length}
                                     </p>
                                 </div>
-                                <Building2 className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <Building2 className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-3 opacity-0 bg-gradient-to-br from-purple-500 to-purple-600 text-white hover-lift sm:col-span-2 lg:col-span-1">
+                    <Card className="animate-fade-in-up stagger-3 hover-lift bg-gradient-to-br from-purple-500 to-purple-600 text-white opacity-0 sm:col-span-2 lg:col-span-1">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -151,13 +151,13 @@ export default function AccountsIndex() {
                                         )}
                                     </p>
                                 </div>
-                                <CreditCard className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <CreditCard className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
-                <div className="space-y-4 animate-fade-in-up stagger-4 opacity-0">
+                <div className="animate-fade-in-up stagger-4 space-y-4 opacity-0">
                     {isLoading ? (
                         <div className="space-y-4">
                             {[1, 2, 3].map((i) => (
@@ -178,7 +178,8 @@ export default function AccountsIndex() {
                                     No accounts yet
                                 </h3>
                                 <p className="mt-2 text-sm text-muted-foreground">
-                                    Get started by creating your first bank account
+                                    Get started by creating your first bank
+                                    account
                                 </p>
                                 <Button
                                     className="mt-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
@@ -195,7 +196,7 @@ export default function AccountsIndex() {
                         bankAccounts.map((account, index) => (
                             <Card
                                 key={account.id}
-                                className="group cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-lg hover-lift"
+                                className="group hover-lift cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-lg"
                                 onClick={() =>
                                     router.visit(`/accounts/${account.id}`)
                                 }
@@ -205,16 +206,17 @@ export default function AccountsIndex() {
                                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                                         <div className="flex items-center gap-4">
                                             <div
-                                                className="flex h-12 w-12 md:h-16 md:w-16 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
+                                                className="flex h-12 w-12 items-center justify-center rounded-xl transition-transform group-hover:scale-110 md:h-16 md:w-16"
                                                 style={{
-                                                    backgroundColor: account.color,
+                                                    backgroundColor:
+                                                        account.color,
                                                 }}
                                             >
-                                                <Building2 className="h-6 w-6 md:h-8 md:w-8 text-white" />
+                                                <Building2 className="h-6 w-6 text-white md:h-8 md:w-8" />
                                             </div>
                                             <div>
                                                 <div className="flex items-center gap-2">
-                                                    <h3 className="text-lg md:text-xl font-bold">
+                                                    <h3 className="text-lg font-bold md:text-xl">
                                                         {account.name}
                                                     </h3>
                                                     {account.is_default && (
@@ -222,7 +224,8 @@ export default function AccountsIndex() {
                                                     )}
                                                 </div>
                                                 <p className="text-sm text-muted-foreground">
-                                                    {account.bank_name || 'No bank name'}
+                                                    {account.bank_name ||
+                                                        'No bank name'}
                                                 </p>
                                                 <div className="mt-2 flex flex-wrap items-center gap-2">
                                                     <AccountTypeBadge
@@ -230,9 +233,12 @@ export default function AccountsIndex() {
                                                     />
                                                     {account.cards_count !==
                                                         undefined &&
-                                                        account.cards_count > 0 && (
+                                                        account.cards_count >
+                                                            0 && (
                                                             <span className="rounded-full bg-muted px-2 py-1 text-xs">
-                                                                {account.cards_count}{' '}
+                                                                {
+                                                                    account.cards_count
+                                                                }{' '}
                                                                 card
                                                                 {account.cards_count !==
                                                                     1 && 's'}
@@ -247,7 +253,7 @@ export default function AccountsIndex() {
                                                 <p className="text-sm text-muted-foreground">
                                                     Balance
                                                 </p>
-                                                <p className="text-xl md:text-2xl font-bold tabular-nums">
+                                                <p className="text-xl font-bold tabular-nums md:text-2xl">
                                                     {formatCurrency(
                                                         account.balance,
                                                         account.currency,
@@ -289,7 +295,9 @@ export default function AccountsIndex() {
                                                     size="sm"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        handleDelete(account.id);
+                                                        handleDelete(
+                                                            account.id,
+                                                        );
                                                     }}
                                                 >
                                                     <Trash2 className="h-4 w-4 text-red-500" />

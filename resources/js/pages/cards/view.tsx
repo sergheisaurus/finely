@@ -1,7 +1,12 @@
 import { AmountInput } from '@/components/finance/amount-input';
 import { TransactionList } from '@/components/finance/transaction-list';
 import { Button } from '@/components/ui/button';
-import { Card as CardUI, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    CardContent,
+    CardHeader,
+    CardTitle,
+    Card as CardUI,
+} from '@/components/ui/card';
 import {
     Dialog,
     DialogContent,
@@ -24,7 +29,15 @@ import { formatCurrency } from '@/lib/format';
 import { type BreadcrumbItem } from '@/types';
 import type { BankAccount, Card, Transaction } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
-import { Banknote, Copy, CreditCard, Edit, Star, Trash2, Wallet } from 'lucide-react';
+import {
+    Banknote,
+    Copy,
+    CreditCard,
+    Edit,
+    Star,
+    Trash2,
+    Wallet,
+} from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -92,9 +105,11 @@ export default function CardView({ cardId }: CardViewProps) {
     }, []);
 
     useEffect(() => {
-        Promise.all([fetchCard(), fetchTransactions(), fetchAccounts()]).finally(() =>
-            setIsLoading(false),
-        );
+        Promise.all([
+            fetchCard(),
+            fetchTransactions(),
+            fetchAccounts(),
+        ]).finally(() => setIsLoading(false));
     }, [fetchCard, fetchTransactions, fetchAccounts]);
 
     const handleSetDefault = async () => {
@@ -267,7 +282,9 @@ Network: ${card.card_network}`;
                                 </div>
 
                                 <div className="mt-6">
-                                    <p className="text-sm opacity-75">Card Number</p>
+                                    <p className="text-sm opacity-75">
+                                        Card Number
+                                    </p>
                                     <p className="font-mono text-xl font-semibold tracking-wider">
                                         {formatCardNumber(card.card_number)}
                                     </p>
@@ -275,17 +292,22 @@ Network: ${card.card_network}`;
 
                                 <div className="mt-4 flex gap-8">
                                     <div>
-                                        <p className="text-xs opacity-75">Expires</p>
+                                        <p className="text-xs opacity-75">
+                                            Expires
+                                        </p>
                                         <p className="font-mono font-semibold">
                                             {String(card.expiry_month).padStart(
                                                 2,
                                                 '0',
                                             )}
-                                            /{String(card.expiry_year).slice(-2)}
+                                            /
+                                            {String(card.expiry_year).slice(-2)}
                                         </p>
                                     </div>
                                     <div>
-                                        <p className="text-xs opacity-75">Network</p>
+                                        <p className="text-xs opacity-75">
+                                            Network
+                                        </p>
                                         <p className="font-semibold uppercase">
                                             {card.card_network}
                                         </p>
@@ -448,7 +470,12 @@ Network: ${card.card_network}`;
                         <DialogTitle>Pay Credit Card Balance</DialogTitle>
                         <DialogDescription>
                             Make a payment toward your credit card balance of{' '}
-                            {card && formatCurrency(card.current_balance, card.currency)}.
+                            {card &&
+                                formatCurrency(
+                                    card.current_balance,
+                                    card.currency,
+                                )}
+                            .
                         </DialogDescription>
                     </DialogHeader>
 
@@ -458,7 +485,9 @@ Network: ${card.card_network}`;
                             <AmountInput
                                 name="pay-amount"
                                 value={parseFloat(payAmount) || 0}
-                                onChange={(value) => setPayAmount(value.toString())}
+                                onChange={(value) =>
+                                    setPayAmount(value.toString())
+                                }
                                 currency={card?.currency || 'CHF'}
                             />
                             {card && card.current_balance > 0 && (
@@ -468,7 +497,9 @@ Network: ${card.card_network}`;
                                     size="sm"
                                     className="h-auto p-0 text-xs"
                                     onClick={() =>
-                                        setPayAmount(card.current_balance.toFixed(2))
+                                        setPayAmount(
+                                            card.current_balance.toFixed(2),
+                                        )
                                     }
                                 >
                                     Pay full balance
@@ -477,7 +508,9 @@ Network: ${card.card_network}`;
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="pay-from-account">From Account</Label>
+                            <Label htmlFor="pay-from-account">
+                                From Account
+                            </Label>
                             <Select
                                 value={payFromAccount}
                                 onValueChange={setPayFromAccount}
@@ -491,7 +524,12 @@ Network: ${card.card_network}`;
                                             key={account.id}
                                             value={account.id.toString()}
                                         >
-                                            {account.name} ({formatCurrency(account.balance, account.currency)})
+                                            {account.name} (
+                                            {formatCurrency(
+                                                account.balance,
+                                                account.currency,
+                                            )}
+                                            )
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

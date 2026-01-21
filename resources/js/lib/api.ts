@@ -13,7 +13,9 @@ const api = axios.create({
 // Add CSRF token to all requests
 api.interceptors.request.use((config) => {
     // Get CSRF token from meta tag or cookie
-    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const token = document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute('content');
 
     if (token) {
         config.headers['X-CSRF-TOKEN'] = token;
@@ -39,7 +41,8 @@ api.interceptors.response.use(
                     break;
                 case 403:
                     toast.error('Access denied', {
-                        description: 'You do not have permission to perform this action.',
+                        description:
+                            'You do not have permission to perform this action.',
                     });
                     break;
                 case 404:
@@ -61,7 +64,8 @@ api.interceptors.response.use(
                     break;
                 case 500:
                     toast.error('Server error', {
-                        description: 'Something went wrong. Please try again later.',
+                        description:
+                            'Something went wrong. Please try again later.',
                     });
                     break;
                 default:
@@ -71,7 +75,8 @@ api.interceptors.response.use(
             }
         } else if (error.request) {
             toast.error('Network error', {
-                description: 'Unable to connect to the server. Please check your connection.',
+                description:
+                    'Unable to connect to the server. Please check your connection.',
             });
         } else {
             toast.error('Error', {
@@ -80,7 +85,7 @@ api.interceptors.response.use(
         }
 
         return Promise.reject(error);
-    }
+    },
 );
 
 export default api;

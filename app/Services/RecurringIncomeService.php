@@ -87,7 +87,7 @@ class RecurringIncomeService
                 'transaction_date' => $receivedDate,
                 'to_account_id' => $income->to_account_id,
                 'category_id' => $income->category_id,
-                'transactionable_type' => RecurringIncome::class,
+                'transactionable_type' => $income->getMorphClass(),
                 'transactionable_id' => $income->id,
             ]);
 

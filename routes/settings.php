@@ -27,6 +27,10 @@ Route::middleware('auth')->group(function () {
         return Inertia::render('settings/preferences');
     })->name('preferences.edit');
 
+    Route::get('settings/ai', function () {
+        return Inertia::render('settings/ai');
+    })->name('ai.edit');
+
     Route::get('settings/two-factor', [TwoFactorAuthenticationController::class, 'show'])
         ->name('two-factor.show');
 });

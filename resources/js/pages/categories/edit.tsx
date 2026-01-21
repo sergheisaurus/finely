@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
 import {
-    Card as CardUI,
     CardContent,
     CardHeader,
     CardTitle,
+    Card as CardUI,
 } from '@/components/ui/card';
 import { getIconByName, IconPicker } from '@/components/ui/icon-picker';
 import { Input } from '@/components/ui/input';
@@ -117,7 +117,9 @@ export default function CategoryEdit({ categoryId }: CategoryEditProps) {
 
             router.visit('/categories');
         } catch (error: unknown) {
-            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            const err = error as {
+                response?: { data?: { errors?: Record<string, string> } };
+            };
             if (err.response?.data?.errors) {
                 setErrors(err.response.data.errors);
             } else {
@@ -201,7 +203,9 @@ export default function CategoryEdit({ categoryId }: CategoryEditProps) {
                                     <Input
                                         id="name"
                                         value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={(e) =>
+                                            setName(e.target.value)
+                                        }
                                         placeholder="e.g., Groceries, Salary"
                                         required
                                         maxLength={255}
@@ -218,9 +222,9 @@ export default function CategoryEdit({ categoryId }: CategoryEditProps) {
                                     <Label htmlFor="type">Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: 'income' | 'expense') =>
-                                            setType(value)
-                                        }
+                                        onValueChange={(
+                                            value: 'income' | 'expense',
+                                        ) => setType(value)}
                                     >
                                         <SelectTrigger>
                                             <SelectValue />
@@ -328,7 +332,8 @@ export default function CategoryEdit({ categoryId }: CategoryEditProps) {
                                         >
                                             {icon ? (
                                                 (() => {
-                                                    const IconComponent = getIconByName(icon);
+                                                    const IconComponent =
+                                                        getIconByName(icon);
                                                     return IconComponent ? (
                                                         <IconComponent className="h-5 w-5 text-white" />
                                                     ) : (
@@ -371,9 +376,7 @@ export default function CategoryEdit({ categoryId }: CategoryEditProps) {
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting
-                                ? 'Updating...'
-                                : 'Update Category'}
+                            {isSubmitting ? 'Updating...' : 'Update Category'}
                         </Button>
                     </div>
                 </form>

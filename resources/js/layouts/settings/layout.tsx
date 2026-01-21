@@ -8,7 +8,7 @@ import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Sliders } from 'lucide-react';
+import { Bot, Sliders } from 'lucide-react';
 import { type PropsWithChildren } from 'react';
 
 const sidebarNavItems: NavItem[] = [
@@ -21,6 +21,11 @@ const sidebarNavItems: NavItem[] = [
         title: 'Preferences',
         href: { url: '/settings/preferences', method: 'get' },
         icon: Sliders,
+    },
+    {
+        title: 'AI Assistant',
+        href: { url: '/settings/ai', method: 'get' },
+        icon: Bot,
     },
     {
         title: 'Password',

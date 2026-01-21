@@ -10,7 +10,13 @@ import api from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import type { BankAccount, Budget, RecurringIncome, Subscription, Transaction } from '@/types/finance';
+import type {
+    BankAccount,
+    Budget,
+    RecurringIncome,
+    Subscription,
+    Transaction,
+} from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import {
     ArrowDownLeft,
@@ -36,7 +42,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Dashboard() {
     const [accounts, setAccounts] = useState<BankAccount[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [upcomingSubscriptions, setUpcomingSubscriptions] = useState<Subscription[]>([]);
+    const [upcomingSubscriptions, setUpcomingSubscriptions] = useState<
+        Subscription[]
+    >([]);
     const [upcomingIncome, setUpcomingIncome] = useState<RecurringIncome[]>([]);
     const [budgets, setBudgets] = useState<Budget[]>([]);
     const [budgetsAtRisk, setBudgetsAtRisk] = useState<Budget[]>([]);
@@ -73,7 +81,9 @@ export default function Dashboard() {
 
     const fetchUpcomingIncome = useCallback(async () => {
         try {
-            const response = await api.get('/recurring-incomes/upcoming?days=14');
+            const response = await api.get(
+                '/recurring-incomes/upcoming?days=14',
+            );
             setUpcomingIncome(response.data.data);
         } catch (error) {
             console.error('Failed to fetch income:', error);
@@ -111,7 +121,14 @@ export default function Dashboard() {
             setIsLoading(false);
         };
         loadData();
-    }, [fetchAccounts, fetchRecentTransactions, fetchUpcomingSubscriptions, fetchUpcomingIncome, fetchBudgets, fetchBudgetsAtRisk]);
+    }, [
+        fetchAccounts,
+        fetchRecentTransactions,
+        fetchUpcomingSubscriptions,
+        fetchUpcomingIncome,
+        fetchBudgets,
+        fetchBudgetsAtRisk,
+    ]);
 
     const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
     const currency = accounts[0]?.currency || 'CHF';
@@ -129,9 +146,9 @@ export default function Dashboard() {
             <Head title="Dashboard" />
             <div className="space-y-6 p-4 md:p-6">
                 {/* Header */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up">
+                <div className="animate-fade-in-up flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold md:text-3xl bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">
+                        <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold text-transparent md:text-3xl dark:from-white dark:to-slate-400">
                             Welcome back
                         </h1>
                         <p className="text-muted-foreground">
@@ -140,7 +157,7 @@ export default function Dashboard() {
                     </div>
                     <Button
                         onClick={() => router.visit('/journal/create')}
-                        className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30"
+                        className="bg-gradient-to-r from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/25 transition-all hover:from-emerald-600 hover:to-teal-600 hover:shadow-xl hover:shadow-emerald-500/30"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         New Transaction
@@ -149,7 +166,10 @@ export default function Dashboard() {
 
                 {/* Budget Alerts */}
                 {budgetsAtRisk.length > 0 && (
-                    <BudgetAlert budgets={budgetsAtRisk} className="animate-fade-in-up" />
+                    <BudgetAlert
+                        budgets={budgetsAtRisk}
+                        className="animate-fade-in-up"
+                    />
                 )}
 
                 {/* Stats Cards */}
@@ -201,8 +221,9 @@ export default function Dashboard() {
                 </div>
 
                 {/* Upcoming Payments */}
-                {(upcomingSubscriptions.length > 0 || upcomingIncome.length > 0) && (
-                    <div className="grid gap-6 lg:grid-cols-2 animate-fade-in-up stagger-5 opacity-0">
+                {(upcomingSubscriptions.length > 0 ||
+                    upcomingIncome.length > 0) && (
+                    <div className="animate-fade-in-up stagger-5 grid gap-6 opacity-0 lg:grid-cols-2">
                         {/* Upcoming Subscriptions */}
                         <Card className="overflow-hidden">
                             <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-900 dark:to-slate-800/50">
@@ -210,12 +231,16 @@ export default function Dashboard() {
                                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10">
                                         <CalendarClock className="h-4 w-4 text-red-500" />
                                     </div>
-                                    <CardTitle className="text-lg">Upcoming Subscriptions</CardTitle>
+                                    <CardTitle className="text-lg">
+                                        Upcoming Subscriptions
+                                    </CardTitle>
                                 </div>
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => router.visit('/subscriptions')}
+                                    onClick={() =>
+                                        router.visit('/subscriptions')
+                                    }
                                     className="text-muted-foreground hover:text-foreground"
                                 >
                                     View All
@@ -224,42 +249,62 @@ export default function Dashboard() {
                             </CardHeader>
                             <CardContent className="p-4">
                                 {upcomingSubscriptions.length === 0 ? (
-                                    <p className="text-center text-muted-foreground py-4">
+                                    <p className="py-4 text-center text-muted-foreground">
                                         No upcoming subscriptions
                                     </p>
                                 ) : (
                                     <div className="space-y-2">
-                                        {upcomingSubscriptions.slice(0, 4).map((sub) => (
-                                            <div
-                                                key={sub.id}
-                                                className="group flex cursor-pointer items-center justify-between rounded-xl border border-transparent p-3 transition-all duration-200 hover:border-border hover:bg-muted/50"
-                                                onClick={() => router.visit(`/subscriptions/${sub.id}`)}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div
-                                                        className="flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
-                                                        style={{ backgroundColor: sub.color || '#ef4444' }}
-                                                    >
-                                                        <DynamicIcon
-                                                            name={sub.icon}
-                                                            fallback={CreditCard}
-                                                            className="h-5 w-5 text-white"
-                                                        />
+                                        {upcomingSubscriptions
+                                            .slice(0, 4)
+                                            .map((sub) => (
+                                                <div
+                                                    key={sub.id}
+                                                    className="group flex cursor-pointer items-center justify-between rounded-xl border border-transparent p-3 transition-all duration-200 hover:border-border hover:bg-muted/50"
+                                                    onClick={() =>
+                                                        router.visit(
+                                                            `/subscriptions/${sub.id}`,
+                                                        )
+                                                    }
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div
+                                                            className="flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    sub.color ||
+                                                                    '#ef4444',
+                                                            }}
+                                                        >
+                                                            <DynamicIcon
+                                                                name={sub.icon}
+                                                                fallback={
+                                                                    CreditCard
+                                                                }
+                                                                className="h-5 w-5 text-white"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium">
+                                                                {sub.name}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {sub.next_billing_date
+                                                                    ? new Date(
+                                                                          sub.next_billing_date,
+                                                                      ).toLocaleDateString()
+                                                                    : 'N/A'}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="font-medium">{sub.name}</p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {sub.next_billing_date
-                                                                ? new Date(sub.next_billing_date).toLocaleDateString()
-                                                                : 'N/A'}
-                                                        </p>
-                                                    </div>
+                                                    <p className="font-semibold text-red-600 tabular-nums">
+                                                        -
+                                                        {formatCurrency(
+                                                            sub.amount,
+                                                            sub.currency,
+                                                        )}
+                                                    </p>
                                                 </div>
-                                                <p className="font-semibold text-red-600 tabular-nums">
-                                                    -{formatCurrency(sub.amount, sub.currency)}
-                                                </p>
-                                            </div>
-                                        ))}
+                                            ))}
                                     </div>
                                 )}
                             </CardContent>
@@ -272,7 +317,9 @@ export default function Dashboard() {
                                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10">
                                         <TrendingUp className="h-4 w-4 text-green-500" />
                                     </div>
-                                    <CardTitle className="text-lg">Expected Income</CardTitle>
+                                    <CardTitle className="text-lg">
+                                        Expected Income
+                                    </CardTitle>
                                 </div>
                                 <Button
                                     variant="ghost"
@@ -286,42 +333,62 @@ export default function Dashboard() {
                             </CardHeader>
                             <CardContent className="p-4">
                                 {upcomingIncome.length === 0 ? (
-                                    <p className="text-center text-muted-foreground py-4">
+                                    <p className="py-4 text-center text-muted-foreground">
                                         No expected income
                                     </p>
                                 ) : (
                                     <div className="space-y-2">
-                                        {upcomingIncome.slice(0, 4).map((inc) => (
-                                            <div
-                                                key={inc.id}
-                                                className="group flex cursor-pointer items-center justify-between rounded-xl border border-transparent p-3 transition-all duration-200 hover:border-border hover:bg-muted/50"
-                                                onClick={() => router.visit(`/income/${inc.id}`)}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div
-                                                        className="flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
-                                                        style={{ backgroundColor: inc.color || '#10b981' }}
-                                                    >
-                                                        <DynamicIcon
-                                                            name={inc.icon}
-                                                            fallback={TrendingUp}
-                                                            className="h-5 w-5 text-white"
-                                                        />
+                                        {upcomingIncome
+                                            .slice(0, 4)
+                                            .map((inc) => (
+                                                <div
+                                                    key={inc.id}
+                                                    className="group flex cursor-pointer items-center justify-between rounded-xl border border-transparent p-3 transition-all duration-200 hover:border-border hover:bg-muted/50"
+                                                    onClick={() =>
+                                                        router.visit(
+                                                            `/income/${inc.id}`,
+                                                        )
+                                                    }
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div
+                                                            className="flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    inc.color ||
+                                                                    '#10b981',
+                                                            }}
+                                                        >
+                                                            <DynamicIcon
+                                                                name={inc.icon}
+                                                                fallback={
+                                                                    TrendingUp
+                                                                }
+                                                                className="h-5 w-5 text-white"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium">
+                                                                {inc.name}
+                                                            </p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {inc.next_expected_date
+                                                                    ? new Date(
+                                                                          inc.next_expected_date,
+                                                                      ).toLocaleDateString()
+                                                                    : 'N/A'}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="font-medium">{inc.name}</p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {inc.next_expected_date
-                                                                ? new Date(inc.next_expected_date).toLocaleDateString()
-                                                                : 'N/A'}
-                                                        </p>
-                                                    </div>
+                                                    <p className="font-semibold text-green-600 tabular-nums">
+                                                        +
+                                                        {formatCurrency(
+                                                            inc.amount,
+                                                            inc.currency,
+                                                        )}
+                                                    </p>
                                                 </div>
-                                                <p className="font-semibold text-green-600 tabular-nums">
-                                                    +{formatCurrency(inc.amount, inc.currency)}
-                                                </p>
-                                            </div>
-                                        ))}
+                                            ))}
                                     </div>
                                 )}
                             </CardContent>
@@ -331,13 +398,15 @@ export default function Dashboard() {
 
                 {/* Budget Overview */}
                 {budgets.length > 0 && (
-                    <Card className="animate-fade-in-up stagger-5 opacity-0 overflow-hidden">
+                    <Card className="animate-fade-in-up stagger-5 overflow-hidden opacity-0">
                         <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-900 dark:to-slate-800/50">
                             <div className="flex items-center gap-2">
                                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10">
                                     <PiggyBank className="h-4 w-4 text-indigo-500" />
                                 </div>
-                                <CardTitle className="text-lg">Budget Overview</CardTitle>
+                                <CardTitle className="text-lg">
+                                    Budget Overview
+                                </CardTitle>
                             </div>
                             <Button
                                 variant="ghost"
@@ -355,7 +424,11 @@ export default function Dashboard() {
                                     <BudgetProgressCard
                                         key={budget.id}
                                         budget={budget}
-                                        onClick={() => router.visit(`/budgets/${budget.id}`)}
+                                        onClick={() =>
+                                            router.visit(
+                                                `/budgets/${budget.id}`,
+                                            )
+                                        }
                                     />
                                 ))}
                             </div>
@@ -366,13 +439,15 @@ export default function Dashboard() {
                 {/* Main Content */}
                 <div className="grid gap-6 lg:grid-cols-2">
                     {/* Bank Accounts */}
-                    <Card className="animate-fade-in-up stagger-6 opacity-0 overflow-hidden">
+                    <Card className="animate-fade-in-up stagger-6 overflow-hidden opacity-0">
                         <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-900 dark:to-slate-800/50">
                             <div className="flex items-center gap-2">
                                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
                                     <Wallet className="h-4 w-4 text-blue-500" />
                                 </div>
-                                <CardTitle className="text-lg">Bank Accounts</CardTitle>
+                                <CardTitle className="text-lg">
+                                    Bank Accounts
+                                </CardTitle>
                             </div>
                             <Button
                                 variant="ghost"
@@ -416,66 +491,72 @@ export default function Dashboard() {
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    {accounts.slice(0, 4).map((account, index) => (
-                                        <div
-                                            key={account.id}
-                                            className="group flex cursor-pointer items-center justify-between rounded-xl border border-transparent p-3 transition-all duration-200 hover:border-border hover:bg-muted/50 hover:shadow-sm"
-                                            onClick={() =>
-                                                router.visit(
-                                                    `/accounts/${account.id}`,
-                                                )
-                                            }
-                                            style={{
-                                                animationDelay: `${index * 0.1}s`,
-                                            }}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div
-                                                    className="flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
-                                                    style={{
-                                                        backgroundColor: account.color,
-                                                    }}
-                                                >
-                                                    <Wallet className="h-5 w-5 text-white" />
+                                    {accounts
+                                        .slice(0, 4)
+                                        .map((account, index) => (
+                                            <div
+                                                key={account.id}
+                                                className="group flex cursor-pointer items-center justify-between rounded-xl border border-transparent p-3 transition-all duration-200 hover:border-border hover:bg-muted/50 hover:shadow-sm"
+                                                onClick={() =>
+                                                    router.visit(
+                                                        `/accounts/${account.id}`,
+                                                    )
+                                                }
+                                                style={{
+                                                    animationDelay: `${index * 0.1}s`,
+                                                }}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div
+                                                        className="flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-110"
+                                                        style={{
+                                                            backgroundColor:
+                                                                account.color,
+                                                        }}
+                                                    >
+                                                        <Wallet className="h-5 w-5 text-white" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium">
+                                                            {account.name}
+                                                        </p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {account.bank_name ||
+                                                                account.type}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="font-medium">
-                                                        {account.name}
+                                                <div className="text-right">
+                                                    <p className="font-semibold tabular-nums">
+                                                        {formatCurrency(
+                                                            account.balance,
+                                                            account.currency,
+                                                        )}
                                                     </p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {account.bank_name || account.type}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="font-semibold tabular-nums">
-                                                    {formatCurrency(
-                                                        account.balance,
-                                                        account.currency,
+                                                    {account.is_default && (
+                                                        <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                                                            <Sparkles className="h-3 w-3" />
+                                                            Default
+                                                        </span>
                                                     )}
-                                                </p>
-                                                {account.is_default && (
-                                                    <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
-                                                        <Sparkles className="h-3 w-3" />
-                                                        Default
-                                                    </span>
-                                                )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))}
                                 </div>
                             )}
                         </CardContent>
                     </Card>
 
                     {/* Recent Transactions */}
-                    <Card className="animate-fade-in-up stagger-7 opacity-0 overflow-hidden">
+                    <Card className="animate-fade-in-up stagger-7 overflow-hidden opacity-0">
                         <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-900 dark:to-slate-800/50">
                             <div className="flex items-center gap-2">
                                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
                                     <TrendingUp className="h-4 w-4 text-emerald-500" />
                                 </div>
-                                <CardTitle className="text-lg">Recent Transactions</CardTitle>
+                                <CardTitle className="text-lg">
+                                    Recent Transactions
+                                </CardTitle>
                             </div>
                             <Button
                                 variant="ghost"
@@ -492,7 +573,9 @@ export default function Dashboard() {
                                 transactions={transactions}
                                 isLoading={isLoading}
                                 onTransactionClick={(transaction) =>
-                                    router.visit(`/journal/${transaction.id}/edit`)
+                                    router.visit(
+                                        `/journal/${transaction.id}/edit`,
+                                    )
                                 }
                             />
                         </CardContent>
@@ -500,7 +583,10 @@ export default function Dashboard() {
                 </div>
 
                 {/* Quick Actions */}
-                <Card className="animate-fade-in-up opacity-0" style={{ animationDelay: '0.8s' }}>
+                <Card
+                    className="animate-fade-in-up opacity-0"
+                    style={{ animationDelay: '0.8s' }}
+                >
                     <CardHeader className="pb-2">
                         <CardTitle className="text-lg">Quick Actions</CardTitle>
                     </CardHeader>

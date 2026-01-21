@@ -1,6 +1,11 @@
 import { AmountInput } from '@/components/finance/amount-input';
 import { Button } from '@/components/ui/button';
-import { Card as CardUI, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    CardContent,
+    CardHeader,
+    CardTitle,
+    Card as CardUI,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -129,7 +134,9 @@ export default function CardCreate() {
 
             router.visit(`/cards/${response.data.data.id}`);
         } catch (error: unknown) {
-            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            const err = error as {
+                response?: { data?: { errors?: Record<string, string> } };
+            };
             if (err.response?.data?.errors) {
                 setErrors(err.response.data.errors);
             } else {
@@ -174,13 +181,17 @@ export default function CardCreate() {
                                     <Label htmlFor="type">Card Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: 'debit' | 'credit') => setType(value)}
+                                        onValueChange={(
+                                            value: 'debit' | 'credit',
+                                        ) => setType(value)}
                                     >
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="debit">Debit</SelectItem>
+                                            <SelectItem value="debit">
+                                                Debit
+                                            </SelectItem>
                                             <SelectItem value="credit">
                                                 Credit
                                             </SelectItem>
@@ -253,7 +264,12 @@ export default function CardCreate() {
                                         id="card_number"
                                         value={cardNumber}
                                         onChange={(e) =>
-                                            setCardNumber(e.target.value.replace(/\s/g, ''))
+                                            setCardNumber(
+                                                e.target.value.replace(
+                                                    /\s/g,
+                                                    '',
+                                                ),
+                                            )
                                         }
                                         placeholder="1234567890123456"
                                         maxLength={19}
@@ -280,7 +296,9 @@ export default function CardCreate() {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="visa">Visa</SelectItem>
+                                            <SelectItem value="visa">
+                                                Visa
+                                            </SelectItem>
                                             <SelectItem value="mastercard">
                                                 Mastercard
                                             </SelectItem>
@@ -290,7 +308,9 @@ export default function CardCreate() {
                                             <SelectItem value="discover">
                                                 Discover
                                             </SelectItem>
-                                            <SelectItem value="other">Other</SelectItem>
+                                            <SelectItem value="other">
+                                                Other
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                     {errors.card_network && (
@@ -318,7 +338,9 @@ export default function CardCreate() {
                                                     key={month}
                                                     value={month.toString()}
                                                 >
-                                                    {month.toString().padStart(2, '0')}
+                                                    {month
+                                                        .toString()
+                                                        .padStart(2, '0')}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -332,7 +354,9 @@ export default function CardCreate() {
 
                                 {/* Expiry Year */}
                                 <div className="space-y-2">
-                                    <Label htmlFor="expiry_year">Expiry Year *</Label>
+                                    <Label htmlFor="expiry_year">
+                                        Expiry Year *
+                                    </Label>
                                     <Select
                                         value={expiryYear}
                                         onValueChange={setExpiryYear}
@@ -388,9 +412,13 @@ export default function CardCreate() {
                                         </Label>
                                         <AmountInput
                                             name="current_balance"
-                                            value={parseFloat(currentBalance) || 0}
+                                            value={
+                                                parseFloat(currentBalance) || 0
+                                            }
                                             onChange={(value) =>
-                                                setCurrentBalance(value.toString())
+                                                setCurrentBalance(
+                                                    value.toString(),
+                                                )
                                             }
                                             currency="CHF"
                                         />
@@ -413,16 +441,17 @@ export default function CardCreate() {
                                                 <SelectValue placeholder="Select day" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {Array.from({ length: 31 }, (_, i) => i + 1).map(
-                                                    (day) => (
-                                                        <SelectItem
-                                                            key={day}
-                                                            value={day.toString()}
-                                                        >
-                                                            {day}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
+                                                {Array.from(
+                                                    { length: 31 },
+                                                    (_, i) => i + 1,
+                                                ).map((day) => (
+                                                    <SelectItem
+                                                        key={day}
+                                                        value={day.toString()}
+                                                    >
+                                                        {day}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                         {errors.payment_due_day && (
@@ -444,16 +473,17 @@ export default function CardCreate() {
                                                 <SelectValue placeholder="Select day" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {Array.from({ length: 31 }, (_, i) => i + 1).map(
-                                                    (day) => (
-                                                        <SelectItem
-                                                            key={day}
-                                                            value={day.toString()}
-                                                        >
-                                                            {day}
-                                                        </SelectItem>
-                                                    ),
-                                                )}
+                                                {Array.from(
+                                                    { length: 31 },
+                                                    (_, i) => i + 1,
+                                                ).map((day) => (
+                                                    <SelectItem
+                                                        key={day}
+                                                        value={day.toString()}
+                                                    >
+                                                        {day}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                         {errors.billing_cycle_day && (
@@ -481,7 +511,9 @@ export default function CardCreate() {
                                                         ? '3px solid black'
                                                         : 'none',
                                             }}
-                                            onClick={() => setColor(colorOption)}
+                                            onClick={() =>
+                                                setColor(colorOption)
+                                            }
                                         />
                                     ))}
                                 </div>
@@ -493,10 +525,15 @@ export default function CardCreate() {
                                     type="checkbox"
                                     id="is_default"
                                     checked={isDefault}
-                                    onChange={(e) => setIsDefault(e.target.checked)}
+                                    onChange={(e) =>
+                                        setIsDefault(e.target.checked)
+                                    }
                                     className="h-4 w-4"
                                 />
-                                <Label htmlFor="is_default" className="cursor-pointer">
+                                <Label
+                                    htmlFor="is_default"
+                                    className="cursor-pointer"
+                                >
                                     Set as default card
                                 </Label>
                             </div>
@@ -520,12 +557,18 @@ export default function CardCreate() {
                                         <div>
                                             <div className="mb-2 text-lg tracking-wider">
                                                 {cardNumber
-                                                    ? cardNumber.replace(/(\d{4})/g, '$1 ').trim()
+                                                    ? cardNumber
+                                                          .replace(
+                                                              /(\d{4})/g,
+                                                              '$1 ',
+                                                          )
+                                                          .trim()
                                                     : '•••• •••• •••• ••••'}
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-sm uppercase">
-                                                    {cardHolderName || 'CARD HOLDER'}
+                                                    {cardHolderName ||
+                                                        'CARD HOLDER'}
                                                 </span>
                                                 <span className="text-sm">
                                                     {expiryMonth && expiryYear

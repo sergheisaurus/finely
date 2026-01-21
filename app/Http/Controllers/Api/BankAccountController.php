@@ -12,6 +12,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
+use App\Models\Transaction;
+use Illuminate\Support\Facades\DB;
+
 class BankAccountController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
@@ -29,13 +32,31 @@ class BankAccountController extends Controller
     public function store(StoreBankAccountRequest $request): BankAccountResource
     {
         $data = $request->validated();
-        $data['user_id'] = $request->user()->id;
+        $user = $request->user();
+        $data['user_id'] = $user->id;
 
-        if ($data['is_default'] ?? false) {
-            $request->user()->bankAccounts()->update(['is_default' => false]);
-        }
+        $account = DB::transaction(function () use ($request, $data, $user) {
+            if ($data['is_default'] ?? false) {
+                $user->bankAccounts()->update(['is_default' => false]);
+            }
 
-        $account = BankAccount::create($data);
+            $account = BankAccount::create($data);
+
+            if (($data['balance'] ?? 0) > 0) {
+                Transaction::create([
+                    'user_id' => $user->id,
+                    'type' => 'income',
+                    'amount' => $data['balance'],
+                    'currency' => $data['currency'] ?? 'CHF',
+                    'title' => 'Opening Balance',
+                    'description' => 'Initial account balance',
+                    'transaction_date' => now(),
+                    'to_account_id' => $account->id,
+                ]);
+            }
+
+            return $account;
+        });
 
         return new BankAccountResource($account);
     }

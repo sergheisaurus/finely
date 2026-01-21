@@ -69,7 +69,7 @@ class SubscriptionService
 
     public function processPayment(Subscription $subscription, ?Carbon $transactionDate = null): ?Transaction
     {
-        if (! $subscription->is_active || ! $subscription->auto_create_transaction) {
+        if (! $subscription->is_active) {
             return null;
         }
 
@@ -89,7 +89,7 @@ class SubscriptionService
                 'from_card_id' => $subscription->payment_method_type === 'card' ? $subscription->payment_method_id : null,
                 'category_id' => $subscription->category_id,
                 'merchant_id' => $subscription->merchant_id,
-                'transactionable_type' => Subscription::class,
+                'transactionable_type' => $subscription->getMorphClass(),
                 'transactionable_id' => $subscription->id,
             ]);
 

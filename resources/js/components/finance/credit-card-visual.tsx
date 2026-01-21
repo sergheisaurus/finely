@@ -62,12 +62,12 @@ Network: ${card.card_network}`;
             onClick={onClick}
         >
             <div
-                className={`relative h-52 w-full cursor-pointer transition-transform duration-500 preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`}
+                className={`preserve-3d relative h-52 w-full cursor-pointer transition-transform duration-500 ${isFlipped ? 'rotate-y-180' : ''}`}
                 onDoubleClick={() => setIsFlipped(!isFlipped)}
             >
                 {/* Front of card */}
                 <CardUI
-                    className="absolute inset-0 backface-hidden overflow-hidden border-none p-6 shadow-2xl"
+                    className="absolute inset-0 overflow-hidden border-none p-6 shadow-2xl backface-hidden"
                     style={{
                         background: `linear-gradient(135deg, ${card.color} 0%, ${adjustColorBrightness(card.color, -20)} 100%)`,
                         color: isLightColor(card.color) ? '#000' : '#fff',
@@ -99,7 +99,10 @@ Network: ${card.card_network}`;
                                     <Copy className="h-4 w-4" />
                                 </Button>
                                 {isPastDue && (
-                                    <Badge variant="destructive" className="text-xs">
+                                    <Badge
+                                        variant="destructive"
+                                        className="text-xs"
+                                    >
                                         Payment Due
                                     </Badge>
                                 )}
@@ -134,12 +137,12 @@ Network: ${card.card_network}`;
                                     Expires
                                 </p>
                                 <p className="font-mono text-sm font-semibold">
-                                    {String(card.expiry_month).padStart(2, '0')}/
-                                    {String(card.expiry_year).slice(-2)}
+                                    {String(card.expiry_month).padStart(2, '0')}
+                                    /{String(card.expiry_year).slice(-2)}
                                 </p>
                             </div>
                             <div className="text-right">
-                                <p className="text-xs font-bold uppercase tracking-wider">
+                                <p className="text-xs font-bold tracking-wider uppercase">
                                     {networkLogos[card.card_network] ||
                                         card.card_network}
                                 </p>
@@ -150,7 +153,7 @@ Network: ${card.card_network}`;
 
                 {/* Back of card */}
                 <CardUI
-                    className="absolute inset-0 rotate-y-180 backface-hidden overflow-hidden border-none shadow-2xl"
+                    className="absolute inset-0 rotate-y-180 overflow-hidden border-none shadow-2xl backface-hidden"
                     style={{
                         background: `linear-gradient(135deg, ${card.color} 0%, ${adjustColorBrightness(card.color, -20)} 100%)`,
                         color: isLightColor(card.color) ? '#000' : '#fff',
@@ -181,8 +184,8 @@ Network: ${card.card_network}`;
                                     {card.credit_limit && (
                                         <p className="text-xs opacity-75">
                                             Available: {card.currency}{' '}
-                                            {card.available_credit?.toFixed(2)} /{' '}
-                                            {card.credit_limit.toFixed(2)}
+                                            {card.available_credit?.toFixed(2)}{' '}
+                                            / {card.credit_limit.toFixed(2)}
                                         </p>
                                     )}
                                 </div>
@@ -196,7 +199,8 @@ Network: ${card.card_network}`;
             {showBalance && card.type === 'credit' && (
                 <div className="mt-2 text-center text-sm text-muted-foreground">
                     <p>
-                        Balance: {card.currency} {card.current_balance.toFixed(2)}
+                        Balance: {card.currency}{' '}
+                        {card.current_balance.toFixed(2)}
                     </p>
                     {card.credit_limit && (
                         <p className="text-xs">

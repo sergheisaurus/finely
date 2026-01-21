@@ -21,7 +21,12 @@ import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import { type BreadcrumbItem } from '@/types';
-import type { BankAccount, Card as CardType, Invoice, InvoiceStats } from '@/types/finance';
+import type {
+    BankAccount,
+    Card as CardType,
+    Invoice,
+    InvoiceStats,
+} from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -49,13 +54,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const statusColors: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
+    pending:
+        'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
     paid: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
     overdue: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
-    cancelled: 'bg-slate-100 text-slate-700 dark:bg-slate-900/50 dark:text-slate-300',
+    cancelled:
+        'bg-slate-100 text-slate-700 dark:bg-slate-900/50 dark:text-slate-300',
 };
 
-const statusIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+const statusIcons: Record<
+    string,
+    React.ComponentType<{ className?: string }>
+> = {
     pending: Clock,
     paid: Check,
     overdue: AlertCircle,
@@ -70,10 +80,14 @@ export default function InvoicesIndex() {
     // Payment dialog state
     const [isPayDialogOpen, setIsPayDialogOpen] = useState(false);
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-    const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+    const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(
+        null,
+    );
     const [accounts, setAccounts] = useState<BankAccount[]>([]);
     const [cards, setCards] = useState<CardType[]>([]);
-    const [paymentMethod, setPaymentMethod] = useState<'account' | 'card'>('account');
+    const [paymentMethod, setPaymentMethod] = useState<'account' | 'card'>(
+        'account',
+    );
     const [selectedAccountId, setSelectedAccountId] = useState<string>('');
     const [selectedCardId, setSelectedCardId] = useState<string>('');
 
@@ -92,18 +106,26 @@ export default function InvoicesIndex() {
             setCards(cardsRes.data.data || []);
 
             // Set default selection
-            const defaultAccount = (accountsRes.data.data || []).find((a: BankAccount) => a.is_default);
+            const defaultAccount = (accountsRes.data.data || []).find(
+                (a: BankAccount) => a.is_default,
+            );
             if (defaultAccount) {
                 setSelectedAccountId(defaultAccount.id.toString());
             } else if ((accountsRes.data.data || []).length > 0) {
-                setSelectedAccountId((accountsRes.data.data[0] as BankAccount).id.toString());
+                setSelectedAccountId(
+                    (accountsRes.data.data[0] as BankAccount).id.toString(),
+                );
             }
 
-            const defaultCard = (cardsRes.data.data || []).find((c: CardType) => c.is_default);
+            const defaultCard = (cardsRes.data.data || []).find(
+                (c: CardType) => c.is_default,
+            );
             if (defaultCard) {
                 setSelectedCardId(defaultCard.id.toString());
             } else if ((cardsRes.data.data || []).length > 0) {
-                setSelectedCardId((cardsRes.data.data[0] as CardType).id.toString());
+                setSelectedCardId(
+                    (cardsRes.data.data[0] as CardType).id.toString(),
+                );
             }
         } catch (error) {
             console.error('Failed to fetch payment methods:', error);
@@ -185,9 +207,9 @@ export default function InvoicesIndex() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Invoices" />
             <div className="space-y-6 p-4 md:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up">
+                <div className="animate-fade-in-up flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold md:text-3xl bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">
+                        <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold text-transparent md:text-3xl dark:from-white dark:to-slate-400">
                             Invoices
                         </h1>
                         <p className="text-muted-foreground">
@@ -196,7 +218,7 @@ export default function InvoicesIndex() {
                     </div>
                     <Button
                         onClick={() => router.visit('/invoices/create')}
-                        className="bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 shadow-lg shadow-violet-500/25 transition-all hover:shadow-xl hover:shadow-violet-500/30"
+                        className="bg-gradient-to-r from-violet-500 to-purple-500 shadow-lg shadow-violet-500/25 transition-all hover:from-violet-600 hover:to-purple-600 hover:shadow-xl hover:shadow-violet-500/30"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         Add Invoice
@@ -205,7 +227,7 @@ export default function InvoicesIndex() {
 
                 {/* Stats Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <Card className="animate-fade-in-up stagger-1 opacity-0 bg-gradient-to-br from-amber-500 to-orange-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-1 hover-lift bg-gradient-to-br from-amber-500 to-orange-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -213,18 +235,21 @@ export default function InvoicesIndex() {
                                         Pending
                                     </p>
                                     <p className="mt-2 text-2xl font-bold md:text-3xl">
-                                        {formatCurrency(stats?.pending_total ?? 0, 'CHF')}
+                                        {formatCurrency(
+                                            stats?.pending_total ?? 0,
+                                            'CHF',
+                                        )}
                                     </p>
                                     <p className="text-sm opacity-80">
                                         {stats?.pending_count ?? 0} invoices
                                     </p>
                                 </div>
-                                <Clock className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <Clock className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-2 opacity-0 bg-gradient-to-br from-red-500 to-rose-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-2 hover-lift bg-gradient-to-br from-red-500 to-rose-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -232,18 +257,21 @@ export default function InvoicesIndex() {
                                         Overdue
                                     </p>
                                     <p className="mt-2 text-2xl font-bold md:text-3xl">
-                                        {formatCurrency(stats?.overdue_total ?? 0, 'CHF')}
+                                        {formatCurrency(
+                                            stats?.overdue_total ?? 0,
+                                            'CHF',
+                                        )}
                                     </p>
                                     <p className="text-sm opacity-80">
                                         {stats?.overdue_count ?? 0} invoices
                                     </p>
                                 </div>
-                                <AlertCircle className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <AlertCircle className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-3 opacity-0 bg-gradient-to-br from-green-500 to-emerald-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-3 hover-lift bg-gradient-to-br from-green-500 to-emerald-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -257,12 +285,12 @@ export default function InvoicesIndex() {
                                         invoices
                                     </p>
                                 </div>
-                                <Check className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <Check className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-4 opacity-0 bg-gradient-to-br from-violet-500 to-purple-600 text-white hover-lift sm:col-span-2 lg:col-span-1">
+                    <Card className="animate-fade-in-up stagger-4 hover-lift bg-gradient-to-br from-violet-500 to-purple-600 text-white opacity-0 sm:col-span-2 lg:col-span-1">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -276,14 +304,14 @@ export default function InvoicesIndex() {
                                         invoices
                                     </p>
                                 </div>
-                                <RefreshCw className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <RefreshCw className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
                 {isLoading ? (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-in-up stagger-5 opacity-0">
+                    <div className="animate-fade-in-up stagger-5 grid gap-4 opacity-0 sm:grid-cols-2 lg:grid-cols-3">
                         {[1, 2, 3, 4, 5, 6].map((i) => (
                             <div
                                 key={i}
@@ -292,7 +320,7 @@ export default function InvoicesIndex() {
                         ))}
                     </div>
                 ) : invoices.length === 0 ? (
-                    <Card className="animate-fade-in-up stagger-5 opacity-0 overflow-hidden">
+                    <Card className="animate-fade-in-up stagger-5 overflow-hidden opacity-0">
                         <CardContent className="p-12 text-center">
                             <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/50 dark:to-purple-900/50">
                                 <FileText className="h-10 w-10 text-violet-500" />
@@ -315,8 +343,8 @@ export default function InvoicesIndex() {
                 ) : (
                     <>
                         {overdueInvoices.length > 0 && (
-                            <div className="space-y-4 animate-fade-in-up stagger-5 opacity-0">
-                                <h2 className="text-xl font-bold md:text-2xl text-red-600 dark:text-red-400">
+                            <div className="animate-fade-in-up stagger-5 space-y-4 opacity-0">
+                                <h2 className="text-xl font-bold text-red-600 md:text-2xl dark:text-red-400">
                                     Overdue
                                 </h2>
                                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -333,7 +361,7 @@ export default function InvoicesIndex() {
                         )}
 
                         {pendingInvoices.length > 0 && (
-                            <div className="space-y-4 animate-fade-in-up stagger-6 opacity-0">
+                            <div className="animate-fade-in-up stagger-6 space-y-4 opacity-0">
                                 <h2 className="text-xl font-bold md:text-2xl">
                                     Pending
                                 </h2>
@@ -351,8 +379,8 @@ export default function InvoicesIndex() {
                         )}
 
                         {paidInvoices.length > 0 && (
-                            <div className="space-y-4 animate-fade-in-up stagger-7 opacity-0">
-                                <h2 className="text-xl font-bold md:text-2xl text-muted-foreground">
+                            <div className="animate-fade-in-up stagger-7 space-y-4 opacity-0">
+                                <h2 className="text-xl font-bold text-muted-foreground md:text-2xl">
                                     Paid
                                 </h2>
                                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -377,20 +405,27 @@ export default function InvoicesIndex() {
                     <DialogHeader>
                         <DialogTitle>Mark Invoice as Paid</DialogTitle>
                         <DialogDescription>
-                            Select the account or card you used to pay this invoice.
-                            A transaction will be created and the balance will be updated.
+                            Select the account or card you used to pay this
+                            invoice. A transaction will be created and the
+                            balance will be updated.
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-4 py-4">
                         {/* Amount summary */}
                         <div className="rounded-lg bg-muted p-4">
-                            <p className="text-sm text-muted-foreground">Amount to pay</p>
+                            <p className="text-sm text-muted-foreground">
+                                Amount to pay
+                            </p>
                             <p className="text-2xl font-bold">
-                                {selectedInvoice && formatCurrency(selectedInvoice.amount, selectedInvoice.currency)}
+                                {selectedInvoice &&
+                                    formatCurrency(
+                                        selectedInvoice.amount,
+                                        selectedInvoice.currency,
+                                    )}
                             </p>
                             {selectedInvoice?.creditor_name && (
-                                <p className="text-sm text-muted-foreground mt-1">
+                                <p className="mt-1 text-sm text-muted-foreground">
                                     {selectedInvoice.creditor_name}
                                 </p>
                             )}
@@ -402,7 +437,11 @@ export default function InvoicesIndex() {
                             <div className="flex gap-2">
                                 <Button
                                     type="button"
-                                    variant={paymentMethod === 'account' ? 'default' : 'outline'}
+                                    variant={
+                                        paymentMethod === 'account'
+                                            ? 'default'
+                                            : 'outline'
+                                    }
                                     className="flex-1"
                                     onClick={() => setPaymentMethod('account')}
                                 >
@@ -411,7 +450,11 @@ export default function InvoicesIndex() {
                                 </Button>
                                 <Button
                                     type="button"
-                                    variant={paymentMethod === 'card' ? 'default' : 'outline'}
+                                    variant={
+                                        paymentMethod === 'card'
+                                            ? 'default'
+                                            : 'outline'
+                                    }
                                     className="flex-1"
                                     onClick={() => setPaymentMethod('card')}
                                 >
@@ -427,7 +470,8 @@ export default function InvoicesIndex() {
                                 <Label>Select Account</Label>
                                 {accounts.length === 0 ? (
                                     <p className="text-sm text-muted-foreground">
-                                        No bank accounts found. Add one in Settings.
+                                        No bank accounts found. Add one in
+                                        Settings.
                                     </p>
                                 ) : (
                                     <Select
@@ -446,11 +490,21 @@ export default function InvoicesIndex() {
                                                     <div className="flex items-center gap-2">
                                                         <div
                                                             className="h-3 w-3 rounded-full"
-                                                            style={{ backgroundColor: account.color }}
+                                                            style={{
+                                                                backgroundColor:
+                                                                    account.color,
+                                                            }}
                                                         />
-                                                        <span>{account.name}</span>
+                                                        <span>
+                                                            {account.name}
+                                                        </span>
                                                         <span className="text-muted-foreground">
-                                                            ({formatCurrency(account.balance, account.currency)})
+                                                            (
+                                                            {formatCurrency(
+                                                                account.balance,
+                                                                account.currency,
+                                                            )}
+                                                            )
                                                         </span>
                                                     </div>
                                                 </SelectItem>
@@ -483,10 +537,19 @@ export default function InvoicesIndex() {
                                                     <div className="flex items-center gap-2">
                                                         <div
                                                             className="h-3 w-3 rounded-full"
-                                                            style={{ backgroundColor: card.color }}
+                                                            style={{
+                                                                backgroundColor:
+                                                                    card.color,
+                                                            }}
                                                         />
                                                         <span>
-                                                            {card.card_holder_name} •••• {card.card_number.slice(-4)}
+                                                            {
+                                                                card.card_holder_name
+                                                            }{' '}
+                                                            ••••{' '}
+                                                            {card.card_number.slice(
+                                                                -4,
+                                                            )}
                                                         </span>
                                                     </div>
                                                 </SelectItem>
@@ -513,7 +576,8 @@ export default function InvoicesIndex() {
                             onClick={handleConfirmPayment}
                             disabled={
                                 isProcessingPayment ||
-                                (paymentMethod === 'account' && !selectedAccountId) ||
+                                (paymentMethod === 'account' &&
+                                    !selectedAccountId) ||
                                 (paymentMethod === 'card' && !selectedCardId)
                             }
                             className="bg-green-600 hover:bg-green-700"
@@ -547,7 +611,7 @@ function InvoiceCard({
 
     return (
         <Card
-            className={`group transition-all duration-200 hover:shadow-md hover-lift overflow-hidden ${
+            className={`group hover-lift overflow-hidden transition-all duration-200 hover:shadow-md ${
                 invoice.status === 'paid' ? 'opacity-70' : ''
             }`}
         >
@@ -568,13 +632,16 @@ function InvoiceCard({
                         </div>
                         <div>
                             <h3 className="font-semibold">
-                                {invoice.creditor_name || invoice.invoice_number || 'Invoice'}
+                                {invoice.creditor_name ||
+                                    invoice.invoice_number ||
+                                    'Invoice'}
                             </h3>
-                            {invoice.invoice_number && invoice.creditor_name && (
-                                <p className="text-sm text-muted-foreground">
-                                    #{invoice.invoice_number}
-                                </p>
-                            )}
+                            {invoice.invoice_number &&
+                                invoice.creditor_name && (
+                                    <p className="text-sm text-muted-foreground">
+                                        #{invoice.invoice_number}
+                                    </p>
+                                )}
                         </div>
                     </div>
                     <div className="text-right">
@@ -585,12 +652,13 @@ function InvoiceCard({
                             className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[invoice.status]}`}
                         >
                             <StatusIcon className="h-3 w-3" />
-                            {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                            {invoice.status.charAt(0).toUpperCase() +
+                                invoice.status.slice(1)}
                         </span>
                     </div>
                 </div>
 
-                <div className="mt-3 flex items-center gap-2 flex-wrap">
+                <div className="mt-3 flex flex-wrap items-center gap-2">
                     {invoice.is_recurring && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
                             <RefreshCw className="h-3 w-3" />
@@ -600,7 +668,8 @@ function InvoiceCard({
                     {invoice.due_date && invoice.status !== 'paid' && (
                         <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                             <Calendar className="h-3 w-3" />
-                            Due: {new Date(invoice.due_date).toLocaleDateString()}
+                            Due:{' '}
+                            {new Date(invoice.due_date).toLocaleDateString()}
                         </span>
                     )}
                     {invoice.days_overdue && invoice.days_overdue > 0 && (
@@ -627,7 +696,9 @@ function InvoiceCard({
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => router.visit(`/invoices/${invoice.id}/edit`)}
+                        onClick={() =>
+                            router.visit(`/invoices/${invoice.id}/edit`)
+                        }
                     >
                         <Edit className="h-4 w-4" />
                     </Button>

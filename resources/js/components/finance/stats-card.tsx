@@ -41,7 +41,12 @@ export function StatsCard({
     }
 
     return (
-        <Card className={cn('overflow-hidden transition-all duration-200', className)}>
+        <Card
+            className={cn(
+                'overflow-hidden transition-all duration-200',
+                className,
+            )}
+        >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                     {title}
@@ -53,7 +58,7 @@ export function StatsCard({
                 )}
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold tabular-nums tracking-tight">
+                <div className="text-2xl font-bold tracking-tight tabular-nums">
                     {value}
                 </div>
                 {(description || trend) && (
@@ -64,7 +69,7 @@ export function StatsCard({
                                     'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium',
                                     trend.isPositive
                                         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400'
-                                        : 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400'
+                                        : 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400',
                                 )}
                             >
                                 {trend.isPositive ? '↑' : '↓'} {trend.value}

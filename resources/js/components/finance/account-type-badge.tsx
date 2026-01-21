@@ -7,7 +7,10 @@ interface AccountTypeBadgeProps {
 
 export function AccountTypeBadge({ type, className }: AccountTypeBadgeProps) {
     const badgeText = type === 'checking' ? 'Checking' : 'Savings';
-    const badgeColor = type === 'checking' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800';
+    const badgeColor =
+        type === 'checking'
+            ? 'bg-blue-100 text-blue-800'
+            : 'bg-green-100 text-green-800';
 
     return (
         <Badge variant="outline" className={`${badgeColor} ${className}`}>

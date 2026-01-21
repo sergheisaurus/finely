@@ -69,7 +69,9 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
         if (!income) return;
         try {
             await api.post(`/recurring-incomes/${income.id}/toggle`);
-            toast.success(income.is_active ? 'Income paused' : 'Income resumed');
+            toast.success(
+                income.is_active ? 'Income paused' : 'Income resumed',
+            );
             await fetchData();
         } catch (error) {
             console.error('Failed to toggle income:', error);
@@ -142,7 +144,7 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
             <Head title={income.name} />
             <div className="space-y-6 p-4 md:p-6">
                 {/* Header */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up">
+                <div className="animate-fade-in-up flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">
                         <Button
                             variant="ghost"
@@ -211,7 +213,9 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
                         </Button>
                         <Button
                             variant="outline"
-                            onClick={() => router.visit(`/income/${income.id}/edit`)}
+                            onClick={() =>
+                                router.visit(`/income/${income.id}/edit`)
+                            }
                         >
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
@@ -224,7 +228,7 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-fade-in-up stagger-1 opacity-0">
+                <div className="animate-fade-in-up stagger-1 grid gap-4 opacity-0 sm:grid-cols-2 lg:grid-cols-4">
                     <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
                         <CardContent className="p-6">
                             <p className="text-sm opacity-90">Amount</p>
@@ -243,7 +247,11 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
                                 Monthly Income
                             </p>
                             <p className="mt-1 text-2xl font-bold text-green-600">
-                                +{formatCurrency(income.monthly_equivalent, income.currency)}
+                                +
+                                {formatCurrency(
+                                    income.monthly_equivalent,
+                                    income.currency,
+                                )}
                             </p>
                         </CardContent>
                     </Card>
@@ -254,7 +262,11 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
                                 Yearly Income
                             </p>
                             <p className="mt-1 text-2xl font-bold text-green-600">
-                                +{formatCurrency(income.yearly_total, income.currency)}
+                                +
+                                {formatCurrency(
+                                    income.yearly_total,
+                                    income.currency,
+                                )}
                             </p>
                         </CardContent>
                     </Card>
@@ -293,7 +305,9 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
 
                             {income.source && (
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Source</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Source
+                                    </p>
                                     <p>{income.source}</p>
                                 </div>
                             )}
@@ -304,7 +318,9 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
                                         Start Date
                                     </p>
                                     <p>
-                                        {new Date(income.start_date).toLocaleDateString()}
+                                        {new Date(
+                                            income.start_date,
+                                        ).toLocaleDateString()}
                                     </p>
                                 </div>
                                 {income.end_date && (
@@ -313,7 +329,9 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
                                             End Date
                                         </p>
                                         <p>
-                                            {new Date(income.end_date).toLocaleDateString()}
+                                            {new Date(
+                                                income.end_date,
+                                            ).toLocaleDateString()}
                                         </p>
                                     </div>
                                 )}
@@ -333,7 +351,9 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
 
                             {income.category && (
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Category</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Category
+                                    </p>
                                     <p>{income.category.name}</p>
                                 </div>
                             )}
@@ -355,15 +375,17 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
                     {/* Recent Transactions */}
                     <Card className="animate-fade-in-up stagger-3 opacity-0">
                         <CardHeader>
-                            <CardTitle>Payment History ({transactions.length})</CardTitle>
+                            <CardTitle>
+                                Payment History ({transactions.length})
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                             {transactions.length === 0 ? (
-                                <p className="text-center text-muted-foreground py-8">
+                                <p className="py-8 text-center text-muted-foreground">
                                     No payments received yet
                                 </p>
                             ) : (
-                                <div className="space-y-3 max-h-80 overflow-y-auto">
+                                <div className="max-h-80 space-y-3 overflow-y-auto">
                                     {transactions.map((transaction) => (
                                         <div
                                             key={transaction.id}

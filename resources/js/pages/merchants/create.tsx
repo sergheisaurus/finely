@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
 import {
-    Card as CardUI,
     CardContent,
     CardHeader,
     CardTitle,
+    Card as CardUI,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -63,7 +63,9 @@ export default function MerchantCreate() {
 
             router.visit('/merchants');
         } catch (error: unknown) {
-            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            const err = error as {
+                response?: { data?: { errors?: Record<string, string> } };
+            };
             if (err.response?.data?.errors) {
                 setErrors(err.response.data.errors);
             } else {
@@ -101,7 +103,9 @@ export default function MerchantCreate() {
                                     <Input
                                         id="name"
                                         value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={(e) =>
+                                            setName(e.target.value)
+                                        }
                                         placeholder="e.g., Migros, Coop, John Smith"
                                         required
                                         maxLength={255}
@@ -118,9 +122,9 @@ export default function MerchantCreate() {
                                     <Label htmlFor="type">Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: 'company' | 'person') =>
-                                            setType(value)
-                                        }
+                                        onValueChange={(
+                                            value: 'company' | 'person',
+                                        ) => setType(value)}
                                     >
                                         <SelectTrigger>
                                             <SelectValue />
@@ -225,9 +229,7 @@ export default function MerchantCreate() {
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting
-                                ? 'Creating...'
-                                : 'Create Merchant'}
+                            {isSubmitting ? 'Creating...' : 'Create Merchant'}
                         </Button>
                     </div>
                 </form>

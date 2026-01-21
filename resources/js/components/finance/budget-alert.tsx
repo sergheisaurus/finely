@@ -1,9 +1,9 @@
 import { formatCurrency } from '@/lib/format';
-import type { Budget } from '@/types/finance';
 import { cn } from '@/lib/utils';
+import type { Budget } from '@/types/finance';
+import { router } from '@inertiajs/react';
 import { AlertTriangle, X, XCircle } from 'lucide-react';
 import { useState } from 'react';
-import { router } from '@inertiajs/react';
 
 interface BudgetAlertProps {
     budgets: Budget[];
@@ -21,7 +21,9 @@ export function BudgetAlert({
     if (dismissed || budgets.length === 0) return null;
 
     const overBudget = budgets.filter((b) => b.is_over_budget);
-    const nearLimit = budgets.filter((b) => b.is_near_limit && !b.is_over_budget);
+    const nearLimit = budgets.filter(
+        (b) => b.is_near_limit && !b.is_over_budget,
+    );
 
     if (overBudget.length === 0 && nearLimit.length === 0) return null;
 
@@ -29,8 +31,8 @@ export function BudgetAlert({
         <div className={cn('space-y-2', className)}>
             {overBudget.length > 0 && (
                 <div className="relative flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/50">
-                    <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
+                    <XCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600 dark:text-red-400" />
+                    <div className="min-w-0 flex-1">
                         <p className="font-medium text-red-800 dark:text-red-200">
                             {overBudget.length === 1
                                 ? 'Budget exceeded'
@@ -40,16 +42,23 @@ export function BudgetAlert({
                             {overBudget.slice(0, 3).map((budget) => (
                                 <button
                                     key={budget.id}
-                                    onClick={() => router.visit(`/budgets/${budget.id}`)}
-                                    className="block text-sm text-red-700 dark:text-red-300 hover:underline"
+                                    onClick={() =>
+                                        router.visit(`/budgets/${budget.id}`)
+                                    }
+                                    className="block text-sm text-red-700 hover:underline dark:text-red-300"
                                 >
-                                    {budget.name}: {formatCurrency(Math.abs(budget.remaining_amount), budget.currency)} over
+                                    {budget.name}:{' '}
+                                    {formatCurrency(
+                                        Math.abs(budget.remaining_amount),
+                                        budget.currency,
+                                    )}{' '}
+                                    over
                                 </button>
                             ))}
                             {overBudget.length > 3 && (
                                 <button
                                     onClick={() => router.visit('/budgets')}
-                                    className="text-sm text-red-600 dark:text-red-400 hover:underline"
+                                    className="text-sm text-red-600 hover:underline dark:text-red-400"
                                 >
                                     +{overBudget.length - 3} more
                                 </button>
@@ -69,8 +78,8 @@ export function BudgetAlert({
 
             {nearLimit.length > 0 && (
                 <div className="relative flex items-start gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900 dark:bg-yellow-950/50">
-                    <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
+                    <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600 dark:text-yellow-400" />
+                    <div className="min-w-0 flex-1">
                         <p className="font-medium text-yellow-800 dark:text-yellow-200">
                             {nearLimit.length === 1
                                 ? 'Budget near limit'
@@ -80,16 +89,19 @@ export function BudgetAlert({
                             {nearLimit.slice(0, 3).map((budget) => (
                                 <button
                                     key={budget.id}
-                                    onClick={() => router.visit(`/budgets/${budget.id}`)}
-                                    className="block text-sm text-yellow-700 dark:text-yellow-300 hover:underline"
+                                    onClick={() =>
+                                        router.visit(`/budgets/${budget.id}`)
+                                    }
+                                    className="block text-sm text-yellow-700 hover:underline dark:text-yellow-300"
                                 >
-                                    {budget.name}: {budget.spent_percentage.toFixed(0)}% used
+                                    {budget.name}:{' '}
+                                    {budget.spent_percentage.toFixed(0)}% used
                                 </button>
                             ))}
                             {nearLimit.length > 3 && (
                                 <button
                                     onClick={() => router.visit('/budgets')}
-                                    className="text-sm text-yellow-600 dark:text-yellow-400 hover:underline"
+                                    className="text-sm text-yellow-600 hover:underline dark:text-yellow-400"
                                 >
                                     +{nearLimit.length - 3} more
                                 </button>

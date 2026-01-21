@@ -21,7 +21,13 @@ import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import { type BreadcrumbItem } from '@/types';
-import type { BankAccount, Card as CardType, Invoice, InvoiceAttachment, Transaction } from '@/types/finance';
+import type {
+    BankAccount,
+    Card as CardType,
+    Invoice,
+    InvoiceAttachment,
+    Transaction,
+} from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -46,13 +52,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 const statusColors: Record<string, string> = {
-    pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
+    pending:
+        'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
     paid: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
     overdue: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
-    cancelled: 'bg-slate-100 text-slate-700 dark:bg-slate-900/50 dark:text-slate-300',
+    cancelled:
+        'bg-slate-100 text-slate-700 dark:bg-slate-900/50 dark:text-slate-300',
 };
 
-const statusIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+const statusIcons: Record<
+    string,
+    React.ComponentType<{ className?: string }>
+> = {
     pending: Clock,
     paid: Check,
     overdue: AlertCircle,
@@ -74,7 +85,9 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
     const [accounts, setAccounts] = useState<BankAccount[]>([]);
     const [cards, setCards] = useState<CardType[]>([]);
-    const [paymentMethod, setPaymentMethod] = useState<'account' | 'card'>('account');
+    const [paymentMethod, setPaymentMethod] = useState<'account' | 'card'>(
+        'account',
+    );
     const [selectedAccountId, setSelectedAccountId] = useState<string>('');
     const [selectedCardId, setSelectedCardId] = useState<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -85,7 +98,10 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
             href: '/invoices',
         },
         {
-            title: invoice?.creditor_name || invoice?.invoice_number || 'Loading...',
+            title:
+                invoice?.creditor_name ||
+                invoice?.invoice_number ||
+                'Loading...',
             href: `/invoices/${invoiceId}`,
         },
     ];
@@ -122,18 +138,26 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                 setCards(cardsRes.data.data || []);
 
                 // Set default selection
-                const defaultAccount = (accountsRes.data.data || []).find((a: BankAccount) => a.is_default);
+                const defaultAccount = (accountsRes.data.data || []).find(
+                    (a: BankAccount) => a.is_default,
+                );
                 if (defaultAccount) {
                     setSelectedAccountId(defaultAccount.id.toString());
                 } else if ((accountsRes.data.data || []).length > 0) {
-                    setSelectedAccountId((accountsRes.data.data[0] as BankAccount).id.toString());
+                    setSelectedAccountId(
+                        (accountsRes.data.data[0] as BankAccount).id.toString(),
+                    );
                 }
 
-                const defaultCard = (cardsRes.data.data || []).find((c: CardType) => c.is_default);
+                const defaultCard = (cardsRes.data.data || []).find(
+                    (c: CardType) => c.is_default,
+                );
                 if (defaultCard) {
                     setSelectedCardId(defaultCard.id.toString());
                 } else if ((cardsRes.data.data || []).length > 0) {
-                    setSelectedCardId((cardsRes.data.data[0] as CardType).id.toString());
+                    setSelectedCardId(
+                        (cardsRes.data.data[0] as CardType).id.toString(),
+                    );
                 }
             } catch (error) {
                 console.error('Failed to fetch payment methods:', error);
@@ -210,7 +234,9 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
         }
     };
 
-    const handleUploadAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleUploadAttachment = async (
+        e: React.ChangeEvent<HTMLInputElement>,
+    ) => {
         if (!invoice || !e.target.files || e.target.files.length === 0) return;
 
         const file = e.target.files[0];
@@ -244,7 +270,9 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
         }
 
         try {
-            await api.delete(`/invoices/${invoice.id}/attachments/${attachment.id}`);
+            await api.delete(
+                `/invoices/${invoice.id}/attachments/${attachment.id}`,
+            );
             toast.success('Attachment deleted');
             await fetchData();
         } catch (error) {
@@ -252,7 +280,6 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
             toast.error('Failed to delete attachment');
         }
     };
-
 
     if (isLoading) {
         return (
@@ -304,10 +331,21 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
             '',
             '',
             'CH',
-            '', '', '', '', '', '', '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
             qrData.amount?.toString() || '',
             qrData.currency || 'CHF',
-            '', '', '', '', '', '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
             qrData.reference_type || 'NON',
             qrData.reference || '',
             qrData.message || '',
@@ -318,14 +356,19 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
         return lines.join('\n');
     };
 
-    const qrContent = invoice.qr_raw_text || generateQrFromData(invoice.qr_data);
+    const qrContent =
+        invoice.qr_raw_text || generateQrFromData(invoice.qr_data);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={invoice.creditor_name || invoice.invoice_number || 'Invoice'} />
+            <Head
+                title={
+                    invoice.creditor_name || invoice.invoice_number || 'Invoice'
+                }
+            />
             <div className="space-y-6 p-4 md:p-6">
                 {/* Header */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up">
+                <div className="animate-fade-in-up flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">
                         <Button
                             variant="ghost"
@@ -348,14 +391,17 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold md:text-3xl">
-                                {invoice.creditor_name || invoice.invoice_number || 'Invoice'}
+                                {invoice.creditor_name ||
+                                    invoice.invoice_number ||
+                                    'Invoice'}
                             </h1>
-                            <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex flex-wrap items-center gap-2">
                                 <span
                                     className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[invoice.status]}`}
                                 >
                                     <StatusIcon className="h-3 w-3" />
-                                    {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                                    {invoice.status.charAt(0).toUpperCase() +
+                                        invoice.status.slice(1)}
                                 </span>
                                 {invoice.is_recurring && (
                                     <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
@@ -363,38 +409,46 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                                         Recurring
                                     </span>
                                 )}
-                                {invoice.invoice_number && invoice.creditor_name && (
-                                    <span className="text-sm text-muted-foreground">
-                                        #{invoice.invoice_number}
-                                    </span>
-                                )}
+                                {invoice.invoice_number &&
+                                    invoice.creditor_name && (
+                                        <span className="text-sm text-muted-foreground">
+                                            #{invoice.invoice_number}
+                                        </span>
+                                    )}
                             </div>
                         </div>
                     </div>
-                    <div className="flex gap-2 flex-wrap">
-                        {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
-                            <Button
-                                variant="outline"
-                                onClick={handleMarkPaid}
-                                className="text-green-600 hover:text-green-700"
-                            >
-                                <Check className="mr-2 h-4 w-4" />
-                                Mark Paid
-                            </Button>
-                        )}
+                    <div className="flex flex-wrap gap-2">
+                        {invoice.status !== 'paid' &&
+                            invoice.status !== 'cancelled' && (
+                                <Button
+                                    variant="outline"
+                                    onClick={handleMarkPaid}
+                                    className="text-green-600 hover:text-green-700"
+                                >
+                                    <Check className="mr-2 h-4 w-4" />
+                                    Mark Paid
+                                </Button>
+                            )}
                         <Button
                             variant="outline"
-                            onClick={() => router.visit(`/invoices/${invoice.id}/edit`)}
+                            onClick={() =>
+                                router.visit(`/invoices/${invoice.id}/edit`)
+                            }
                         >
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                         </Button>
-                        {invoice.status !== 'cancelled' && invoice.status !== 'paid' && (
-                            <Button variant="outline" onClick={handleCancel}>
-                                <Ban className="mr-2 h-4 w-4" />
-                                Cancel
-                            </Button>
-                        )}
+                        {invoice.status !== 'cancelled' &&
+                            invoice.status !== 'paid' && (
+                                <Button
+                                    variant="outline"
+                                    onClick={handleCancel}
+                                >
+                                    <Ban className="mr-2 h-4 w-4" />
+                                    Cancel
+                                </Button>
+                            )}
                         <Button variant="destructive" onClick={handleDelete}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete
@@ -403,12 +457,15 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-fade-in-up stagger-1 opacity-0">
+                <div className="animate-fade-in-up stagger-1 grid gap-4 opacity-0 sm:grid-cols-2 lg:grid-cols-4">
                     <Card className="bg-gradient-to-br from-violet-500 to-purple-600 text-white">
                         <CardContent className="p-6">
                             <p className="text-sm opacity-90">Amount</p>
                             <p className="mt-1 text-2xl font-bold">
-                                {formatCurrency(invoice.amount, invoice.currency)}
+                                {formatCurrency(
+                                    invoice.amount,
+                                    invoice.currency,
+                                )}
                             </p>
                             {invoice.is_recurring && invoice.frequency && (
                                 <p className="text-sm opacity-75">
@@ -420,34 +477,47 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
 
                     <Card>
                         <CardContent className="p-6">
-                            <p className="text-sm text-muted-foreground">Due Date</p>
+                            <p className="text-sm text-muted-foreground">
+                                Due Date
+                            </p>
                             <p className="mt-1 text-2xl font-bold">
                                 {invoice.due_date
-                                    ? new Date(invoice.due_date).toLocaleDateString()
+                                    ? new Date(
+                                          invoice.due_date,
+                                      ).toLocaleDateString()
                                     : 'No due date'}
                             </p>
-                            {invoice.status !== 'paid' && invoice.days_until_due !== undefined && invoice.days_until_due !== null && (
-                                <p className={`text-sm ${invoice.days_until_due < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
-                                    {invoice.days_until_due < 0
-                                        ? `${Math.abs(invoice.days_until_due)} days overdue`
-                                        : invoice.days_until_due === 0
-                                          ? 'Due today'
-                                          : `${invoice.days_until_due} days left`}
-                                </p>
-                            )}
+                            {invoice.status !== 'paid' &&
+                                invoice.days_until_due !== undefined &&
+                                invoice.days_until_due !== null && (
+                                    <p
+                                        className={`text-sm ${invoice.days_until_due < 0 ? 'text-red-500' : 'text-muted-foreground'}`}
+                                    >
+                                        {invoice.days_until_due < 0
+                                            ? `${Math.abs(invoice.days_until_due)} days overdue`
+                                            : invoice.days_until_due === 0
+                                              ? 'Due today'
+                                              : `${invoice.days_until_due} days left`}
+                                    </p>
+                                )}
                         </CardContent>
                     </Card>
 
                     {invoice.is_recurring ? (
                         <Card>
                             <CardContent className="p-6">
-                                <p className="text-sm text-muted-foreground">Times Paid</p>
+                                <p className="text-sm text-muted-foreground">
+                                    Times Paid
+                                </p>
                                 <p className="mt-1 text-2xl font-bold">
                                     {invoice.times_paid}
                                 </p>
                                 {invoice.next_due_date && (
                                     <p className="text-sm text-muted-foreground">
-                                        Next: {new Date(invoice.next_due_date).toLocaleDateString()}
+                                        Next:{' '}
+                                        {new Date(
+                                            invoice.next_due_date,
+                                        ).toLocaleDateString()}
                                     </p>
                                 )}
                             </CardContent>
@@ -455,9 +525,13 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                     ) : (
                         <Card>
                             <CardContent className="p-6">
-                                <p className="text-sm text-muted-foreground">Issue Date</p>
+                                <p className="text-sm text-muted-foreground">
+                                    Issue Date
+                                </p>
                                 <p className="mt-1 text-2xl font-bold">
-                                    {new Date(invoice.issue_date).toLocaleDateString()}
+                                    {new Date(
+                                        invoice.issue_date,
+                                    ).toLocaleDateString()}
                                 </p>
                             </CardContent>
                         </Card>
@@ -468,14 +542,18 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                             <CardContent className="p-6">
                                 <p className="text-sm opacity-90">Paid On</p>
                                 <p className="mt-1 text-2xl font-bold">
-                                    {new Date(invoice.paid_date).toLocaleDateString()}
+                                    {new Date(
+                                        invoice.paid_date,
+                                    ).toLocaleDateString()}
                                 </p>
                             </CardContent>
                         </Card>
                     ) : (
                         <Card>
                             <CardContent className="p-6">
-                                <p className="text-sm text-muted-foreground">Status</p>
+                                <p className="text-sm text-muted-foreground">
+                                    Status
+                                </p>
                                 <p className="mt-1 text-2xl font-bold capitalize">
                                     {invoice.status}
                                 </p>
@@ -493,34 +571,58 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                         <CardContent className="space-y-4">
                             {invoice.creditor_name && (
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Creditor</p>
-                                    <p className="font-medium">{invoice.creditor_name}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Creditor
+                                    </p>
+                                    <p className="font-medium">
+                                        {invoice.creditor_name}
+                                    </p>
                                 </div>
                             )}
 
                             {invoice.creditor_iban && (
                                 <div>
-                                    <p className="text-sm text-muted-foreground">IBAN</p>
-                                    <p className="font-mono">{invoice.creditor_iban}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        IBAN
+                                    </p>
+                                    <p className="font-mono">
+                                        {invoice.creditor_iban}
+                                    </p>
                                 </div>
                             )}
 
                             {invoice.payment_reference && (
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Payment Reference</p>
-                                    <p className="font-mono text-sm break-all">{invoice.payment_reference}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Payment Reference
+                                    </p>
+                                    <p className="font-mono text-sm break-all">
+                                        {invoice.payment_reference}
+                                    </p>
                                 </div>
                             )}
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Issue Date</p>
-                                    <p>{new Date(invoice.issue_date).toLocaleDateString()}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Issue Date
+                                    </p>
+                                    <p>
+                                        {new Date(
+                                            invoice.issue_date,
+                                        ).toLocaleDateString()}
+                                    </p>
                                 </div>
                                 {invoice.due_date && (
                                     <div>
-                                        <p className="text-sm text-muted-foreground">Due Date</p>
-                                        <p>{new Date(invoice.due_date).toLocaleDateString()}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Due Date
+                                        </p>
+                                        <p>
+                                            {new Date(
+                                                invoice.due_date,
+                                            ).toLocaleDateString()}
+                                        </p>
                                     </div>
                                 )}
                             </div>
@@ -528,12 +630,23 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                             {invoice.is_recurring && (
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <p className="text-sm text-muted-foreground">Frequency</p>
-                                        <p>{frequencyLabels[invoice.frequency || 'monthly']}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            Frequency
+                                        </p>
+                                        <p>
+                                            {
+                                                frequencyLabels[
+                                                    invoice.frequency ||
+                                                        'monthly'
+                                                ]
+                                            }
+                                        </p>
                                     </div>
                                     {invoice.billing_day && (
                                         <div>
-                                            <p className="text-sm text-muted-foreground">Billing Day</p>
+                                            <p className="text-sm text-muted-foreground">
+                                                Billing Day
+                                            </p>
                                             <p>Day {invoice.billing_day}</p>
                                         </div>
                                     )}
@@ -542,29 +655,39 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
 
                             {invoice.reference && (
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Reference</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Reference
+                                    </p>
                                     <p>{invoice.reference}</p>
                                 </div>
                             )}
 
                             {invoice.merchant && (
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Merchant</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Merchant
+                                    </p>
                                     <p>{invoice.merchant.name}</p>
                                 </div>
                             )}
 
                             {invoice.category && (
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Category</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Category
+                                    </p>
                                     <p>{invoice.category.name}</p>
                                 </div>
                             )}
 
                             {invoice.notes && (
                                 <div>
-                                    <p className="text-sm text-muted-foreground">Notes</p>
-                                    <p className="whitespace-pre-wrap">{invoice.notes}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Notes
+                                    </p>
+                                    <p className="whitespace-pre-wrap">
+                                        {invoice.notes}
+                                    </p>
                                 </div>
                             )}
                         </CardContent>
@@ -588,16 +711,38 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                                             level="M"
                                         />
                                     </div>
-                                    <p className="text-sm text-muted-foreground text-center">
-                                        Scan this QR code with your banking app to pay
+                                    <p className="text-center text-sm text-muted-foreground">
+                                        Scan this QR code with your banking app
+                                        to pay
                                     </p>
                                     {invoice.qr_data && (
-                                        <div className="text-sm space-y-1 w-full">
-                                            <p><span className="text-muted-foreground">Creditor:</span> {invoice.qr_data.creditor_name}</p>
-                                            <p><span className="text-muted-foreground">IBAN:</span> {invoice.qr_data.iban}</p>
-                                            <p><span className="text-muted-foreground">Amount:</span> {invoice.qr_data.amount} {invoice.qr_data.currency}</p>
+                                        <div className="w-full space-y-1 text-sm">
+                                            <p>
+                                                <span className="text-muted-foreground">
+                                                    Creditor:
+                                                </span>{' '}
+                                                {invoice.qr_data.creditor_name}
+                                            </p>
+                                            <p>
+                                                <span className="text-muted-foreground">
+                                                    IBAN:
+                                                </span>{' '}
+                                                {invoice.qr_data.iban}
+                                            </p>
+                                            <p>
+                                                <span className="text-muted-foreground">
+                                                    Amount:
+                                                </span>{' '}
+                                                {invoice.qr_data.amount}{' '}
+                                                {invoice.qr_data.currency}
+                                            </p>
                                             {invoice.qr_data.reference && (
-                                                <p><span className="text-muted-foreground">Reference:</span> {invoice.qr_data.reference}</p>
+                                                <p>
+                                                    <span className="text-muted-foreground">
+                                                        Reference:
+                                                    </span>{' '}
+                                                    {invoice.qr_data.reference}
+                                                </p>
                                             )}
                                         </div>
                                     )}
@@ -624,7 +769,9 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => fileInputRef.current?.click()}
+                                    onClick={() =>
+                                        fileInputRef.current?.click()
+                                    }
                                     disabled={isUploading}
                                 >
                                     <Upload className="mr-2 h-4 w-4" />
@@ -633,8 +780,9 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            {!invoice.attachments || invoice.attachments.length === 0 ? (
-                                <p className="text-center text-muted-foreground py-8">
+                            {!invoice.attachments ||
+                            invoice.attachments.length === 0 ? (
+                                <p className="py-8 text-center text-muted-foreground">
                                     No attachments yet
                                 </p>
                             ) : (
@@ -646,24 +794,28 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                                         >
                                             <div className="flex items-center gap-3">
                                                 {attachment.is_image ? (
-                                                    <div className="h-10 w-10 rounded bg-muted flex items-center justify-center overflow-hidden">
+                                                    <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded bg-muted">
                                                         <img
                                                             src={attachment.url}
-                                                            alt={attachment.file_name}
+                                                            alt={
+                                                                attachment.file_name
+                                                            }
                                                             className="h-full w-full object-cover"
                                                         />
                                                     </div>
                                                 ) : (
-                                                    <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded bg-muted">
                                                         <FileText className="h-5 w-5 text-muted-foreground" />
                                                     </div>
                                                 )}
                                                 <div>
-                                                    <p className="font-medium text-sm truncate max-w-[200px]">
+                                                    <p className="max-w-[200px] truncate text-sm font-medium">
                                                         {attachment.file_name}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground">
-                                                        {attachment.formatted_size}
+                                                        {
+                                                            attachment.formatted_size
+                                                        }
                                                     </p>
                                                 </div>
                                             </div>
@@ -688,7 +840,9 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                                                 >
                                                     <a
                                                         href={attachment.url}
-                                                        download={attachment.file_name}
+                                                        download={
+                                                            attachment.file_name
+                                                        }
                                                     >
                                                         <Download className="h-4 w-4" />
                                                     </a>
@@ -696,7 +850,11 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() => handleDeleteAttachment(attachment)}
+                                                    onClick={() =>
+                                                        handleDeleteAttachment(
+                                                            attachment,
+                                                        )
+                                                    }
                                                 >
                                                     <Trash2 className="h-4 w-4 text-red-500" />
                                                 </Button>
@@ -711,15 +869,17 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                     {/* Payment History */}
                     <Card className="animate-fade-in-up stagger-5 opacity-0">
                         <CardHeader>
-                            <CardTitle>Payment History ({transactions.length})</CardTitle>
+                            <CardTitle>
+                                Payment History ({transactions.length})
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                             {transactions.length === 0 ? (
-                                <p className="text-center text-muted-foreground py-8">
+                                <p className="py-8 text-center text-muted-foreground">
                                     No payments recorded yet
                                 </p>
                             ) : (
-                                <div className="space-y-3 max-h-80 overflow-y-auto">
+                                <div className="max-h-80 space-y-3 overflow-y-auto">
                                     {transactions.map((transaction) => (
                                         <div
                                             key={transaction.id}
@@ -736,7 +896,8 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                                                 </p>
                                             </div>
                                             <p className="font-semibold text-red-600">
-                                                -{formatCurrency(
+                                                -
+                                                {formatCurrency(
                                                     transaction.amount,
                                                     transaction.currency,
                                                 )}
@@ -756,17 +917,24 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                     <DialogHeader>
                         <DialogTitle>Mark Invoice as Paid</DialogTitle>
                         <DialogDescription>
-                            Select the account or card you used to pay this invoice.
-                            A transaction will be created and the balance will be updated.
+                            Select the account or card you used to pay this
+                            invoice. A transaction will be created and the
+                            balance will be updated.
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-4 py-4">
                         {/* Amount summary */}
                         <div className="rounded-lg bg-muted p-4">
-                            <p className="text-sm text-muted-foreground">Amount to pay</p>
+                            <p className="text-sm text-muted-foreground">
+                                Amount to pay
+                            </p>
                             <p className="text-2xl font-bold">
-                                {invoice && formatCurrency(invoice.amount, invoice.currency)}
+                                {invoice &&
+                                    formatCurrency(
+                                        invoice.amount,
+                                        invoice.currency,
+                                    )}
                             </p>
                         </div>
 
@@ -776,7 +944,11 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                             <div className="flex gap-2">
                                 <Button
                                     type="button"
-                                    variant={paymentMethod === 'account' ? 'default' : 'outline'}
+                                    variant={
+                                        paymentMethod === 'account'
+                                            ? 'default'
+                                            : 'outline'
+                                    }
                                     className="flex-1"
                                     onClick={() => setPaymentMethod('account')}
                                 >
@@ -785,7 +957,11 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                                 </Button>
                                 <Button
                                     type="button"
-                                    variant={paymentMethod === 'card' ? 'default' : 'outline'}
+                                    variant={
+                                        paymentMethod === 'card'
+                                            ? 'default'
+                                            : 'outline'
+                                    }
                                     className="flex-1"
                                     onClick={() => setPaymentMethod('card')}
                                 >
@@ -801,7 +977,8 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                                 <Label>Select Account</Label>
                                 {accounts.length === 0 ? (
                                     <p className="text-sm text-muted-foreground">
-                                        No bank accounts found. Add one in Settings.
+                                        No bank accounts found. Add one in
+                                        Settings.
                                     </p>
                                 ) : (
                                     <Select
@@ -820,11 +997,21 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                                                     <div className="flex items-center gap-2">
                                                         <div
                                                             className="h-3 w-3 rounded-full"
-                                                            style={{ backgroundColor: account.color }}
+                                                            style={{
+                                                                backgroundColor:
+                                                                    account.color,
+                                                            }}
                                                         />
-                                                        <span>{account.name}</span>
+                                                        <span>
+                                                            {account.name}
+                                                        </span>
                                                         <span className="text-muted-foreground">
-                                                            ({formatCurrency(account.balance, account.currency)})
+                                                            (
+                                                            {formatCurrency(
+                                                                account.balance,
+                                                                account.currency,
+                                                            )}
+                                                            )
                                                         </span>
                                                     </div>
                                                 </SelectItem>
@@ -857,10 +1044,19 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                                                     <div className="flex items-center gap-2">
                                                         <div
                                                             className="h-3 w-3 rounded-full"
-                                                            style={{ backgroundColor: card.color }}
+                                                            style={{
+                                                                backgroundColor:
+                                                                    card.color,
+                                                            }}
                                                         />
                                                         <span>
-                                                            {card.card_holder_name} •••• {card.card_number.slice(-4)}
+                                                            {
+                                                                card.card_holder_name
+                                                            }{' '}
+                                                            ••••{' '}
+                                                            {card.card_number.slice(
+                                                                -4,
+                                                            )}
                                                         </span>
                                                     </div>
                                                 </SelectItem>
@@ -884,7 +1080,8 @@ export default function InvoiceView({ invoiceId }: { invoiceId: string }) {
                             onClick={handleConfirmPayment}
                             disabled={
                                 isProcessingPayment ||
-                                (paymentMethod === 'account' && !selectedAccountId) ||
+                                (paymentMethod === 'account' &&
+                                    !selectedAccountId) ||
                                 (paymentMethod === 'card' && !selectedCardId)
                             }
                             className="bg-green-600 hover:bg-green-700"

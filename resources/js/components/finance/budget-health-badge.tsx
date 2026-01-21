@@ -22,25 +22,29 @@ const healthConfig: Record<
     healthy: {
         label: 'On Track',
         icon: CheckCircle,
-        className: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
+        className:
+            'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
         dotClassName: 'bg-green-500',
     },
     warning: {
         label: 'Near Limit',
         icon: AlertTriangle,
-        className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300',
+        className:
+            'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300',
         dotClassName: 'bg-yellow-500',
     },
     danger: {
         label: 'At Risk',
         icon: AlertCircle,
-        className: 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300',
+        className:
+            'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300',
         dotClassName: 'bg-orange-500',
     },
     exceeded: {
         label: 'Over Budget',
         icon: XCircle,
-        className: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
+        className:
+            'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
         dotClassName: 'bg-red-500',
     },
 };
@@ -108,11 +112,7 @@ export function BudgetHealthDot({
     return (
         <span className={cn('relative inline-flex', className)}>
             <span
-                className={cn(
-                    'rounded-full',
-                    config.dotClassName,
-                    sizes.dot,
-                )}
+                className={cn('rounded-full', config.dotClassName, sizes.dot)}
             />
             {pulse && (health === 'exceeded' || health === 'danger') && (
                 <span

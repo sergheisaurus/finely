@@ -77,7 +77,9 @@ export default function AccountsCreate() {
 
             router.visit(`/accounts/${response.data.data.id}`);
         } catch (error: unknown) {
-            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            const err = error as {
+                response?: { data?: { errors?: Record<string, string> } };
+            };
             if (err.response?.data?.errors) {
                 setErrors(err.response.data.errors);
             } else {
@@ -107,13 +109,13 @@ export default function AccountsCreate() {
                         <CardContent className="space-y-6">
                             <div className="grid gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
-                                    <Label htmlFor="name">
-                                        Account Name *
-                                    </Label>
+                                    <Label htmlFor="name">Account Name *</Label>
                                     <Input
                                         id="name"
                                         value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={(e) =>
+                                            setName(e.target.value)
+                                        }
                                         placeholder="My Checking Account"
                                         required
                                     />
@@ -128,9 +130,9 @@ export default function AccountsCreate() {
                                     <Label htmlFor="type">Account Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: 'checking' | 'savings') =>
-                                            setType(value)
-                                        }
+                                        onValueChange={(
+                                            value: 'checking' | 'savings',
+                                        ) => setType(value)}
                                     >
                                         <SelectTrigger>
                                             <SelectValue />
@@ -158,7 +160,9 @@ export default function AccountsCreate() {
                                     <AmountInput
                                         name="balance"
                                         value={parseFloat(balance) || 0}
-                                        onChange={(value) => setBalance(value.toString())}
+                                        onChange={(value) =>
+                                            setBalance(value.toString())
+                                        }
                                         currency={currency}
                                         required
                                     />
@@ -252,7 +256,9 @@ export default function AccountsCreate() {
                                                         ? '3px solid black'
                                                         : 'none',
                                             }}
-                                            onClick={() => setColor(colorOption)}
+                                            onClick={() =>
+                                                setColor(colorOption)
+                                            }
                                         />
                                     ))}
                                 </div>
@@ -268,7 +274,10 @@ export default function AccountsCreate() {
                                     }
                                     className="h-4 w-4"
                                 />
-                                <Label htmlFor="is_default" className="cursor-pointer">
+                                <Label
+                                    htmlFor="is_default"
+                                    className="cursor-pointer"
+                                >
                                     Set as default account
                                 </Label>
                             </div>

@@ -15,6 +15,9 @@ class UserPreference extends Model
         'default_account_id',
         'default_card_id',
         'currency',
+        'ai_model',
+        'ai_system_prompt',
+        'ai_user_context',
     ];
 
     public function user(): BelongsTo

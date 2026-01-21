@@ -60,7 +60,7 @@ export function AmountInput({
                 </Label>
             )}
             <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
                     {currency}
                 </span>
                 <Input
@@ -77,15 +77,18 @@ export function AmountInput({
                     aria-invalid={!!error}
                     className="pl-12"
                 />
-                {!isFocused && displayValue && parseAmount(displayValue) > 0 && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                        {formatCurrency(parseAmount(displayValue), currency)}
-                    </span>
-                )}
+                {!isFocused &&
+                    displayValue &&
+                    parseAmount(displayValue) > 0 && (
+                        <span className="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted-foreground">
+                            {formatCurrency(
+                                parseAmount(displayValue),
+                                currency,
+                            )}
+                        </span>
+                    )}
             </div>
-            {error && (
-                <p className="mt-1 text-sm text-destructive">{error}</p>
-            )}
+            {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
         </div>
     );
 }

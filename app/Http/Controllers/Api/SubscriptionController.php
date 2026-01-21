@@ -109,7 +109,7 @@ class SubscriptionController extends Controller
         }
 
         return response()->json([
-            'message' => 'Subscription is not active or not due',
+            'message' => 'Subscription is not active',
         ], 422);
     }
 

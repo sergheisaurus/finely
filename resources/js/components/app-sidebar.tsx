@@ -12,20 +12,46 @@ import {
 import { dashboard, journal } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookText, CalendarClock, CreditCard, FileText, FolderTree, LayoutGrid, Store, TrendingUp, Wallet } from 'lucide-react';
+import {
+    BarChart3,
+    BookText,
+    CalendarClock,
+    CreditCard,
+    FileText,
+    FolderTree,
+    LayoutGrid,
+    MessageSquare,
+    PiggyBank,
+    Store,
+    TrendingUp,
+    Wallet,
+} from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
+    // Overview
     {
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
     },
     {
+        title: 'Statistics',
+        href: { url: '/statistics', method: 'get' },
+        icon: BarChart3,
+    },
+    {
+        title: 'AI Chat',
+        href: { url: '/chat', method: 'get' },
+        icon: MessageSquare,
+    },
+    // Transactions
+    {
         title: 'Journal',
         href: journal(),
         icon: BookText,
     },
+    // Money sources
     {
         title: 'Accounts',
         href: { url: '/accounts', method: 'get' },
@@ -36,6 +62,29 @@ const mainNavItems: NavItem[] = [
         href: { url: '/cards', method: 'get' },
         icon: CreditCard,
     },
+    // Planning
+    {
+        title: 'Budgets',
+        href: { url: '/budgets', method: 'get' },
+        icon: PiggyBank,
+    },
+    // Recurring
+    {
+        title: 'Income',
+        href: { url: '/income', method: 'get' },
+        icon: TrendingUp,
+    },
+    {
+        title: 'Subscriptions',
+        href: { url: '/subscriptions', method: 'get' },
+        icon: CalendarClock,
+    },
+    {
+        title: 'Invoices',
+        href: { url: '/invoices', method: 'get' },
+        icon: FileText,
+    },
+    // Organization
     {
         title: 'Categories',
         href: { url: '/categories', method: 'get' },
@@ -45,21 +94,6 @@ const mainNavItems: NavItem[] = [
         title: 'Merchants',
         href: { url: '/merchants', method: 'get' },
         icon: Store,
-    },
-    {
-        title: 'Subscriptions',
-        href: { url: '/subscriptions', method: 'get' },
-        icon: CalendarClock,
-    },
-    {
-        title: 'Income',
-        href: { url: '/income', method: 'get' },
-        icon: TrendingUp,
-    },
-    {
-        title: 'Invoices',
-        href: { url: '/invoices', method: 'get' },
-        icon: FileText,
     },
 ];
 

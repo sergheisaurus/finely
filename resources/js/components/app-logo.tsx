@@ -7,7 +7,7 @@ export default function AppLogo() {
                 <AppLogoIcon className="size-5" />
             </div>
             <div className="ml-1 grid flex-1 text-left text-sm">
-                <span className="mb-0.5 truncate leading-tight font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent dark:from-emerald-400 dark:to-teal-400">
+                <span className="mb-0.5 truncate bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text leading-tight font-semibold text-transparent dark:from-emerald-400 dark:to-teal-400">
                     Finely
                 </span>
             </div>

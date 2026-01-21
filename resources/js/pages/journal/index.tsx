@@ -1,6 +1,11 @@
 import { TransactionList } from '@/components/finance/transaction-list';
 import { Button } from '@/components/ui/button';
-import { Card as CardUI, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    CardContent,
+    CardHeader,
+    CardTitle,
+    Card as CardUI,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -75,13 +80,25 @@ export default function JournalIndex() {
             if (dateFrom) params.append('date_from', dateFrom);
             if (dateTo) params.append('date_to', dateTo);
 
-            const response = await api.get(`/transactions?${params.toString()}`);
+            const response = await api.get(
+                `/transactions?${params.toString()}`,
+            );
             setTransactions(response.data.data);
             setLastPage(response.data.meta?.last_page || 1);
         } catch (error) {
             console.error('Failed to fetch transactions:', error);
         }
-    }, [search, typeFilter, categoryFilter, merchantFilter, accountFilter, dateFrom, dateTo, currentPage, perPage]);
+    }, [
+        search,
+        typeFilter,
+        categoryFilter,
+        merchantFilter,
+        accountFilter,
+        dateFrom,
+        dateTo,
+        currentPage,
+        perPage,
+    ]);
 
     const fetchAccounts = useCallback(async () => {
         try {
@@ -131,7 +148,13 @@ export default function JournalIndex() {
             setIsLoading(false);
         };
         loadData();
-    }, [fetchTransactions, fetchAccounts, fetchCards, fetchCategories, fetchMerchants]);
+    }, [
+        fetchTransactions,
+        fetchAccounts,
+        fetchCards,
+        fetchCategories,
+        fetchMerchants,
+    ]);
 
     const handleEdit = (transaction: Transaction) => {
         router.visit(`/journal/${transaction.id}/edit`);
@@ -184,9 +207,9 @@ export default function JournalIndex() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Journal" />
             <div className="space-y-6 p-4 md:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up">
+                <div className="animate-fade-in-up flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold md:text-3xl bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">
+                        <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold text-transparent md:text-3xl dark:from-white dark:to-slate-400">
                             Transaction Journal
                         </h1>
                         <p className="text-muted-foreground">
@@ -195,14 +218,14 @@ export default function JournalIndex() {
                     </div>
                     <Button
                         onClick={() => router.visit('/journal/create')}
-                        className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30"
+                        className="bg-gradient-to-r from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/25 transition-all hover:from-emerald-600 hover:to-teal-600 hover:shadow-xl hover:shadow-emerald-500/30"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         New Transaction
                     </Button>
                 </div>
 
-                <CardUI className="animate-fade-in-up stagger-1 opacity-0 overflow-hidden">
+                <CardUI className="animate-fade-in-up stagger-1 overflow-hidden opacity-0">
                     <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-900 dark:to-slate-800/50">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <CardTitle className="flex items-center gap-2">
@@ -239,7 +262,7 @@ export default function JournalIndex() {
                                         Search
                                     </label>
                                     <div className="relative">
-                                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <Search className="absolute top-2.5 left-2 h-4 w-4 text-muted-foreground" />
                                         <Input
                                             placeholder="Search transactions..."
                                             value={search}
@@ -392,7 +415,7 @@ export default function JournalIndex() {
                     )}
                 </CardUI>
 
-                <CardUI className="animate-fade-in-up stagger-2 opacity-0 overflow-hidden">
+                <CardUI className="animate-fade-in-up stagger-2 overflow-hidden opacity-0">
                     <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-900 dark:to-slate-800/50">
                         <CardTitle className="flex items-center gap-2">
                             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
@@ -414,37 +437,39 @@ export default function JournalIndex() {
                             onDelete={handleDelete}
                         />
 
-                        {!isLoading && transactions.length > 0 && lastPage > 1 && (
-                            <div className="mt-6 flex flex-col items-center justify-between gap-3 sm:flex-row">
-                                <Button
-                                    variant="outline"
-                                    onClick={() =>
-                                        setCurrentPage((prev) =>
-                                            Math.max(1, prev - 1),
-                                        )
-                                    }
-                                    disabled={currentPage === 1}
-                                    className="w-full sm:w-auto hover-lift"
-                                >
-                                    Previous
-                                </Button>
-                                <span className="text-sm text-muted-foreground">
-                                    Page {currentPage} of {lastPage}
-                                </span>
-                                <Button
-                                    variant="outline"
-                                    onClick={() =>
-                                        setCurrentPage((prev) =>
-                                            Math.min(lastPage, prev + 1),
-                                        )
-                                    }
-                                    disabled={currentPage === lastPage}
-                                    className="w-full sm:w-auto hover-lift"
-                                >
-                                    Next
-                                </Button>
-                            </div>
-                        )}
+                        {!isLoading &&
+                            transactions.length > 0 &&
+                            lastPage > 1 && (
+                                <div className="mt-6 flex flex-col items-center justify-between gap-3 sm:flex-row">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() =>
+                                            setCurrentPage((prev) =>
+                                                Math.max(1, prev - 1),
+                                            )
+                                        }
+                                        disabled={currentPage === 1}
+                                        className="hover-lift w-full sm:w-auto"
+                                    >
+                                        Previous
+                                    </Button>
+                                    <span className="text-sm text-muted-foreground">
+                                        Page {currentPage} of {lastPage}
+                                    </span>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() =>
+                                            setCurrentPage((prev) =>
+                                                Math.min(lastPage, prev + 1),
+                                            )
+                                        }
+                                        disabled={currentPage === lastPage}
+                                        className="hover-lift w-full sm:w-auto"
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            )}
                     </CardContent>
                 </CardUI>
             </div>

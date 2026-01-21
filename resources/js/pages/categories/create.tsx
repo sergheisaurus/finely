@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
 import {
-    Card as CardUI,
     CardContent,
     CardHeader,
     CardTitle,
+    Card as CardUI,
 } from '@/components/ui/card';
 import { getIconByName, IconPicker } from '@/components/ui/icon-picker';
 import { Input } from '@/components/ui/input';
@@ -86,7 +86,9 @@ export default function CategoryCreate() {
 
             router.visit('/categories');
         } catch (error: unknown) {
-            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            const err = error as {
+                response?: { data?: { errors?: Record<string, string> } };
+            };
             if (err.response?.data?.errors) {
                 setErrors(err.response.data.errors);
             } else {
@@ -140,7 +142,9 @@ export default function CategoryCreate() {
                                     <Input
                                         id="name"
                                         value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={(e) =>
+                                            setName(e.target.value)
+                                        }
                                         placeholder="e.g., Groceries, Salary"
                                         required
                                         maxLength={255}
@@ -157,9 +161,9 @@ export default function CategoryCreate() {
                                     <Label htmlFor="type">Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: 'income' | 'expense') =>
-                                            setType(value)
-                                        }
+                                        onValueChange={(
+                                            value: 'income' | 'expense',
+                                        ) => setType(value)}
                                     >
                                         <SelectTrigger>
                                             <SelectValue />
@@ -193,15 +197,17 @@ export default function CategoryCreate() {
                                             <SelectValue placeholder="None (Top-level category)" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {parentCategories.map((category) => (
-                                                <SelectItem
-                                                    key={category.id}
-                                                    value={category.id.toString()}
-                                                >
-                                                    {category.icon}{' '}
-                                                    {category.name}
-                                                </SelectItem>
-                                            ))}
+                                            {parentCategories.map(
+                                                (category) => (
+                                                    <SelectItem
+                                                        key={category.id}
+                                                        value={category.id.toString()}
+                                                    >
+                                                        {category.icon}{' '}
+                                                        {category.name}
+                                                    </SelectItem>
+                                                ),
+                                            )}
                                         </SelectContent>
                                     </Select>
                                     {errors.parent_id && (
@@ -268,7 +274,8 @@ export default function CategoryCreate() {
                                         >
                                             {icon ? (
                                                 (() => {
-                                                    const IconComponent = getIconByName(icon);
+                                                    const IconComponent =
+                                                        getIconByName(icon);
                                                     return IconComponent ? (
                                                         <IconComponent className="h-5 w-5 text-white" />
                                                     ) : (
@@ -311,9 +318,7 @@ export default function CategoryCreate() {
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting
-                                ? 'Creating...'
-                                : 'Create Category'}
+                            {isSubmitting ? 'Creating...' : 'Create Category'}
                         </Button>
                     </div>
                 </form>

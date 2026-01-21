@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-@import "tw-animate-css";
+@import 'tw-animate-css';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -215,7 +215,8 @@
 }
 
 @keyframes pulse-subtle {
-    0%, 100% {
+    0%,
+    100% {
         opacity: 1;
     }
     50% {
@@ -233,7 +234,8 @@
 }
 
 @keyframes float {
-    0%, 100% {
+    0%,
+    100% {
         transform: translateY(0);
     }
     50% {
@@ -282,12 +284,24 @@
     }
 
     /* Stagger children animation delays */
-    .stagger-1 { animation-delay: 0.1s; }
-    .stagger-2 { animation-delay: 0.2s; }
-    .stagger-3 { animation-delay: 0.3s; }
-    .stagger-4 { animation-delay: 0.4s; }
-    .stagger-5 { animation-delay: 0.5s; }
-    .stagger-6 { animation-delay: 0.6s; }
+    .stagger-1 {
+        animation-delay: 0.1s;
+    }
+    .stagger-2 {
+        animation-delay: 0.2s;
+    }
+    .stagger-3 {
+        animation-delay: 0.3s;
+    }
+    .stagger-4 {
+        animation-delay: 0.4s;
+    }
+    .stagger-5 {
+        animation-delay: 0.5s;
+    }
+    .stagger-6 {
+        animation-delay: 0.6s;
+    }
 
     /* Initial state for animation */
     .animate-on-enter {
@@ -296,12 +310,16 @@
 
     /* Hover lift effect */
     .hover-lift {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
     }
 
     .hover-lift:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        box-shadow:
+            0 10px 25px -5px rgba(0, 0, 0, 0.1),
+            0 8px 10px -6px rgba(0, 0, 0, 0.1);
     }
 
     /* Gradient text animation */
@@ -311,7 +329,8 @@
     }
 
     @keyframes gradient-shift {
-        0%, 100% {
+        0%,
+        100% {
             background-position: 0% 50%;
         }
         50% {

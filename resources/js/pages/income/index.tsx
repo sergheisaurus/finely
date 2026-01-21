@@ -117,9 +117,9 @@ export default function IncomeIndex() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Recurring Income" />
             <div className="space-y-6 p-4 md:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up">
+                <div className="animate-fade-in-up flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold md:text-3xl bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">
+                        <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold text-transparent md:text-3xl dark:from-white dark:to-slate-400">
                             Recurring Income
                         </h1>
                         <p className="text-muted-foreground">
@@ -128,7 +128,7 @@ export default function IncomeIndex() {
                     </div>
                     <Button
                         onClick={() => router.visit('/income/create')}
-                        className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30"
+                        className="bg-gradient-to-r from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/25 transition-all hover:from-emerald-600 hover:to-teal-600 hover:shadow-xl hover:shadow-emerald-500/30"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         Add Income
@@ -137,7 +137,7 @@ export default function IncomeIndex() {
 
                 {/* Stats Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <Card className="animate-fade-in-up stagger-1 opacity-0 bg-gradient-to-br from-emerald-500 to-teal-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-1 hover-lift bg-gradient-to-br from-emerald-500 to-teal-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -148,12 +148,12 @@ export default function IncomeIndex() {
                                         {stats?.active_count ?? 0}
                                     </p>
                                 </div>
-                                <TrendingUp className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <TrendingUp className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-2 opacity-0 bg-gradient-to-br from-blue-500 to-cyan-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-2 hover-lift bg-gradient-to-br from-blue-500 to-cyan-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -167,12 +167,12 @@ export default function IncomeIndex() {
                                         )}
                                     </p>
                                 </div>
-                                <TrendingUp className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <TrendingUp className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-3 opacity-0 bg-gradient-to-br from-amber-500 to-orange-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-3 hover-lift bg-gradient-to-br from-amber-500 to-orange-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -186,12 +186,12 @@ export default function IncomeIndex() {
                                         )}
                                     </p>
                                 </div>
-                                <TrendingUp className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <TrendingUp className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-4 opacity-0 bg-gradient-to-br from-green-500 to-green-600 text-white hover-lift sm:col-span-2 lg:col-span-1">
+                    <Card className="animate-fade-in-up stagger-4 hover-lift bg-gradient-to-br from-green-500 to-green-600 text-white opacity-0 sm:col-span-2 lg:col-span-1">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -202,14 +202,14 @@ export default function IncomeIndex() {
                                         {stats?.expected_this_week ?? 0}
                                     </p>
                                 </div>
-                                <Check className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <Check className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
                 {isLoading ? (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-in-up stagger-5 opacity-0">
+                    <div className="animate-fade-in-up stagger-5 grid gap-4 opacity-0 sm:grid-cols-2 lg:grid-cols-3">
                         {[1, 2, 3, 4, 5, 6].map((i) => (
                             <div
                                 key={i}
@@ -218,7 +218,7 @@ export default function IncomeIndex() {
                         ))}
                     </div>
                 ) : incomes.length === 0 ? (
-                    <Card className="animate-fade-in-up stagger-5 opacity-0 overflow-hidden">
+                    <Card className="animate-fade-in-up stagger-5 overflow-hidden opacity-0">
                         <CardContent className="p-12 text-center">
                             <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/50 dark:to-teal-900/50">
                                 <TrendingUp className="h-10 w-10 text-emerald-500" />
@@ -241,7 +241,7 @@ export default function IncomeIndex() {
                 ) : (
                     <>
                         {activeIncomes.length > 0 && (
-                            <div className="space-y-4 animate-fade-in-up stagger-5 opacity-0">
+                            <div className="animate-fade-in-up stagger-5 space-y-4 opacity-0">
                                 <h2 className="text-xl font-bold md:text-2xl">
                                     Active Income
                                 </h2>
@@ -260,8 +260,8 @@ export default function IncomeIndex() {
                         )}
 
                         {pausedIncomes.length > 0 && (
-                            <div className="space-y-4 animate-fade-in-up stagger-6 opacity-0">
-                                <h2 className="text-xl font-bold md:text-2xl text-muted-foreground">
+                            <div className="animate-fade-in-up stagger-6 space-y-4 opacity-0">
+                                <h2 className="text-xl font-bold text-muted-foreground md:text-2xl">
                                     Paused Income
                                 </h2>
                                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -297,7 +297,7 @@ function IncomeCard({
 }) {
     return (
         <Card
-            className={`group transition-all duration-200 hover:shadow-md hover-lift overflow-hidden ${
+            className={`group hover-lift overflow-hidden transition-all duration-200 hover:shadow-md ${
                 !income.is_active ? 'opacity-60' : ''
             }`}
         >
@@ -328,7 +328,12 @@ function IncomeCard({
                             +{formatCurrency(income.amount, income.currency)}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                            ~{formatCurrency(income.monthly_equivalent, income.currency)}/mo
+                            ~
+                            {formatCurrency(
+                                income.monthly_equivalent,
+                                income.currency,
+                            )}
+                            /mo
                         </p>
                     </div>
                 </div>
@@ -353,7 +358,10 @@ function IncomeCard({
                             </span>
                         ) : (
                             <span className="text-xs text-muted-foreground">
-                                Next: {new Date(income.next_expected_date).toLocaleDateString()}
+                                Next:{' '}
+                                {new Date(
+                                    income.next_expected_date,
+                                ).toLocaleDateString()}
                             </span>
                         )}
                     </div>
@@ -370,7 +378,9 @@ function IncomeCard({
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => router.visit(`/income/${income.id}/edit`)}
+                        onClick={() =>
+                            router.visit(`/income/${income.id}/edit`)
+                        }
                     >
                         <Edit className="h-4 w-4" />
                     </Button>

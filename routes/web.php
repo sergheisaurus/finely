@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\OnboardingController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -13,11 +14,27 @@ Route::get('/home', function () {
     return redirect()->route('dashboard');
 })->middleware(['auth', 'verified']);
 
-Route::middleware(['auth', 'verified'])->group(function () {
+// Onboarding routes (auth required, but NOT onboarding middleware)
+Route::middleware(['auth', 'verified'])->prefix('onboarding')->name('onboarding.')->group(function () {
+    Route::get('/', [OnboardingController::class, 'index'])->name('index');
+    Route::post('/account', [OnboardingController::class, 'storeAccount'])->name('store-account');
+    Route::post('/cards', [OnboardingController::class, 'storeCards'])->name('store-cards');
+    Route::post('/subscriptions', [OnboardingController::class, 'storeSubscriptions'])->name('store-subscriptions');
+    Route::post('/incomes', [OnboardingController::class, 'storeIncomes'])->name('store-incomes');
+    Route::post('/complete', [OnboardingController::class, 'complete'])->name('complete');
+    Route::post('/skip', [OnboardingController::class, 'skip'])->name('skip');
+});
+
+Route::middleware(['auth', 'verified', 'onboarding'])->group(function () {
     // Dashboard
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
+
+    // Statistics
+    Route::get('statistics', function () {
+        return Inertia::render('statistics/index');
+    })->name('statistics');
 
     // Journal (Transactions)
     Route::get('journal', function () {
@@ -159,6 +176,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('budgets/{id}/edit', function ($id) {
         return Inertia::render('budgets/edit', ['budgetId' => $id]);
     })->name('budgets.edit');
+
+    // AI Chat
+    Route::get('chat', function () {
+        return Inertia::render('chat/index');
+    })->name('chat.index');
 });
 
 require __DIR__.'/settings.php';

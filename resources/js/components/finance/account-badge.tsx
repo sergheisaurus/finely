@@ -23,7 +23,8 @@ export function AccountBadge({
                 style={{ backgroundColor: account.color }}
             />
             {account.name}
-            {showBalance && ` - ${account.currency} ${account.balance.toFixed(2)}`}
+            {showBalance &&
+                ` - ${account.currency} ${account.balance.toFixed(2)}`}
         </Badge>
     );
 }

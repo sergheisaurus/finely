@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\MerchantController;
 use App\Http\Controllers\Api\PreferenceController;
 use App\Http\Controllers\Api\RecurringIncomeController;
+use App\Http\Controllers\Api\StatisticsController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\TransferController;
@@ -86,4 +87,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('budgets/{budget}/breakdown', [BudgetController::class, 'breakdown']);
     Route::get('budgets/{budget}/comparison', [BudgetController::class, 'comparison']);
     Route::get('budgets/{budget}/check-impact', [BudgetController::class, 'checkImpact']);
+
+    // AI Assistant
+    Route::post('ai/chat', [\App\Http\Controllers\Api\AiController::class, 'chat']); // Legacy simple chat
+    
+    // Full AI Chat
+    Route::apiResource('ai/conversations', \App\Http\Controllers\Api\AiChatController::class);
+    Route::post('ai/conversations/{conversation}/messages', [\App\Http\Controllers\Api\AiChatController::class, 'sendMessage']);
+
+    // AI Settings
+    Route::get('settings/ai', [\App\Http\Controllers\Api\Settings\AiSettingsController::class, 'show']);
+    Route::put('settings/ai', [\App\Http\Controllers\Api\Settings\AiSettingsController::class, 'update']);
+    Route::get('settings/ai/stats', [\App\Http\Controllers\Api\Settings\AiSettingsController::class, 'stats']);
+
+    // Statistics
+    Route::get('statistics/overview', [StatisticsController::class, 'overview']);
+    Route::get('statistics/snapshot', [StatisticsController::class, 'snapshot']);
+    Route::get('statistics/net-worth-trend', [StatisticsController::class, 'netWorthTrend']);
+    Route::get('statistics/cash-flow', [StatisticsController::class, 'cashFlow']);
+    Route::get('statistics/top-categories', [StatisticsController::class, 'topCategories']);
+    Route::get('statistics/top-merchants', [StatisticsController::class, 'topMerchants']);
 });

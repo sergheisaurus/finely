@@ -152,6 +152,22 @@ Custom expectations can be added in `tests/Pest.php`.
 
 **Form Requests**: Custom validation requests go in `app/Http/Requests/`. See `Settings/ProfileUpdateRequest.php` for example.
 
+## Common Pitfalls
+
+**Radix UI Select Empty Values**: `<SelectItem value="">` is NOT allowed - Radix Select throws an error because empty string is reserved for clearing the selection. When you need an "All" or "None" option, use a sentinel value:
+```tsx
+// BAD - will throw error
+<SelectItem value="">All Categories</SelectItem>
+
+// GOOD - use sentinel value
+<Select
+    value={categoryId || '__all__'}
+    onValueChange={(v) => setCategoryId(v === '__all__' ? '' : v)}
+>
+    <SelectItem value="__all__">All Categories</SelectItem>
+</Select>
+```
+
 ## Notes
 
 - The app uses React 19's new features and automatic JSX transform

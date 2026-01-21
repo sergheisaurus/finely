@@ -1,10 +1,10 @@
 import { Button } from '@/components/ui/button';
 import {
-    Card as CardUI,
     CardContent,
     CardDescription,
     CardHeader,
     CardTitle,
+    Card as CardUI,
 } from '@/components/ui/card';
 import { IconPicker } from '@/components/ui/icon-picker';
 import { Input } from '@/components/ui/input';
@@ -157,7 +157,9 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
 
             router.visit('/budgets');
         } catch (error: unknown) {
-            const err = error as { response?: { data?: { errors?: Record<string, string[]> } } };
+            const err = error as {
+                response?: { data?: { errors?: Record<string, string[]> } };
+            };
             if (err.response?.data?.errors) {
                 const flatErrors: Record<string, string> = {};
                 for (const [key, messages] of Object.entries(
@@ -202,7 +204,7 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
             <Head title={`Edit ${name}`} />
             <div className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
                 <div className="animate-fade-in-up">
-                    <h1 className="text-2xl font-bold md:text-3xl bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">
+                    <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold text-transparent md:text-3xl dark:from-white dark:to-slate-400">
                         Edit Budget
                     </h1>
                     <p className="text-muted-foreground">
@@ -223,7 +225,9 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
                                     <Input
                                         id="name"
                                         value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={(e) =>
+                                            setName(e.target.value)
+                                        }
                                         placeholder="e.g., Monthly Groceries, Entertainment"
                                         required
                                     />
@@ -235,14 +239,18 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="amount">Budget Amount *</Label>
+                                    <Label htmlFor="amount">
+                                        Budget Amount *
+                                    </Label>
                                     <Input
                                         id="amount"
                                         type="number"
                                         step="0.01"
                                         min="0.01"
                                         value={amount}
-                                        onChange={(e) => setAmount(e.target.value)}
+                                        onChange={(e) =>
+                                            setAmount(e.target.value)
+                                        }
                                         placeholder="0.00"
                                         required
                                     />
@@ -255,31 +263,49 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
 
                                 <div className="space-y-2">
                                     <Label htmlFor="currency">Currency</Label>
-                                    <Select value={currency} onValueChange={setCurrency}>
+                                    <Select
+                                        value={currency}
+                                        onValueChange={setCurrency}
+                                    >
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="CHF">CHF</SelectItem>
-                                            <SelectItem value="EUR">EUR</SelectItem>
-                                            <SelectItem value="USD">USD</SelectItem>
-                                            <SelectItem value="GBP">GBP</SelectItem>
+                                            <SelectItem value="CHF">
+                                                CHF
+                                            </SelectItem>
+                                            <SelectItem value="EUR">
+                                                EUR
+                                            </SelectItem>
+                                            <SelectItem value="USD">
+                                                USD
+                                            </SelectItem>
+                                            <SelectItem value="GBP">
+                                                GBP
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="period">Budget Period *</Label>
+                                    <Label htmlFor="period">
+                                        Budget Period *
+                                    </Label>
                                     <Select
                                         value={period}
-                                        onValueChange={(v) => setPeriod(v as BudgetPeriod)}
+                                        onValueChange={(v) =>
+                                            setPeriod(v as BudgetPeriod)
+                                        }
                                     >
                                         <SelectTrigger>
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {periods.map((p) => (
-                                                <SelectItem key={p.value} value={p.value}>
+                                                <SelectItem
+                                                    key={p.value}
+                                                    value={p.value}
+                                                >
                                                     {p.label}
                                                 </SelectItem>
                                             ))}
@@ -288,12 +314,16 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="start_date">Start Date *</Label>
+                                    <Label htmlFor="start_date">
+                                        Start Date *
+                                    </Label>
                                     <Input
                                         id="start_date"
                                         type="date"
                                         value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
+                                        onChange={(e) =>
+                                            setStartDate(e.target.value)
+                                        }
                                         required
                                     />
                                     {errors.start_date && (
@@ -304,12 +334,16 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="end_date">End Date (Optional)</Label>
+                                    <Label htmlFor="end_date">
+                                        End Date (Optional)
+                                    </Label>
                                     <Input
                                         id="end_date"
                                         type="date"
                                         value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
+                                        onChange={(e) =>
+                                            setEndDate(e.target.value)
+                                        }
                                     />
                                     <p className="text-xs text-muted-foreground">
                                         Leave empty for an ongoing budget
@@ -317,11 +351,15 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
                                 </div>
 
                                 <div className="space-y-2 md:col-span-2">
-                                    <Label htmlFor="description">Description</Label>
+                                    <Label htmlFor="description">
+                                        Description
+                                    </Label>
                                     <Textarea
                                         id="description"
                                         value={description}
-                                        onChange={(e) => setDescription(e.target.value)}
+                                        onChange={(e) =>
+                                            setDescription(e.target.value)
+                                        }
                                         placeholder="Additional notes about this budget..."
                                         rows={2}
                                     />
@@ -335,18 +373,24 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
                         <CardHeader>
                             <CardTitle>Category</CardTitle>
                             <CardDescription>
-                                Assign this budget to a specific expense category, or leave empty for an overall budget
+                                Assign this budget to a specific expense
+                                category, or leave empty for an overall budget
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label>Category</Label>
-                                <Select value={categoryId} onValueChange={setCategoryId}>
+                                <Select
+                                    value={categoryId || '__all__'}
+                                    onValueChange={(v) =>
+                                        setCategoryId(v === '__all__' ? '' : v)
+                                    }
+                                >
                                     <SelectTrigger>
                                         <SelectValue placeholder="Overall Budget (all expenses)" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">
+                                        <SelectItem value="__all__">
                                             Overall Budget (all expenses)
                                         </SelectItem>
                                         {categories.map((category) => (
@@ -378,7 +422,8 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
                                 <div className="space-y-0.5">
                                     <Label>Rollover Unused Budget</Label>
                                     <p className="text-sm text-muted-foreground">
-                                        Carry forward unused budget to the next period
+                                        Carry forward unused budget to the next
+                                        period
                                     </p>
                                 </div>
                                 <Switch
@@ -387,8 +432,10 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
                                 />
                             </div>
                             {rolloverUnused && (
-                                <p className="text-xs text-muted-foreground bg-muted p-3 rounded-lg">
-                                    If you spend less than your budget, the remaining amount will be added to your next period&apos;s budget.
+                                <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+                                    If you spend less than your budget, the
+                                    remaining amount will be added to your next
+                                    period&apos;s budget.
                                 </p>
                             )}
                         </CardContent>
@@ -410,10 +457,13 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
                                     min="0"
                                     max="100"
                                     value={alertThreshold}
-                                    onChange={(e) => setAlertThreshold(e.target.value)}
+                                    onChange={(e) =>
+                                        setAlertThreshold(e.target.value)
+                                    }
                                 />
                                 <p className="text-xs text-muted-foreground">
-                                    You&apos;ll be alerted when spending reaches {alertThreshold}% of the budget
+                                    You&apos;ll be alerted when spending reaches{' '}
+                                    {alertThreshold}% of the budget
                                 </p>
                             </div>
                         </CardContent>
@@ -433,12 +483,16 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
                                             id="color"
                                             type="color"
                                             value={color}
-                                            onChange={(e) => setColor(e.target.value)}
+                                            onChange={(e) =>
+                                                setColor(e.target.value)
+                                            }
                                             className="h-10 w-20 cursor-pointer"
                                         />
                                         <Input
                                             value={color}
-                                            onChange={(e) => setColor(e.target.value)}
+                                            onChange={(e) =>
+                                                setColor(e.target.value)
+                                            }
                                             placeholder="#4f46e5"
                                             className="flex-1"
                                         />
@@ -447,7 +501,10 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
 
                                 <div className="space-y-2">
                                     <Label>Icon</Label>
-                                    <IconPicker value={icon} onChange={setIcon} />
+                                    <IconPicker
+                                        value={icon}
+                                        onChange={setIcon}
+                                    />
                                 </div>
                             </div>
                         </CardContent>
@@ -466,12 +523,15 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
                                         Track this budget
                                     </p>
                                 </div>
-                                <Switch checked={isActive} onCheckedChange={setIsActive} />
+                                <Switch
+                                    checked={isActive}
+                                    onCheckedChange={setIsActive}
+                                />
                             </div>
                         </CardContent>
                     </CardUI>
 
-                    <div className="flex gap-4 animate-fade-in-up stagger-7 opacity-0">
+                    <div className="animate-fade-in-up stagger-7 flex gap-4 opacity-0">
                         <Button
                             type="button"
                             variant="outline"

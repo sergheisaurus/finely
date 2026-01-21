@@ -7,6 +7,7 @@ import { formatCurrency } from '@/lib/format';
 import { type BreadcrumbItem } from '@/types';
 import type { Subscription, Transaction } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
+import axios from 'axios';
 import {
     AlertCircle,
     ArrowLeft,
@@ -85,12 +86,33 @@ export default function SubscriptionView({
         }
     };
 
+    const handleProcessPayment = async () => {
+        if (!subscription) return;
+
+        // Optimistically update
+        const toastId = toast.loading('Processing payment...');
+
+        try {
+            await api.post(`/subscriptions/${subscription.id}/process`);
+            toast.dismiss(toastId);
+            toast.success('Payment processed successfully');
+            await fetchData();
+        } catch (error: unknown) {
+            toast.dismiss(toastId);
+            console.error('Failed to process payment:', error);
+            // The API returns 422 with a message if not due or inactive, handle it gracefully
+            if (axios.isAxiosError(error) && error.response?.data?.message) {
+                toast.error(error.response.data.message);
+            } else {
+                toast.error('Failed to process payment');
+            }
+        }
+    };
+
     const handleDelete = async () => {
         if (!subscription) return;
         if (
-            !confirm(
-                `Are you sure you want to delete "${subscription.name}"?`,
-            )
+            !confirm(`Are you sure you want to delete "${subscription.name}"?`)
         ) {
             return;
         }
@@ -144,7 +166,7 @@ export default function SubscriptionView({
             <Head title={subscription.name} />
             <div className="space-y-6 p-4 md:p-6">
                 {/* Header */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up">
+                <div className="animate-fade-in-up flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-4">
                         <Button
                             variant="ghost"
@@ -156,7 +178,8 @@ export default function SubscriptionView({
                         <div
                             className="flex h-14 w-14 items-center justify-center rounded-xl"
                             style={{
-                                backgroundColor: subscription.color || '#8b5cf6',
+                                backgroundColor:
+                                    subscription.color || '#8b5cf6',
                             }}
                         >
                             <DynamicIcon
@@ -189,6 +212,19 @@ export default function SubscriptionView({
                         </div>
                     </div>
                     <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={handleProcessPayment}
+                            disabled={!subscription.is_active}
+                            title={
+                                !subscription.is_active
+                                    ? 'Activate subscription to process payment'
+                                    : 'Manually record a payment'
+                            }
+                        >
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Pay Now
+                        </Button>
                         <Button variant="outline" onClick={handleToggle}>
                             {subscription.is_active ? (
                                 <>
@@ -221,7 +257,7 @@ export default function SubscriptionView({
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-fade-in-up stagger-1 opacity-0">
+                <div className="animate-fade-in-up stagger-1 grid gap-4 opacity-0 sm:grid-cols-2 lg:grid-cols-4">
                     <Card className="bg-gradient-to-br from-violet-500 to-purple-600 text-white">
                         <CardContent className="p-6">
                             <p className="text-sm opacity-90">Amount</p>
@@ -404,11 +440,11 @@ export default function SubscriptionView({
                         </CardHeader>
                         <CardContent>
                             {transactions.length === 0 ? (
-                                <p className="text-center text-muted-foreground py-8">
+                                <p className="py-8 text-center text-muted-foreground">
                                     No payments recorded yet
                                 </p>
                             ) : (
-                                <div className="space-y-3 max-h-80 overflow-y-auto">
+                                <div className="max-h-80 space-y-3 overflow-y-auto">
                                     {transactions.map((transaction) => (
                                         <div
                                             key={transaction.id}

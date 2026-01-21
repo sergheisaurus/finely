@@ -116,8 +116,18 @@ export interface UserPreference {
     updated_at: string;
 }
 
-export type BillingCycle = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
-export type IncomeFrequency = 'weekly' | 'bi_weekly' | 'monthly' | 'quarterly' | 'yearly';
+export type BillingCycle =
+    | 'daily'
+    | 'weekly'
+    | 'monthly'
+    | 'quarterly'
+    | 'yearly';
+export type IncomeFrequency =
+    | 'weekly'
+    | 'bi_weekly'
+    | 'monthly'
+    | 'quarterly'
+    | 'yearly';
 
 export interface Subscription {
     id: number;

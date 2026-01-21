@@ -112,7 +112,9 @@ export default function AccountEdit({ accountId }: AccountEditProps) {
 
             router.visit(`/accounts/${accountId}`);
         } catch (error: unknown) {
-            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            const err = error as {
+                response?: { data?: { errors?: Record<string, string> } };
+            };
             if (err.response?.data?.errors) {
                 setErrors(err.response.data.errors);
             } else {
@@ -183,7 +185,9 @@ export default function AccountEdit({ accountId }: AccountEditProps) {
                                     <Input
                                         id="name"
                                         value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={(e) =>
+                                            setName(e.target.value)
+                                        }
                                         placeholder="My Checking Account"
                                         required
                                     />
@@ -198,9 +202,9 @@ export default function AccountEdit({ accountId }: AccountEditProps) {
                                     <Label htmlFor="type">Account Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: 'checking' | 'savings') =>
-                                            setType(value)
-                                        }
+                                        onValueChange={(
+                                            value: 'checking' | 'savings',
+                                        ) => setType(value)}
                                     >
                                         <SelectTrigger>
                                             <SelectValue />
@@ -226,7 +230,9 @@ export default function AccountEdit({ accountId }: AccountEditProps) {
                                     <AmountInput
                                         name="balance"
                                         value={parseFloat(balance) || 0}
-                                        onChange={(value) => setBalance(value.toString())}
+                                        onChange={(value) =>
+                                            setBalance(value.toString())
+                                        }
                                         currency={currency}
                                         required
                                     />
@@ -320,7 +326,9 @@ export default function AccountEdit({ accountId }: AccountEditProps) {
                                                         ? '3px solid black'
                                                         : 'none',
                                             }}
-                                            onClick={() => setColor(colorOption)}
+                                            onClick={() =>
+                                                setColor(colorOption)
+                                            }
                                         />
                                     ))}
                                 </div>

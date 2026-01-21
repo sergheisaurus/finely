@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
 import {
-    Card as CardUI,
     CardContent,
     CardHeader,
     CardTitle,
+    Card as CardUI,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -95,7 +95,9 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
 
             router.visit('/merchants');
         } catch (error: unknown) {
-            const err = error as { response?: { data?: { errors?: Record<string, string> } } };
+            const err = error as {
+                response?: { data?: { errors?: Record<string, string> } };
+            };
             if (err.response?.data?.errors) {
                 setErrors(err.response.data.errors);
             } else {
@@ -170,7 +172,9 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
                                     <Input
                                         id="name"
                                         value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={(e) =>
+                                            setName(e.target.value)
+                                        }
                                         placeholder="e.g., Migros, Coop, John Smith"
                                         required
                                         maxLength={255}
@@ -187,9 +191,9 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
                                     <Label htmlFor="type">Type *</Label>
                                     <Select
                                         value={type}
-                                        onValueChange={(value: 'company' | 'person') =>
-                                            setType(value)
-                                        }
+                                        onValueChange={(
+                                            value: 'company' | 'person',
+                                        ) => setType(value)}
                                     >
                                         <SelectTrigger>
                                             <SelectValue />
@@ -294,9 +298,7 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting
-                                ? 'Updating...'
-                                : 'Update Merchant'}
+                            {isSubmitting ? 'Updating...' : 'Update Merchant'}
                         </Button>
                     </div>
                 </form>

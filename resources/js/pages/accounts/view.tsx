@@ -1,14 +1,26 @@
 import { AccountTypeBadge } from '@/components/finance/account-type-badge';
 import { TransactionList } from '@/components/finance/transaction-list';
 import { Button } from '@/components/ui/button';
-import { Card as CardUI, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    CardContent,
+    CardHeader,
+    CardTitle,
+    Card as CardUI,
+} from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import { type BreadcrumbItem } from '@/types';
 import type { BankAccount, Card, Transaction } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
-import { Building2, CreditCard, Edit, Star, Trash2, Wallet } from 'lucide-react';
+import {
+    Building2,
+    CreditCard,
+    Edit,
+    Star,
+    Trash2,
+    Wallet,
+} from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -66,7 +78,11 @@ export default function AccountView({ accountId }: AccountViewProps) {
 
     useEffect(() => {
         const loadData = async () => {
-            await Promise.all([fetchAccount(), fetchTransactions(), fetchLinkedCards()]);
+            await Promise.all([
+                fetchAccount(),
+                fetchTransactions(),
+                fetchLinkedCards(),
+            ]);
             setIsLoading(false);
         };
         loadData();
@@ -182,7 +198,9 @@ export default function AccountView({ accountId }: AccountViewProps) {
 
                             <div className="flex flex-col items-end gap-4">
                                 <div className="text-right">
-                                    <p className="text-sm opacity-90">Balance</p>
+                                    <p className="text-sm opacity-90">
+                                        Balance
+                                    </p>
                                     <p className="text-4xl font-bold">
                                         {formatCurrency(
                                             account.balance,
@@ -249,7 +267,12 @@ export default function AccountView({ accountId }: AccountViewProps) {
                                             </p>
                                             <p className="text-sm text-muted-foreground">
                                                 {card.card_number
-                                                    ? card.card_number.replace(/(\d{4})/g, '$1 ').trim()
+                                                    ? card.card_number
+                                                          .replace(
+                                                              /(\d{4})/g,
+                                                              '$1 ',
+                                                          )
+                                                          .trim()
                                                     : 'No card number'}
                                             </p>
                                         </div>
@@ -267,7 +290,9 @@ export default function AccountView({ accountId }: AccountViewProps) {
                             variant="outline"
                             size="sm"
                             onClick={() =>
-                                router.visit(`/journal?account_id=${account.id}`)
+                                router.visit(
+                                    `/journal?account_id=${account.id}`,
+                                )
                             }
                         >
                             View All

@@ -16,25 +16,29 @@ export function TransactionTypeBadge({
             label: 'Income',
             icon: ArrowDownLeft,
             variant: 'default' as const,
-            className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+            className:
+                'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
         },
         expense: {
             label: 'Expense',
             icon: ArrowUpRight,
             variant: 'default' as const,
-            className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+            className:
+                'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
         },
         transfer: {
             label: 'Transfer',
             icon: Repeat,
             variant: 'secondary' as const,
-            className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+            className:
+                'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
         },
         card_payment: {
             label: 'Card Payment',
             icon: CreditCard,
             variant: 'secondary' as const,
-            className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+            className:
+                'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
         },
     };
 

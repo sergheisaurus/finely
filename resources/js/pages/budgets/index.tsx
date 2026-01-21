@@ -139,9 +139,9 @@ export default function BudgetsIndex() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Budgets" />
             <div className="space-y-6 p-4 md:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up">
+                <div className="animate-fade-in-up flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold md:text-3xl bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">
+                        <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold text-transparent md:text-3xl dark:from-white dark:to-slate-400">
                             Budgets
                         </h1>
                         <p className="text-muted-foreground">
@@ -150,7 +150,7 @@ export default function BudgetsIndex() {
                     </div>
                     <Button
                         onClick={() => router.visit('/budgets/create')}
-                        className="bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30"
+                        className="bg-gradient-to-r from-indigo-500 to-blue-500 shadow-lg shadow-indigo-500/25 transition-all hover:from-indigo-600 hover:to-blue-600 hover:shadow-xl hover:shadow-indigo-500/30"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         Add Budget
@@ -159,7 +159,7 @@ export default function BudgetsIndex() {
 
                 {/* Stats Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <Card className="animate-fade-in-up stagger-1 opacity-0 bg-gradient-to-br from-indigo-500 to-blue-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-1 hover-lift bg-gradient-to-br from-indigo-500 to-blue-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -170,12 +170,12 @@ export default function BudgetsIndex() {
                                         {stats?.active_count ?? 0}
                                     </p>
                                 </div>
-                                <PiggyBank className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <PiggyBank className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-2 opacity-0 bg-gradient-to-br from-blue-500 to-cyan-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-2 hover-lift bg-gradient-to-br from-blue-500 to-cyan-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -189,12 +189,12 @@ export default function BudgetsIndex() {
                                         )}
                                     </p>
                                 </div>
-                                <Wallet className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <Wallet className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-3 opacity-0 bg-gradient-to-br from-amber-500 to-orange-600 text-white hover-lift">
+                    <Card className="animate-fade-in-up stagger-3 hover-lift bg-gradient-to-br from-amber-500 to-orange-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -209,16 +209,19 @@ export default function BudgetsIndex() {
                                     </p>
                                     {stats && stats.total_budgeted > 0 && (
                                         <p className="text-xs opacity-80">
-                                            {stats.overall_percentage.toFixed(1)}% of budget
+                                            {stats.overall_percentage.toFixed(
+                                                1,
+                                            )}
+                                            % of budget
                                         </p>
                                     )}
                                 </div>
-                                <TrendingUp className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <TrendingUp className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-4 opacity-0 bg-gradient-to-br from-red-500 to-rose-600 text-white hover-lift sm:col-span-2 lg:col-span-1">
+                    <Card className="animate-fade-in-up stagger-4 hover-lift bg-gradient-to-br from-red-500 to-rose-600 text-white opacity-0 sm:col-span-2 lg:col-span-1">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -234,14 +237,14 @@ export default function BudgetsIndex() {
                                         </p>
                                     )}
                                 </div>
-                                <AlertTriangle className="h-10 w-10 md:h-12 md:w-12 opacity-80" />
+                                <AlertTriangle className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
                 {isLoading ? (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-in-up stagger-5 opacity-0">
+                    <div className="animate-fade-in-up stagger-5 grid gap-4 opacity-0 sm:grid-cols-2 lg:grid-cols-3">
                         {[1, 2, 3, 4, 5, 6].map((i) => (
                             <div
                                 key={i}
@@ -250,7 +253,7 @@ export default function BudgetsIndex() {
                         ))}
                     </div>
                 ) : budgets.length === 0 ? (
-                    <Card className="animate-fade-in-up stagger-5 opacity-0 overflow-hidden">
+                    <Card className="animate-fade-in-up stagger-5 overflow-hidden opacity-0">
                         <CardContent className="p-12 text-center">
                             <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/50 dark:to-blue-900/50">
                                 <PiggyBank className="h-10 w-10 text-indigo-500" />
@@ -273,7 +276,7 @@ export default function BudgetsIndex() {
                 ) : (
                     <>
                         {activeBudgets.length > 0 && (
-                            <div className="space-y-4 animate-fade-in-up stagger-5 opacity-0">
+                            <div className="animate-fade-in-up stagger-5 space-y-4 opacity-0">
                                 <h2 className="text-xl font-bold md:text-2xl">
                                     Active Budgets
                                 </h2>
@@ -292,8 +295,8 @@ export default function BudgetsIndex() {
                         )}
 
                         {pausedBudgets.length > 0 && (
-                            <div className="space-y-4 animate-fade-in-up stagger-6 opacity-0">
-                                <h2 className="text-xl font-bold md:text-2xl text-muted-foreground">
+                            <div className="animate-fade-in-up stagger-6 space-y-4 opacity-0">
+                                <h2 className="text-xl font-bold text-muted-foreground md:text-2xl">
                                     Paused Budgets
                                 </h2>
                                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -332,7 +335,7 @@ function BudgetCard({
 
     return (
         <Card
-            className={`group transition-all duration-200 hover:shadow-md hover-lift overflow-hidden ${
+            className={`group hover-lift overflow-hidden transition-all duration-200 hover:shadow-md ${
                 !budget.is_active ? 'opacity-60' : ''
             }`}
         >
@@ -367,11 +370,19 @@ function BudgetCard({
                     </div>
                     <div className="text-right">
                         <p className="font-bold">
-                            {formatCurrency(budget.effective_budget, budget.currency)}
+                            {formatCurrency(
+                                budget.effective_budget,
+                                budget.currency,
+                            )}
                         </p>
                         {budget.rollover_amount > 0 && (
                             <p className="text-xs text-muted-foreground">
-                                +{formatCurrency(budget.rollover_amount, budget.currency)} rollover
+                                +
+                                {formatCurrency(
+                                    budget.rollover_amount,
+                                    budget.currency,
+                                )}{' '}
+                                rollover
                             </p>
                         )}
                     </div>
@@ -379,23 +390,33 @@ function BudgetCard({
 
                 {/* Progress Bar */}
                 <div className="mt-4">
-                    <div className="flex items-center justify-between text-sm mb-1">
+                    <div className="mb-1 flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">
-                            {formatCurrency(budget.current_period_spent, budget.currency)} spent
+                            {formatCurrency(
+                                budget.current_period_spent,
+                                budget.currency,
+                            )}{' '}
+                            spent
                         </span>
-                        <span className={healthTextColors[budget.budget_health]}>
+                        <span
+                            className={healthTextColors[budget.budget_health]}
+                        >
                             {budget.spent_percentage.toFixed(1)}%
                         </span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                         <div
                             className={`h-full rounded-full transition-all duration-500 ${progressColor}`}
                             style={{ width: `${progressWidth}%` }}
                         />
                     </div>
-                    <div className="flex items-center justify-between mt-1">
+                    <div className="mt-1 flex items-center justify-between">
                         <span className="text-xs text-muted-foreground">
-                            {formatCurrency(budget.remaining_amount, budget.currency)} remaining
+                            {formatCurrency(
+                                budget.remaining_amount,
+                                budget.currency,
+                            )}{' '}
+                            remaining
                         </span>
                         <span className="text-xs text-muted-foreground">
                             {budget.days_left_in_period} days left
@@ -407,22 +428,30 @@ function BudgetCard({
                 {budget.is_active && (
                     <div className="mt-3 flex items-center gap-2">
                         {budget.is_over_budget ? (
-                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${healthBgColors.exceeded} ${healthTextColors.exceeded}`}>
+                            <span
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${healthBgColors.exceeded} ${healthTextColors.exceeded}`}
+                            >
                                 <AlertCircle className="h-3 w-3" />
                                 Over budget
                             </span>
                         ) : budget.is_near_limit ? (
-                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${healthBgColors.warning} ${healthTextColors.warning}`}>
+                            <span
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${healthBgColors.warning} ${healthTextColors.warning}`}
+                            >
                                 <AlertTriangle className="h-3 w-3" />
                                 Near limit
                             </span>
                         ) : budget.will_exceed ? (
-                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${healthBgColors.danger} ${healthTextColors.danger}`}>
+                            <span
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${healthBgColors.danger} ${healthTextColors.danger}`}
+                            >
                                 <TrendingUp className="h-3 w-3" />
                                 Projected to exceed
                             </span>
                         ) : (
-                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${healthBgColors.healthy} ${healthTextColors.healthy}`}>
+                            <span
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${healthBgColors.healthy} ${healthTextColors.healthy}`}
+                            >
                                 On track
                             </span>
                         )}
@@ -440,7 +469,9 @@ function BudgetCard({
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => router.visit(`/budgets/${budget.id}/edit`)}
+                        onClick={() =>
+                            router.visit(`/budgets/${budget.id}/edit`)
+                        }
                     >
                         <Edit className="h-4 w-4" />
                     </Button>

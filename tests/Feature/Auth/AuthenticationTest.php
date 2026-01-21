@@ -11,7 +11,12 @@ test('login screen can be rendered', function () {
 });
 
 test('users can authenticate using the login screen', function () {
-    $user = User::factory()->withoutTwoFactor()->create();
+    $user = User::factory()->withoutTwoFactor()->create([
+        'onboarding_completed_at' => now(),
+    ]);
+
+    // Create a bank account so onboarding is complete
+    \App\Models\BankAccount::factory()->create(['user_id' => $user->id]);
 
     $response = $this->post(route('login.store'), [
         'email' => $user->email,
@@ -20,6 +25,18 @@ test('users can authenticate using the login screen', function () {
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
+});
+
+test('new users without onboarding are redirected to onboarding', function () {
+    $user = User::factory()->withoutTwoFactor()->create();
+
+    $response = $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticated();
+    $response->assertRedirect(route('onboarding.index', absolute: false));
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {
