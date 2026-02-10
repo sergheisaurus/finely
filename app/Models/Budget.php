@@ -204,9 +204,13 @@ class Budget extends Model
             ->where('type', 'expense')
             ->forDateRange($this->current_period_start, $this->current_period_end);
 
-        // If category-specific budget, filter by category
+        // If category-specific budget, filter by category (including children)
         if ($this->category_id) {
-            $query->where('category_id', $this->category_id);
+            $categoryIds = Category::where('id', $this->category_id)
+                ->orWhere('parent_id', $this->category_id)
+                ->pluck('id');
+
+            $query->whereIn('category_id', $categoryIds);
         }
 
         return (float) $query->sum('amount');
