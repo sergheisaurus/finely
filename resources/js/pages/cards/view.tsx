@@ -450,6 +450,9 @@ Network: ${card.card_network}`;
                             onTransactionClick={(transaction) => {
                                 console.log('View transaction:', transaction);
                             }}
+                            onEdit={(transaction) =>
+                                router.visit(`/journal/${transaction.id}/edit`)
+                            }
                         />
                         {transactions.length === 0 && (
                             <div className="py-8 text-center">
