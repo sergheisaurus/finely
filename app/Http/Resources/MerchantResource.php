@@ -14,6 +14,9 @@ class MerchantResource extends JsonResource
             'name' => $this->name,
             'type' => $this->type,
             'image_path' => $this->image_path,
+            'image_url' => $this->image_path
+                ? (filter_var($this->image_path, FILTER_VALIDATE_URL) ? $this->image_path : \Illuminate\Support\Facades\Storage::url($this->image_path))
+                : null,
             'transactions_count' => $this->whenCounted('transactions'),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

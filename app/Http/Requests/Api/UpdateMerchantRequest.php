@@ -17,7 +17,7 @@ class UpdateMerchantRequest extends FormRequest
         return [
             'name' => ['sometimes', 'string', 'max:255'],
             'type' => ['sometimes', Rule::in(['company', 'person'])],
-            'image_path' => ['nullable', 'string', 'max:500'],
+            'image_path' => ['nullable', 'string', 'max:2048'],
         ];
     }
 }

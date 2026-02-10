@@ -17,7 +17,7 @@ class StoreMerchantRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::in(['company', 'person'])],
-            'image_path' => ['nullable', 'string', 'max:500'],
+            'image_path' => ['nullable', 'string', 'max:2048'],
         ];
     }
 }

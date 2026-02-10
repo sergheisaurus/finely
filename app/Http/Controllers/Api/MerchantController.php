@@ -8,12 +8,17 @@ use App\Http\Requests\Api\UpdateMerchantRequest;
 use App\Http\Resources\MerchantResource;
 use App\Http\Resources\TransactionResource;
 use App\Models\Merchant;
+use App\Services\MerchantService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class MerchantController extends Controller
 {
+    public function __construct(
+        protected MerchantService $merchantService
+    ) {}
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $query = $request->user()->merchants();
@@ -38,7 +43,7 @@ class MerchantController extends Controller
         $data = $request->validated();
         $data['user_id'] = $request->user()->id;
 
-        $merchant = Merchant::create($data);
+        $merchant = $this->merchantService->createMerchant($data);
 
         return new MerchantResource($merchant);
     }
@@ -56,7 +61,7 @@ class MerchantController extends Controller
     {
         $this->authorize('update', $merchant);
 
-        $merchant->update($request->validated());
+        $merchant = $this->merchantService->updateMerchant($merchant, $request->validated());
 
         return new MerchantResource($merchant);
     }
