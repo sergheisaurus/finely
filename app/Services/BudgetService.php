@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Budget;
+use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
@@ -216,9 +217,13 @@ class BudgetService
             ->where('type', 'expense')
             ->forDateRange($start, $end);
 
-        // If category-specific budget, filter by category
+        // If category-specific budget, filter by category (and its children)
         if ($budget->category_id) {
-            $query->where('category_id', $budget->category_id);
+            $categoryIds = Category::where('id', $budget->category_id)
+                ->orWhere('parent_id', $budget->category_id)
+                ->pluck('id');
+
+            $query->whereIn('category_id', $categoryIds);
         }
 
         return (float) $query->sum('amount');
@@ -256,7 +261,12 @@ class BudgetService
                 ->toArray();
         } else {
             // Category-specific budget - breakdown by merchant
-            $query->where('category_id', $budget->category_id);
+            $categoryIds = Category::where('id', $budget->category_id)
+                ->orWhere('parent_id', $budget->category_id)
+                ->pluck('id');
+
+            $query->whereIn('category_id', $categoryIds);
+            
             $transactions = $query->with('merchant')->get();
 
             $breakdown = $transactions
