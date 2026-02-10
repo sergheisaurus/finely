@@ -85,31 +85,18 @@ export default function TransactionCreate({
         'account',
     );
 
-    // Initial default account selection
+    // Initial default account selection - Only runs once on mount if accounts are already loaded
     useEffect(() => {
+        // This effect is largely redundant now due to the smart reset above,
+        // but kept for initial load if type doesn't change.
         const defaultAccount = accounts.find((acc) => acc.is_default);
 
         if (defaultAccount) {
-            // Only set defaults if the fields are empty to allow manual override
-            if (
-                type === 'expense' &&
-                paymentMethod === 'account' &&
-                !fromAccountId
-            ) {
-                setFromAccountId(defaultAccount.id.toString());
-            } else if (
-                type === 'income' &&
-                paymentMethod === 'account' &&
-                !toAccountId
-            ) {
-                setToAccountId(defaultAccount.id.toString());
-            } else if (type === 'transfer' && !fromAccountId) {
-                setFromAccountId(defaultAccount.id.toString());
-            } else if (type === 'card_payment' && !fromAccountId) {
+            if (type === 'expense' && !fromAccountId) {
                 setFromAccountId(defaultAccount.id.toString());
             }
         }
-    }, [accounts, type, paymentMethod]);
+    }, []);
 
     useEffect(() => {
         setAccounts(initialAccounts.data);
@@ -118,16 +105,32 @@ export default function TransactionCreate({
         setMerchants(initialMerchants.data);
     }, [initialAccounts, initialCards, initialCategories, initialMerchants]);
 
-    // Reset relevant fields when transaction type changes
+    // Reset relevant fields when transaction type changes, but preserve default accounts
     useEffect(() => {
-        setFromAccountId('');
         setFromCardId('');
-        setToAccountId('');
         setToCardId('');
         setCategoryId('');
         setPaymentMethod('account');
         setErrors({});
-    }, [type]);
+
+        const defaultAccount = accounts.find((acc) => acc.is_default);
+        const defaultId = defaultAccount ? defaultAccount.id.toString() : '';
+
+        // Smart reset: Set default account where applicable, otherwise clear
+        if (type === 'expense') {
+            setFromAccountId(defaultId);
+            setToAccountId('');
+        } else if (type === 'income') {
+            setFromAccountId('');
+            setToAccountId(defaultId);
+        } else if (type === 'transfer') {
+            setFromAccountId(defaultId);
+            setToAccountId('');
+        } else if (type === 'card_payment') {
+            setFromAccountId(defaultId);
+            setToAccountId('');
+        }
+    }, [type, accounts]); // Added accounts dependency so it re-runs if accounts load later
 
     // Reset account/card fields when payment method changes
     useEffect(() => {
