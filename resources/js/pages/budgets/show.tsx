@@ -61,7 +61,7 @@ const healthConfig: Record<
     },
 };
 
-export default function BudgetView({ budgetId }: { budgetId: string }) {
+export default function BudgetShow({ budgetId }: { budgetId: string }) {
     const [budget, setBudget] = useState<Budget | null>(null);
     const [breakdown, setBreakdown] = useState<BudgetBreakdown[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
