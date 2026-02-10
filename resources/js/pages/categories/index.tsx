@@ -1,13 +1,32 @@
 import { CreateCategoryDialog } from '@/components/finance/create-category-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { DynamicIcon } from '@/components/ui/dynamic-icon';
 import { getIconByName } from '@/components/ui/icon-picker';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
+import { cn } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import type { Category } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
-import { Edit, FolderTree, Plus, Tag, Trash2 } from 'lucide-react';
+import {
+    ChevronDown,
+    ChevronRight,
+    Edit,
+    Plus,
+    Search,
+    Tag,
+    Trash2,
+    TrendingDown,
+    TrendingUp,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -28,6 +47,8 @@ export default function CategoriesIndex({
     );
     const [isLoading, setIsLoading] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeTab, setActiveTab] = useState('all');
 
     useEffect(() => {
         setCategories(initialCategories.data);
@@ -35,7 +56,6 @@ export default function CategoriesIndex({
 
     const handleCategoryCreated = (newCategory: Category) => {
         setCategories((prev) => [...prev, newCategory]);
-        // Also reload props to ensure sync
         router.reload({ only: ['categories'] });
     };
 
@@ -64,141 +84,22 @@ export default function CategoriesIndex({
         }
     };
 
+    const filteredCategories = categories.filter((category) => {
+        const matchesSearch = category.name
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase());
+        const matchesTab = activeTab === 'all' || category.type === activeTab;
+        return matchesSearch && matchesTab;
+    });
+
     const incomeCategories = categories.filter((c) => c.type === 'income');
     const expenseCategories = categories.filter((c) => c.type === 'expense');
 
-    const renderCategory = (category: Category) => {
-        const subcategories = categories.filter(
-            (c) => c.parent_id === category.id,
-        );
-
-        return (
-            <div key={category.id} className="space-y-2">
-                <Card className="group hover-lift overflow-hidden transition-all duration-200 hover:shadow-md">
-                    <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div
-                                    className="flex h-10 w-10 items-center justify-center rounded-lg transition-transform group-hover:scale-110"
-                                    style={{ backgroundColor: category.color }}
-                                >
-                                    {(() => {
-                                        const IconComponent = category.icon
-                                            ? getIconByName(category.icon)
-                                            : null;
-                                        return IconComponent ? (
-                                            <IconComponent className="h-5 w-5 text-white" />
-                                        ) : (
-                                            <Tag className="h-5 w-5 text-white" />
-                                        );
-                                    })()}
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold">
-                                        {category.name}
-                                    </h3>
-                                    <p className="text-sm text-muted-foreground">
-                                        {category.transactions_count || 0}{' '}
-                                        transactions
-                                        {subcategories.length > 0 &&
-                                            ` • ${subcategories.length} subcategories`}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                        router.visit(
-                                            `/categories/${category.id}/edit`,
-                                        )
-                                    }
-                                >
-                                    <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleDelete(category.id)}
-                                >
-                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Subcategories */}
-                {subcategories.length > 0 && (
-                    <div className="ml-8 space-y-2">
-                        {subcategories.map((sub) => (
-                            <Card key={sub.id} className="border-l-4">
-                                <CardContent className="p-3">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div
-                                                className="flex h-8 w-8 items-center justify-center rounded"
-                                                style={{
-                                                    backgroundColor: sub.color,
-                                                }}
-                                            >
-                                                {(() => {
-                                                    const IconComponent =
-                                                        sub.icon
-                                                            ? getIconByName(
-                                                                  sub.icon,
-                                                              )
-                                                            : null;
-                                                    return IconComponent ? (
-                                                        <IconComponent className="h-4 w-4 text-white" />
-                                                    ) : (
-                                                        <Tag className="h-4 w-4 text-white" />
-                                                    );
-                                                })()}
-                                            </div>
-                                            <div>
-                                                <h4 className="text-sm font-medium">
-                                                    {sub.name}
-                                                </h4>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {sub.transactions_count ||
-                                                        0}{' '}
-                                                    transactions
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() =>
-                                                    router.visit(
-                                                        `/categories/${sub.id}/edit`,
-                                                    )
-                                                }
-                                            >
-                                                <Edit className="h-3 w-3" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() =>
-                                                    handleDelete(sub.id)
-                                                }
-                                            >
-                                                <Trash2 className="h-3 w-3 text-red-500" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                )}
-            </div>
-        );
-    };
+    // Stats
+    const totalTransactions = categories.reduce(
+        (acc, curr) => acc + (curr.transactions_count || 0),
+        0,
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -227,118 +128,293 @@ export default function CategoriesIndex({
                     />
                 </div>
 
+                {/* Summary Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <Card className="animate-fade-in-up stagger-1 hover-lift bg-gradient-to-br from-green-500 to-green-600 text-white opacity-0">
+                    <Card className="animate-fade-in-up stagger-1 hover-lift border-l-4 border-l-blue-500">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium opacity-90">
-                                        Total Categories
-                                    </p>
-                                    <p className="mt-2 text-2xl font-bold md:text-3xl">
-                                        {categories.length}
-                                    </p>
-                                </div>
-                                <FolderTree className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="animate-fade-in-up stagger-2 hover-lift bg-gradient-to-br from-blue-500 to-blue-600 text-white opacity-0">
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium opacity-90">
+                                    <p className="text-sm font-medium text-muted-foreground">
                                         Income Categories
                                     </p>
-                                    <p className="mt-2 text-2xl font-bold md:text-3xl">
+                                    <p className="mt-2 text-2xl font-bold">
                                         {incomeCategories.length}
                                     </p>
                                 </div>
-                                <Tag className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
+                                    <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-3 hover-lift bg-gradient-to-br from-purple-500 to-purple-600 text-white opacity-0 sm:col-span-2 lg:col-span-1">
+                    <Card className="animate-fade-in-up stagger-2 hover-lift border-l-4 border-l-orange-500">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium opacity-90">
+                                    <p className="text-sm font-medium text-muted-foreground">
                                         Expense Categories
                                     </p>
-                                    <p className="mt-2 text-2xl font-bold md:text-3xl">
+                                    <p className="mt-2 text-2xl font-bold">
                                         {expenseCategories.length}
                                     </p>
                                 </div>
-                                <Tag className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/20">
+                                    <TrendingDown className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="animate-fade-in-up stagger-3 hover-lift border-l-4 border-l-purple-500 sm:col-span-2 lg:col-span-1">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">
+                                        Total Transactions
+                                    </p>
+                                    <p className="mt-2 text-2xl font-bold">
+                                        {totalTransactions}
+                                    </p>
+                                </div>
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/20">
+                                    <Tag className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
-                {isLoading ? (
-                    <div className="animate-fade-in-up stagger-4 grid gap-4 opacity-0">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div
-                                key={i}
-                                className="h-20 animate-pulse rounded-xl bg-muted"
-                            />
-                        ))}
-                    </div>
-                ) : categories.length === 0 ? (
-                    <Card className="animate-fade-in-up stagger-4 overflow-hidden opacity-0">
-                        <CardContent className="p-12 text-center">
-                            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/50 dark:to-amber-900/50">
-                                <FolderTree className="h-10 w-10 text-orange-500" />
-                            </div>
-                            <h3 className="mt-4 text-lg font-semibold">
-                                No categories yet
-                            </h3>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                                Get started by adding your first category
-                            </p>
-                            <Button
-                                className="mt-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
-                                onClick={() => setIsCreateOpen(true)}
+                {/* Main Content */}
+                <Card className="animate-fade-in-up stagger-4">
+                    <CardContent className="p-6">
+                        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                            <Tabs
+                                value={activeTab}
+                                onValueChange={setActiveTab}
+                                className="w-full md:w-auto"
                             >
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add Category
-                            </Button>
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <>
-                        {expenseCategories.filter((c) => !c.parent_id).length >
-                            0 && (
-                            <div className="animate-fade-in-up stagger-4 space-y-4 opacity-0">
-                                <h2 className="text-xl font-bold md:text-2xl">
-                                    Expense Categories
-                                </h2>
-                                <div className="space-y-3">
-                                    {expenseCategories
-                                        .filter((c) => !c.parent_id)
-                                        .map(renderCategory)}
-                                </div>
-                            </div>
-                        )}
+                                <TabsList>
+                                    <TabsTrigger value="all">All</TabsTrigger>
+                                    <TabsTrigger value="expense">
+                                        Expense
+                                    </TabsTrigger>
+                                    <TabsTrigger value="income">
+                                        Income
+                                    </TabsTrigger>
+                                </TabsList>
+                            </Tabs>
 
-                        {incomeCategories.filter((c) => !c.parent_id).length >
-                            0 && (
-                            <div className="animate-fade-in-up stagger-5 space-y-4 opacity-0">
-                                <h2 className="text-xl font-bold md:text-2xl">
-                                    Income Categories
-                                </h2>
-                                <div className="space-y-3">
-                                    {incomeCategories
-                                        .filter((c) => !c.parent_id)
-                                        .map(renderCategory)}
-                                </div>
+                            <div className="relative w-full md:w-64">
+                                <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search categories..."
+                                    value={searchQuery}
+                                    onChange={(e) =>
+                                        setSearchQuery(e.target.value)
+                                    }
+                                    className="pl-9"
+                                />
                             </div>
-                        )}
-                    </>
-                )}
+                        </div>
+
+                        <div className="space-y-2">
+                            {filteredCategories.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-12 text-center">
+                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                                        <Search className="h-8 w-8 text-muted-foreground/50" />
+                                    </div>
+                                    <h3 className="mt-4 text-lg font-semibold">
+                                        No categories found
+                                    </h3>
+                                    <p className="mt-2 text-sm text-muted-foreground">
+                                        Try adjusting your search or filter
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {/* Render Top Level Categories */}
+                                    {filteredCategories
+                                        .filter((c) => !c.parent_id)
+                                        .map((category) => (
+                                            <CategoryRow
+                                                key={category.id}
+                                                category={category}
+                                                allCategories={
+                                                    filteredCategories
+                                                } // Pass filtered list to show relevant children
+                                                onDelete={handleDelete}
+                                            />
+                                        ))}
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </AppLayout>
+    );
+}
+
+// Sub-component for Category Row to handle collapsible state cleanly
+function CategoryRow({
+    category,
+    allCategories,
+    onDelete,
+}: {
+    category: Category;
+    allCategories: Category[];
+    onDelete: (id: number) => void;
+}) {
+    const [isOpen, setIsOpen] = useState(false);
+
+    // Find children in the provided list (so if we filter, we might hide children?
+    // Or should we always show children if parent matches?
+    // Usually if parent matches search, we show it.
+    // If child matches search, we show child (and maybe parent).
+    // Current logic: filteredCategories contains flat list of matches.
+    // So we just look for children in 'allCategories' which IS the filtered list.
+    const children = allCategories.filter((c) => c.parent_id === category.id);
+    const hasChildren = children.length > 0;
+
+    const IconComponent = category.icon ? getIconByName(category.icon) : Tag;
+
+    return (
+        <Collapsible
+            open={isOpen}
+            onOpenChange={setIsOpen}
+            className="rounded-lg border bg-card text-card-foreground transition-all hover:bg-accent/5"
+        >
+            <div className="flex items-center justify-between p-3">
+                <div className="flex items-center gap-3">
+                    {hasChildren ? (
+                        <CollapsibleTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                            >
+                                {isOpen ? (
+                                    <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                    <ChevronRight className="h-4 w-4" />
+                                )}
+                            </Button>
+                        </CollapsibleTrigger>
+                    ) : (
+                        <div className="w-8" /> // Spacer
+                    )}
+
+                    <div
+                        className="flex h-10 w-10 items-center justify-center rounded-lg shadow-sm"
+                        style={{ backgroundColor: category.color }}
+                    >
+                        {IconComponent && (
+                            <IconComponent className="h-5 w-5 text-white" />
+                        )}
+                    </div>
+
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="font-semibold">
+                                {category.name}
+                            </span>
+                            {category.type && (
+                                <span
+                                    className={cn(
+                                        'rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase',
+                                        category.type === 'income'
+                                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                            : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+                                    )}
+                                >
+                                    {category.type}
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            {category.transactions_count || 0} transactions
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 lg:opacity-100">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                            router.visit(`/categories/${category.id}/edit`)
+                        }
+                    >
+                        <Edit className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onDelete(category.id)}
+                    >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                </div>
+            </div>
+
+            {hasChildren && (
+                <CollapsibleContent>
+                    <div className="border-t bg-muted/30 px-4 py-2">
+                        {children.map((child) => (
+                            <div
+                                key={child.id}
+                                className="group flex items-center justify-between rounded-md py-2 pr-2 pl-12 hover:bg-accent/50"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div
+                                        className="flex h-8 w-8 items-center justify-center rounded shadow-sm"
+                                        style={{
+                                            backgroundColor: child.color,
+                                        }}
+                                    >
+                                        <DynamicIcon
+                                            name={child.icon}
+                                            fallback={Tag}
+                                            className="h-4 w-4 text-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium">
+                                            {child.name}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {child.transactions_count || 0} txs
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() =>
+                                            router.visit(
+                                                `/categories/${child.id}/edit`,
+                                            )
+                                        }
+                                    >
+                                        <Edit className="h-3.5 w-3.5 text-muted-foreground" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => onDelete(child.id)}
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </CollapsibleContent>
+            )}
+        </Collapsible>
     );
 }
