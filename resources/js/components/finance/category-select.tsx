@@ -1,26 +1,16 @@
+import { CreateCategoryDialog } from '@/components/finance/create-category-dialog';
 import { Button } from '@/components/ui/button';
+import { DynamicIcon } from '@/components/ui/dynamic-icon';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import api from '@/lib/api';
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 import type { Category } from '@/types/finance';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
+import { Check, ChevronsUpDown, Plus, Search, Tag } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 interface CategorySelectProps {
     value: string;
@@ -41,168 +31,181 @@ export function CategorySelect({
     placeholder = 'Select category',
     onCategoryCreated,
 }: CategorySelectProps) {
+    const [open, setOpen] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [isCreating, setIsCreating] = useState(false);
-    const [newCategoryName, setNewCategoryName] = useState('');
-    const [newCategoryParent, setNewCategoryParent] = useState<string>('none');
+    const [searchQuery, setSearchQuery] = useState('');
 
-    // Filter categories based on type if provided
-    const filteredCategories = type
-        ? categories.filter((c) => c.type === type)
-        : categories;
+    const filteredCategories = useMemo(() => {
+        let base = type
+            ? categories.filter((c) => c.type === type)
+            : categories;
 
-    // Potential parents are only top-level categories of the same type
-    const potentialParents = filteredCategories.filter((c) => !c.parent_id);
-
-    const handleCreate = async () => {
-        if (!newCategoryName) return;
-
-        setIsCreating(true);
-        try {
-            const payload: {
-                name: string;
-                type: string;
-                color: string;
-                parent_id?: number;
-            } = {
-                name: newCategoryName,
-                type: type || 'expense', // Default to expense if not specified
-                color: '#64748b', // Default color
-            };
-
-            if (newCategoryParent !== 'none') {
-                payload.parent_id = parseInt(newCategoryParent);
-            }
-
-            const response = await api.post('/categories', payload);
-            const newCategory = response.data.data;
-
-            toast.success('Category created');
-            setIsDialogOpen(false);
-            setNewCategoryName('');
-            setNewCategoryParent('none');
-
-            if (onCategoryCreated) {
-                onCategoryCreated(newCategory);
-            }
-            onValueChange(newCategory.id.toString());
-        } catch (error) {
-            console.error(error);
-            toast.error('Failed to create category');
-        } finally {
-            setIsCreating(false);
+        if (searchQuery) {
+            base = base.filter((c) =>
+                c.name.toLowerCase().includes(searchQuery.toLowerCase()),
+            );
         }
+
+        // Return a flattened tree
+        const topLevel = base.filter((c) => !c.parent_id);
+        const result: Category[] = [];
+
+        topLevel.forEach((parent) => {
+            result.push(parent);
+            const subs = base.filter((c) => c.parent_id === parent.id);
+            result.push(...subs);
+        });
+
+        // Add orphans if searching (orphans are subcategories whose parents don't match the search)
+        if (searchQuery) {
+            const addedIds = new Set(result.map((c) => c.id));
+            base.forEach((c) => {
+                if (!addedIds.has(c.id)) {
+                    result.push(c);
+                }
+            });
+        }
+
+        return result;
+    }, [categories, type, searchQuery]);
+
+    const selectedCategory = useMemo(
+        () => categories.find((c) => c.id.toString() === value),
+        [categories, value],
+    );
+
+    const handleCategoryCreated = (newCategory: Category) => {
+        if (onCategoryCreated) {
+            onCategoryCreated(newCategory);
+        }
+        onValueChange(newCategory.id.toString());
+        setOpen(false);
     };
 
     return (
         <>
             <div className="space-y-1">
-                <Select
-                    value={value}
-                    onValueChange={(val) => {
-                        if (val === 'new') {
-                            setIsDialogOpen(true);
-                        } else {
-                            onValueChange(val);
-                        }
-                    }}
-                >
-                    <SelectTrigger className={error ? 'border-red-500' : ''}>
-                        <SelectValue placeholder={placeholder} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem
-                            value="new"
-                            className="mb-1 border-b font-medium text-blue-600 focus:bg-blue-50 focus:text-blue-700"
+                <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={open}
+                            className={cn(
+                                'w-full justify-between px-3 font-normal',
+                                !value && 'text-muted-foreground',
+                                error && 'border-red-500',
+                            )}
                         >
-                            <div className="flex items-center">
-                                <Plus className="mr-2 h-4 w-4" />
-                                Create new category...
-                            </div>
-                        </SelectItem>
-                        {filteredCategories.map((category) => (
-                            <SelectItem
-                                key={category.id}
-                                value={category.id.toString()}
-                            >
-                                {category.parent && '└ '}
-                                {category.icon && (
-                                    <span className="mr-2">
-                                        {category.icon}
+                            {selectedCategory ? (
+                                <div className="flex items-center gap-2 overflow-hidden">
+                                    <div
+                                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded"
+                                        style={{
+                                            backgroundColor:
+                                                selectedCategory.color,
+                                        }}
+                                    >
+                                        <DynamicIcon
+                                            name={selectedCategory.icon}
+                                            fallback={Tag}
+                                            className="h-3 w-3 text-white"
+                                        />
+                                    </div>
+                                    <span className="truncate">
+                                        {selectedCategory.parent &&
+                                            `${selectedCategory.parent.name} > `}
+                                        {selectedCategory.name}
                                     </span>
-                                )}
-                                {category.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                                </div>
+                            ) : (
+                                placeholder
+                            )}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full min-w-[var(--radix-popover-trigger-width)] p-0">
+                        <div className="flex items-center border-b px-3">
+                            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                            <input
+                                className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                                placeholder="Search categories..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                        <ScrollArea className="h-[300px]">
+                            <div className="p-1">
+                                <Button
+                                    variant="ghost"
+                                    className="w-full justify-start font-medium text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                                    onClick={() => {
+                                        setIsDialogOpen(true);
+                                    }}
+                                >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Create new category...
+                                </Button>
+                                <div className="mt-1 space-y-1">
+                                    {filteredCategories.length === 0 && (
+                                        <p className="py-6 text-center text-sm text-muted-foreground">
+                                            No categories found.
+                                        </p>
+                                    )}
+                                    {filteredCategories.map((category) => (
+                                        <button
+                                            key={category.id}
+                                            className={cn(
+                                                'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
+                                                category.parent_id && 'ml-4',
+                                                value ===
+                                                    category.id.toString() &&
+                                                    'bg-accent text-accent-foreground',
+                                            )}
+                                            onClick={() => {
+                                                onValueChange(
+                                                    category.id.toString(),
+                                                );
+                                                setOpen(false);
+                                            }}
+                                        >
+                                            <div
+                                                className="flex h-5 w-5 shrink-0 items-center justify-center rounded"
+                                                style={{
+                                                    backgroundColor:
+                                                        category.color,
+                                                }}
+                                            >
+                                                <DynamicIcon
+                                                    name={category.icon}
+                                                    fallback={Tag}
+                                                    className="h-3 w-3 text-white"
+                                                />
+                                            </div>
+                                            <span className="truncate">
+                                                {category.name}
+                                            </span>
+                                            {value ===
+                                                category.id.toString() && (
+                                                <Check className="ml-auto h-4 w-4 opacity-50" />
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </ScrollArea>
+                    </PopoverContent>
+                </Popover>
                 {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Create New Category</DialogTitle>
-                        <DialogDescription>
-                            Add a new category for your transactions.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="category-name">Name</Label>
-                            <Input
-                                id="category-name"
-                                value={newCategoryName}
-                                onChange={(e) =>
-                                    setNewCategoryName(e.target.value)
-                                }
-                                placeholder="e.g., Groceries"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="category-parent">
-                                Parent Category (Optional)
-                            </Label>
-                            <Select
-                                value={newCategoryParent}
-                                onValueChange={setNewCategoryParent}
-                            >
-                                <SelectTrigger id="category-parent">
-                                    <SelectValue placeholder="None (Top level)" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">
-                                        None (Top level)
-                                    </SelectItem>
-                                    {potentialParents.map((category) => (
-                                        <SelectItem
-                                            key={category.id}
-                                            value={category.id.toString()}
-                                        >
-                                            {category.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={() => setIsDialogOpen(false)}
-                            disabled={isCreating}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={handleCreate}
-                            disabled={isCreating || !newCategoryName}
-                        >
-                            {isCreating ? 'Creating...' : 'Create Category'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <CreateCategoryDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                categories={categories}
+                type={type}
+                onCategoryCreated={handleCategoryCreated}
+            />
         </>
     );
 }

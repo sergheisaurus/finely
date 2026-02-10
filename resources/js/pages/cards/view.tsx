@@ -212,6 +212,27 @@ Network: ${card.card_network}`;
         return number.replace(/(\d{4})/g, '$1 ').trim();
     };
 
+    const handleDeleteTransaction = async (transaction: Transaction) => {
+        if (
+            !confirm(
+                `Are you sure you want to delete "${transaction.title}"? This action cannot be undone.`,
+            )
+        ) {
+            return;
+        }
+
+        try {
+            await api.delete(`/transactions/${transaction.id}`);
+            toast.success('Transaction deleted!', {
+                description: `${transaction.title} has been removed.`,
+            });
+            await Promise.all([fetchCard(), fetchTransactions()]);
+        } catch (error) {
+            console.error('Failed to delete transaction:', error);
+            toast.error('Failed to delete transaction');
+        }
+    };
+
     if (isLoading) {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
@@ -453,6 +474,7 @@ Network: ${card.card_network}`;
                             onEdit={(transaction) =>
                                 router.visit(`/journal/${transaction.id}/edit`)
                             }
+                            onDelete={handleDeleteTransaction}
                         />
                         {transactions.length === 0 && (
                             <div className="py-8 text-center">

@@ -17,23 +17,25 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function CategoriesIndex() {
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export default function CategoriesIndex({
+    categories: initialCategories,
+}: {
+    categories: { data: Category[] };
+}) {
+    const [categories, setCategories] = useState<Category[]>(
+        initialCategories.data,
+    );
+    const [isLoading, setIsLoading] = useState(false);
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
 
     useEffect(() => {
-        fetchCategories();
-    }, []);
+        setCategories(initialCategories.data);
+    }, [initialCategories]);
 
-    const fetchCategories = async () => {
-        try {
-            const response = await api.get('/categories');
-            setCategories(response.data.data);
-        } catch (error) {
-            console.error('Failed to fetch categories:', error);
-        } finally {
-            setIsLoading(false);
-        }
+    const handleCategoryCreated = (newCategory: Category) => {
+        setCategories((prev) => [...prev, newCategory]);
+        // Also reload props to ensure sync
+        router.reload({ only: ['categories'] });
     };
 
     const handleDelete = async (categoryId: number) => {
@@ -51,7 +53,7 @@ export default function CategoriesIndex() {
             toast.success('Category deleted!', {
                 description: `${category?.name} has been removed.`,
             });
-            await fetchCategories();
+            router.reload({ only: ['categories'] });
         } catch (error) {
             console.error('Failed to delete category:', error);
             toast.error('Failed to delete category', {
@@ -210,13 +212,18 @@ export default function CategoriesIndex() {
                             Organize your income and expenses
                         </p>
                     </div>
-                    <Button
-                        onClick={() => router.visit('/categories/create')}
-                        className="bg-gradient-to-r from-orange-500 to-amber-500 shadow-lg shadow-orange-500/25 transition-all hover:from-orange-600 hover:to-amber-600 hover:shadow-xl hover:shadow-orange-500/30"
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Category
-                    </Button>
+                    <CreateCategoryDialog
+                        open={isCreateOpen}
+                        onOpenChange={setIsCreateOpen}
+                        categories={categories}
+                        onCategoryCreated={handleCategoryCreated}
+                        trigger={
+                            <Button className="bg-gradient-to-r from-orange-500 to-amber-500 shadow-lg shadow-orange-500/25 transition-all hover:from-orange-600 hover:to-amber-600 hover:shadow-xl hover:shadow-orange-500/30">
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add Category
+                            </Button>
+                        }
+                    />
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -292,9 +299,7 @@ export default function CategoriesIndex() {
                             </p>
                             <Button
                                 className="mt-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
-                                onClick={() =>
-                                    router.visit('/categories/create')
-                                }
+                                onClick={() => setIsCreateOpen(true)}
                             >
                                 <Plus className="mr-2 h-4 w-4" />
                                 Add Category
