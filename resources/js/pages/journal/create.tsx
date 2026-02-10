@@ -41,12 +41,28 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 type TransactionType = 'income' | 'expense' | 'transfer' | 'card_payment';
 
-export default function TransactionCreate() {
-    const [accounts, setAccounts] = useState<BankAccount[]>([]);
-    const [cards, setCards] = useState<Card[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [merchants, setMerchants] = useState<Merchant[]>([]);
-    const [isLoadingData, setIsLoadingData] = useState(true);
+export default function TransactionCreate({
+    accounts: initialAccounts,
+    cards: initialCards,
+    categories: initialCategories,
+    merchants: initialMerchants,
+}: {
+    accounts: { data: BankAccount[] };
+    cards: { data: Card[] };
+    categories: { data: Category[] };
+    merchants: { data: Merchant[] };
+}) {
+    const [accounts, setAccounts] = useState<BankAccount[]>(
+        initialAccounts.data,
+    );
+    const [cards, setCards] = useState<Card[]>(initialCards.data);
+    const [categories, setCategories] = useState<Category[]>(
+        initialCategories.data,
+    );
+    const [merchants, setMerchants] = useState<Merchant[]>(
+        initialMerchants.data,
+    );
+    const [isLoadingData, setIsLoadingData] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -69,15 +85,38 @@ export default function TransactionCreate() {
         'account',
     );
 
+    // Initial default account selection
     useEffect(() => {
-        Promise.all([
-            fetchAccounts(),
-            fetchCards(),
-            fetchCategories(),
-            fetchMerchants(),
-        ]).finally(() => setIsLoadingData(false));
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        const defaultAccount = accounts.find((acc) => acc.is_default);
+
+        if (defaultAccount) {
+            // Only set defaults if the fields are empty to allow manual override
+            if (
+                type === 'expense' &&
+                paymentMethod === 'account' &&
+                !fromAccountId
+            ) {
+                setFromAccountId(defaultAccount.id.toString());
+            } else if (
+                type === 'income' &&
+                paymentMethod === 'account' &&
+                !toAccountId
+            ) {
+                setToAccountId(defaultAccount.id.toString());
+            } else if (type === 'transfer' && !fromAccountId) {
+                setFromAccountId(defaultAccount.id.toString());
+            } else if (type === 'card_payment' && !fromAccountId) {
+                setFromAccountId(defaultAccount.id.toString());
+            }
+        }
+    }, [accounts, type, paymentMethod]);
+
+    useEffect(() => {
+        setAccounts(initialAccounts.data);
+        setCards(initialCards.data);
+        setCategories(initialCategories.data);
+        setMerchants(initialMerchants.data);
+    }, [initialAccounts, initialCards, initialCategories, initialMerchants]);
 
     // Reset relevant fields when transaction type changes
     useEffect(() => {
@@ -102,53 +141,6 @@ export default function TransactionCreate() {
             }
         }
     }, [paymentMethod, type]);
-
-    const fetchAccounts = async () => {
-        try {
-            const response = await api.get('/accounts');
-            setAccounts(response.data.data);
-            // Set default account if available and payment method is account
-            if (paymentMethod === 'account') {
-                const defaultAccount = response.data.data.find(
-                    (acc: BankAccount) => acc.is_default,
-                );
-                if (defaultAccount && type === 'expense') {
-                    setFromAccountId(defaultAccount.id.toString());
-                } else if (defaultAccount && type === 'income') {
-                    setToAccountId(defaultAccount.id.toString());
-                }
-            }
-        } catch (error) {
-            console.error('Failed to fetch accounts:', error);
-        }
-    };
-
-    const fetchCards = async () => {
-        try {
-            const response = await api.get('/cards');
-            setCards(response.data.data);
-        } catch (error) {
-            console.error('Failed to fetch cards:', error);
-        }
-    };
-
-    const fetchCategories = async () => {
-        try {
-            const response = await api.get('/categories');
-            setCategories(response.data.data);
-        } catch (error) {
-            console.error('Failed to fetch categories:', error);
-        }
-    };
-
-    const fetchMerchants = async () => {
-        try {
-            const response = await api.get('/merchants');
-            setMerchants(response.data.data);
-        } catch (error) {
-            console.error('Failed to fetch merchants:', error);
-        }
-    };
 
     const handleCategoryCreated = (newCategory: Category) => {
         setCategories((prev) =>
@@ -487,11 +479,7 @@ export default function TransactionCreate() {
                                                 value={categoryId}
                                                 onValueChange={setCategoryId}
                                                 categories={categories}
-                                                type={
-                                                    type === 'income'
-                                                        ? 'income'
-                                                        : 'expense'
-                                                }
+                                                type="expense"
                                                 error={errors.category_id}
                                                 onCategoryCreated={
                                                     handleCategoryCreated
@@ -639,11 +627,7 @@ export default function TransactionCreate() {
                                                 value={categoryId}
                                                 onValueChange={setCategoryId}
                                                 categories={categories}
-                                                type={
-                                                    type === 'income'
-                                                        ? 'income'
-                                                        : 'expense'
-                                                }
+                                                type="income"
                                                 error={errors.category_id}
                                                 onCategoryCreated={
                                                     handleCategoryCreated
