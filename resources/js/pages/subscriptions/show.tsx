@@ -30,7 +30,7 @@ const billingCycleLabels: Record<string, string> = {
     yearly: 'Yearly',
 };
 
-export default function SubscriptionView({
+export default function SubscriptionShow({
     subscriptionId,
 }: {
     subscriptionId: string;

@@ -1,3 +1,4 @@
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DynamicIcon } from '@/components/ui/dynamic-icon';
@@ -36,28 +37,26 @@ const billingCycleLabels: Record<string, string> = {
     yearly: 'Yearly',
 };
 
-export default function SubscriptionsIndex() {
-    const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-    const [stats, setStats] = useState<SubscriptionStats | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+export default function SubscriptionsIndex({
+    subscriptions: initialSubscriptions,
+    stats: initialStats,
+}: {
+    subscriptions: { data: Subscription[] };
+    stats: SubscriptionStats;
+}) {
+    const [subscriptions, setSubscriptions] = useState<Subscription[]>(
+        initialSubscriptions.data,
+    );
+    const [stats, setStats] = useState<SubscriptionStats | null>(initialStats);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        setSubscriptions(initialSubscriptions.data);
+        setStats(initialStats);
+    }, [initialSubscriptions, initialStats]);
 
     const fetchData = async () => {
-        try {
-            const [subsResponse, statsResponse] = await Promise.all([
-                api.get('/subscriptions'),
-                api.get('/subscriptions/stats'),
-            ]);
-            setSubscriptions(subsResponse.data.data);
-            setStats(statsResponse.data);
-        } catch (error) {
-            console.error('Failed to fetch subscriptions:', error);
-        } finally {
-            setIsLoading(false);
-        }
+        router.reload({ only: ['subscriptions', 'stats'] });
     };
 
     const handleToggle = async (subscription: Subscription) => {
@@ -71,7 +70,7 @@ export default function SubscriptionsIndex() {
                     description: `${subscription.name} has been ${subscription.is_active ? 'paused' : 'resumed'}.`,
                 },
             );
-            await fetchData();
+            fetchData();
         } catch (error) {
             console.error('Failed to toggle subscription:', error);
             toast.error('Failed to update subscription');
@@ -92,7 +91,7 @@ export default function SubscriptionsIndex() {
             toast.success('Subscription deleted!', {
                 description: `${subscription.name} has been removed.`,
             });
-            await fetchData();
+            fetchData();
         } catch (error) {
             console.error('Failed to delete subscription:', error);
             toast.error('Failed to delete subscription');
@@ -112,12 +111,12 @@ export default function SubscriptionsIndex() {
                             Subscriptions
                         </h1>
                         <p className="text-muted-foreground">
-                            Track and manage your recurring payments
+                            Manage your recurring payments and services
                         </p>
                     </div>
                     <Button
                         onClick={() => router.visit('/subscriptions/create')}
-                        className="bg-gradient-to-r from-violet-500 to-purple-500 shadow-lg shadow-violet-500/25 transition-all hover:from-violet-600 hover:to-purple-600 hover:shadow-xl hover:shadow-violet-500/30"
+                        className="bg-gradient-to-r from-indigo-500 to-purple-500 shadow-lg shadow-indigo-500/25 transition-all hover:from-indigo-600 hover:to-purple-600 hover:shadow-xl hover:shadow-indigo-500/30"
                     >
                         <Plus className="mr-2 h-4 w-4" />
                         Add Subscription
@@ -126,15 +125,18 @@ export default function SubscriptionsIndex() {
 
                 {/* Stats Cards */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <Card className="animate-fade-in-up stagger-1 hover-lift bg-gradient-to-br from-violet-500 to-purple-600 text-white opacity-0">
+                    <Card className="animate-fade-in-up stagger-1 hover-lift bg-gradient-to-br from-indigo-500 to-indigo-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium opacity-90">
-                                        Active Subscriptions
+                                        Monthly Total
                                     </p>
                                     <p className="mt-2 text-2xl font-bold md:text-3xl">
-                                        {stats?.active_count ?? 0}
+                                        {formatCurrency(
+                                            stats?.monthly_total ?? 0,
+                                            'CHF',
+                                        )}
                                     </p>
                                 </div>
                                 <CalendarClock className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
@@ -142,16 +144,16 @@ export default function SubscriptionsIndex() {
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-2 hover-lift bg-gradient-to-br from-blue-500 to-cyan-600 text-white opacity-0">
+                    <Card className="animate-fade-in-up stagger-2 hover-lift bg-gradient-to-br from-purple-500 to-purple-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium opacity-90">
-                                        Monthly Cost
+                                        Yearly Total
                                     </p>
                                     <p className="mt-2 text-2xl font-bold md:text-3xl">
                                         {formatCurrency(
-                                            stats?.monthly_total ?? 0,
+                                            stats?.yearly_total ?? 0,
                                             'CHF',
                                         )}
                                     </p>
@@ -161,31 +163,28 @@ export default function SubscriptionsIndex() {
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-3 hover-lift bg-gradient-to-br from-amber-500 to-orange-600 text-white opacity-0">
+                    <Card className="animate-fade-in-up stagger-3 hover-lift bg-gradient-to-br from-blue-500 to-blue-600 text-white opacity-0">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium opacity-90">
-                                        Yearly Cost
+                                        Active
                                     </p>
                                     <p className="mt-2 text-2xl font-bold md:text-3xl">
-                                        {formatCurrency(
-                                            stats?.yearly_total ?? 0,
-                                            'CHF',
-                                        )}
+                                        {stats?.active_count ?? 0}
                                     </p>
                                 </div>
-                                <CalendarClock className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
+                                <Play className="h-10 w-10 opacity-80 md:h-12 md:w-12" />
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-4 hover-lift bg-gradient-to-br from-red-500 to-rose-600 text-white opacity-0 sm:col-span-2 lg:col-span-1">
+                    <Card className="animate-fade-in-up stagger-4 hover-lift bg-gradient-to-br from-amber-500 to-amber-600 text-white opacity-0 sm:col-span-2 lg:col-span-1">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium opacity-90">
-                                        Due This Week
+                                        Due Soon
                                     </p>
                                     <p className="mt-2 text-2xl font-bold md:text-3xl">
                                         {stats?.upcoming_this_week ?? 0}
@@ -199,7 +198,7 @@ export default function SubscriptionsIndex() {
 
                 {isLoading ? (
                     <div className="animate-fade-in-up stagger-5 grid gap-4 opacity-0 sm:grid-cols-2 lg:grid-cols-3">
-                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                        {[1, 2, 3].map((i) => (
                             <div
                                 key={i}
                                 className="h-40 animate-pulse rounded-xl bg-muted"
@@ -209,17 +208,18 @@ export default function SubscriptionsIndex() {
                 ) : subscriptions.length === 0 ? (
                     <Card className="animate-fade-in-up stagger-5 overflow-hidden opacity-0">
                         <CardContent className="p-12 text-center">
-                            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/50 dark:to-purple-900/50">
-                                <CalendarClock className="h-10 w-10 text-violet-500" />
+                            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50">
+                                <CalendarClock className="h-10 w-10 text-indigo-500" />
                             </div>
                             <h3 className="mt-4 text-lg font-semibold">
                                 No subscriptions yet
                             </h3>
                             <p className="mt-2 text-sm text-muted-foreground">
-                                Start tracking your recurring payments
+                                Add your first subscription to track recurring
+                                costs
                             </p>
                             <Button
-                                className="mt-4 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600"
+                                className="mt-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
                                 onClick={() =>
                                     router.visit('/subscriptions/create')
                                 }
@@ -291,19 +291,28 @@ function SubscriptionCard({
             <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                        <div
-                            className="flex h-12 w-12 items-center justify-center rounded-lg transition-transform group-hover:scale-110"
+                        <Avatar
+                            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-110"
                             style={{
                                 backgroundColor:
                                     subscription.color || '#8b5cf6',
                             }}
                         >
-                            <DynamicIcon
-                                name={subscription.icon}
-                                fallback={CalendarClock}
-                                className="h-6 w-6 text-white"
-                            />
-                        </div>
+                            {subscription.merchant?.image_url && (
+                                <AvatarImage
+                                    src={subscription.merchant.image_url}
+                                    alt={subscription.name}
+                                    className="object-cover"
+                                />
+                            )}
+                            <AvatarFallback className="bg-transparent text-white">
+                                <DynamicIcon
+                                    name={subscription.icon}
+                                    fallback={CalendarClock}
+                                    className="h-6 w-6"
+                                />
+                            </AvatarFallback>
+                        </Avatar>
                         <div>
                             <h3 className="font-semibold">
                                 {subscription.name}
@@ -354,12 +363,6 @@ function SubscriptionCard({
                     </div>
                 )}
 
-                {subscription.merchant && (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                        {subscription.merchant.name}
-                    </p>
-                )}
-
                 <div className="mt-4 flex gap-1 border-t pt-3">
                     <Button
                         variant="ghost"
@@ -387,9 +390,9 @@ function SubscriptionCard({
                         onClick={() => onToggle(subscription)}
                     >
                         {subscription.is_active ? (
-                            <Pause className="h-4 w-4" />
+                            <Pause className="h-4 w-4 text-amber-500" />
                         ) : (
-                            <Play className="h-4 w-4" />
+                            <Play className="h-4 w-4 text-green-500" />
                         )}
                     </Button>
                     <Button
