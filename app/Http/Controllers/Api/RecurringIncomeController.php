@@ -7,6 +7,7 @@ use App\Http\Requests\Api\StoreRecurringIncomeRequest;
 use App\Http\Requests\Api\UpdateRecurringIncomeRequest;
 use App\Http\Resources\RecurringIncomeResource;
 use App\Http\Resources\TransactionResource;
+use App\Http\Requests\Api\MarkRecurringIncomeReceivedRequest;
 use App\Models\RecurringIncome;
 use App\Services\RecurringIncomeService;
 use Illuminate\Http\JsonResponse;
@@ -98,11 +99,14 @@ class RecurringIncomeController extends Controller
         return new RecurringIncomeResource($income->load(['category', 'toAccount']));
     }
 
-    public function markReceived(Request $request, RecurringIncome $recurringIncome): JsonResponse
+    public function markReceived(MarkRecurringIncomeReceivedRequest $request, RecurringIncome $recurringIncome): JsonResponse
     {
         $this->authorize('update', $recurringIncome);
 
-        $transaction = $this->recurringIncomeService->markReceived($recurringIncome);
+        $transaction = $this->recurringIncomeService->markReceived(
+            $recurringIncome, 
+            $request->validated()
+        );
 
         if ($transaction) {
             return response()->json([

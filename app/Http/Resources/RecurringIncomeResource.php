@@ -30,6 +30,7 @@ class RecurringIncomeResource extends JsonResource
             'reminder_days_before' => $this->reminder_days_before,
             'color' => $this->color,
             'icon' => $this->icon,
+            'deductions' => $this->deductions,
 
             // Computed fields
             'is_overdue' => $this->isOverdue(),

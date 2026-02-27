@@ -5,8 +5,9 @@ import { MerchantBadge } from '@/components/finance/merchant-badge';
 import { TransactionTypeBadge } from '@/components/finance/transaction-type-badge';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { useSecretStore } from '@/stores/useSecretStore';
 import type { Transaction } from '@/types/finance';
-import { ArrowRight, Edit, FileText, Trash2 } from 'lucide-react';
+import { ArrowRight, Edit, EyeOff, FileText, Trash2, Lock } from 'lucide-react';
 
 interface TransactionItemProps {
     transaction: Transaction;
@@ -26,9 +27,12 @@ export function TransactionItem({
     const isTransfer = transaction.type === 'transfer';
     const isCardPayment = transaction.type === 'card_payment';
 
+    const { isSecretModeActive } = useSecretStore();
+    const hasSecretDetails = !!(transaction.secret_title || transaction.secret_category_id || transaction.secret_merchant_id);
+
     return (
         <div
-            className={`flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50 ${onClick ? 'cursor-pointer' : ''}`}
+            className={`flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50 ${onClick ? 'cursor-pointer' : ''} ${isSecretModeActive && hasSecretDetails ? 'border-fuchsia-500/30 bg-fuchsia-500/5' : ''}`}
             onClick={onClick}
         >
             {/* Date */}
@@ -47,7 +51,16 @@ export function TransactionItem({
             {/* Main content */}
             <div className="flex flex-1 flex-col gap-1">
                 <div className="flex items-center gap-2">
-                    <h4 className="font-semibold">{transaction.title}</h4>
+                    <h4 className="font-semibold flex items-center gap-1.5">
+                        {transaction.title}
+                        {hasSecretDetails && (
+                            isSecretModeActive ? (
+                                <Lock className="h-3.5 w-3.5 text-fuchsia-400" />
+                            ) : (
+                                <EyeOff className="h-3.5 w-3.5 text-muted-foreground/50" />
+                            )
+                        )}
+                    </h4>
                     <TransactionTypeBadge type={transaction.type} />
                 </div>
 
@@ -131,13 +144,12 @@ export function TransactionItem({
             {/* Amount */}
             <div className="text-right">
                 <p
-                    className={`text-lg font-bold ${
-                        isIncome
+                    className={`text-lg font-bold ${isIncome
                             ? 'text-green-600 dark:text-green-400'
                             : isExpense
-                              ? 'text-red-600 dark:text-red-400'
-                              : ''
-                    }`}
+                                ? 'text-red-600 dark:text-red-400'
+                                : ''
+                        }`}
                 >
                     {isIncome ? '+' : isExpense ? '-' : ''}
                     {formatCurrency(transaction.amount, transaction.currency)}

@@ -19,7 +19,16 @@ class Category extends Model
         'icon',
         'color',
         'type',
+        'is_secret',
+        'cover_category_id',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_secret' => 'boolean',
+        ];
+    }
 
     public function user(): BelongsTo
     {
@@ -39,6 +48,11 @@ class Category extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function coverCategory(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'cover_category_id');
     }
 
     public function isParent(): bool

@@ -3,10 +3,16 @@ import { PieChartCard } from '@/components/statistics/charts/pie-chart-card';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import type { BankAccount } from '@/types/finance';
+import type { StatisticsFilters } from '@/hooks/use-statistics-filters';
 import { DollarSign, Wallet } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-export function AccountsTab() {
+interface AccountsTabProps {
+    filters: StatisticsFilters;
+    apiFilters: Record<string, unknown>;
+}
+
+export function AccountsTab({ filters, apiFilters }: AccountsTabProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [accounts, setAccounts] = useState<BankAccount[]>([]);
     const [totalBalance, setTotalBalance] = useState(0);
@@ -44,7 +50,7 @@ export function AccountsTab() {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [apiFilters]);
 
     const accountsForChart = accounts.map((acc) => ({
         name: acc.name,

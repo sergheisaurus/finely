@@ -1,3 +1,5 @@
+import { MarkReceivedModal } from '@/components/finance/mark-received-modal';
+import { TransactionDeductionsModal } from '@/components/finance/transaction-deductions-modal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DynamicIcon } from '@/components/ui/dynamic-icon';
@@ -33,6 +35,9 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
     const [income, setIncome] = useState<RecurringIncome | null>(null);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [showMarkReceived, setShowMarkReceived] = useState(false);
+    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const [showDeductions, setShowDeductions] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -79,16 +84,13 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
         }
     };
 
-    const handleMarkReceived = async () => {
-        if (!income) return;
-        try {
-            await api.post(`/recurring-incomes/${income.id}/mark-received`);
-            toast.success('Income marked as received!');
-            await fetchData();
-        } catch (error) {
-            console.error('Failed to mark income as received:', error);
-            toast.error('Failed to record income');
-        }
+    const handleMarkReceived = () => {
+        setShowMarkReceived(true);
+    };
+
+    const handleTransactionClick = (transaction: Transaction) => {
+        setSelectedTransaction(transaction);
+        setShowDeductions(true);
     };
 
     const handleDelete = async () => {
@@ -279,8 +281,8 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
                             <p className="mt-1 text-2xl font-bold">
                                 {income.next_expected_date
                                     ? new Date(
-                                          income.next_expected_date,
-                                      ).toLocaleDateString()
+                                        income.next_expected_date,
+                                    ).toLocaleDateString()
                                     : 'N/A'}
                             </p>
                         </CardContent>
@@ -389,7 +391,8 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
                                     {transactions.map((transaction) => (
                                         <div
                                             key={transaction.id}
-                                            className="flex items-center justify-between rounded-lg border p-3"
+                                            className="flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                                            onClick={() => handleTransactionClick(transaction)}
                                         >
                                             <div>
                                                 <p className="font-medium">
@@ -400,6 +403,11 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
                                                         transaction.transaction_date,
                                                     ).toLocaleDateString()}
                                                 </p>
+                                                {transaction.metadata?.salary_breakdown && (
+                                                    <p className="text-xs text-blue-500">
+                                                        Click to view breakdown
+                                                    </p>
+                                                )}
                                             </div>
                                             <p className="font-semibold text-green-600">
                                                 +
@@ -416,6 +424,19 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
                     </Card>
                 </div>
             </div>
+
+            {/* Modals */}
+            <MarkReceivedModal
+                income={income}
+                open={showMarkReceived}
+                onOpenChange={setShowMarkReceived}
+                onSuccess={fetchData}
+            />
+            <TransactionDeductionsModal
+                transaction={selectedTransaction}
+                open={showDeductions}
+                onOpenChange={setShowDeductions}
+            />
         </AppLayout>
     );
 }

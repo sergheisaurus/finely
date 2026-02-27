@@ -10,7 +10,9 @@ const api = axios.create({
     },
 });
 
-// Add CSRF token to all requests
+import { useSecretStore } from '@/stores/useSecretStore';
+
+// Add CSRF token and Secret Mode to all requests
 api.interceptors.request.use((config) => {
     // Get CSRF token from meta tag or cookie
     const token = document
@@ -19,6 +21,12 @@ api.interceptors.request.use((config) => {
 
     if (token) {
         config.headers['X-CSRF-TOKEN'] = token;
+    }
+
+    // Attach secret mode state to header
+    const isSecretMode = useSecretStore.getState().isSecretModeActive;
+    if (isSecretMode) {
+        config.headers['X-Secret-Mode'] = 'true';
     }
 
     return config;

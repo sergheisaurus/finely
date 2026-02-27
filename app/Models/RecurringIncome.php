@@ -34,6 +34,7 @@ class RecurringIncome extends Model
         'reminder_days_before',
         'color',
         'icon',
+        'deductions',
     ];
 
     protected function casts(): array
@@ -49,6 +50,7 @@ class RecurringIncome extends Model
             'payment_day' => 'integer',
             'payment_month' => 'integer',
             'reminder_days_before' => 'integer',
+            'deductions' => 'array',
         ];
     }
 

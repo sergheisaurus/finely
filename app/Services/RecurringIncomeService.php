@@ -67,20 +67,56 @@ class RecurringIncomeService
         return $income;
     }
 
-    public function markReceived(RecurringIncome $income, ?Carbon $receivedDate = null): ?Transaction
+    public function markReceived(RecurringIncome $income, array $data = []): ?Transaction
     {
         if (! $income->is_active) {
             return null;
         }
 
-        return DB::transaction(function () use ($income, $receivedDate) {
-            $receivedDate = $receivedDate ?? now();
+        return DB::transaction(function () use ($income, $data) {
+            $receivedDate = isset($data['date']) ? Carbon::parse($data['date']) : now();
+            
+            // Amount provided or default
+            $grossAmount = isset($data['amount']) ? (float) $data['amount'] : (float) $income->amount;
+            $netAmount = $grossAmount;
+            
+            $deductions = $data['deductions'] ?? null;
+            $deductionsMetadata = null;
+
+            if ($deductions && is_array($deductions)) {
+                $totalDeductions = 0;
+                $formattedDeductions = [];
+
+                foreach ($deductions as $deduction) {
+                    $amount = (float) ($deduction['amount'] ?? 0);
+                    $totalDeductions += $amount;
+                    $formattedDeductions[] = [
+                        'name' => $deduction['name'],
+                        'amount' => $amount,
+                    ];
+                }
+
+                $netAmount = $grossAmount - $totalDeductions;
+                
+                $deductionsMetadata = [
+                    'gross_amount' => $grossAmount,
+                    'total_deductions' => $totalDeductions,
+                    'net_amount' => $netAmount,
+                    'deductions' => $formattedDeductions,
+                ];
+
+                // If user opted to save these deductions as default for the future
+                if (!empty($data['save_deductions'])) {
+                    $income->deductions = $formattedDeductions;
+                    $income->amount = $grossAmount; // Update default gross amount
+                }
+            }
 
             // Create the transaction
             $transaction = Transaction::create([
                 'user_id' => $income->user_id,
                 'type' => 'income',
-                'amount' => $income->amount,
+                'amount' => $netAmount, // Save actual received net amount
                 'currency' => $income->currency,
                 'title' => $income->name,
                 'description' => $income->source ? "Income from: {$income->source}" : "Recurring income: {$income->name}",
@@ -89,11 +125,12 @@ class RecurringIncomeService
                 'category_id' => $income->category_id,
                 'transactionable_type' => $income->getMorphClass(),
                 'transactionable_id' => $income->id,
+                'metadata' => $deductionsMetadata ? ['salary_breakdown' => $deductionsMetadata] : null,
             ]);
 
             // Update account balance
             if ($income->toAccount) {
-                $income->toAccount->updateBalance($income->amount, 'add');
+                $income->toAccount->updateBalance($netAmount, 'add');
             }
 
             // Update income dates
@@ -124,7 +161,12 @@ class RecurringIncomeService
             ->get();
 
         foreach ($dueIncomes as $income) {
-            $transaction = $this->markReceived($income, $income->next_expected_date);
+            // Auto processor doesn't submit a form, so it receives the defaults
+            $transaction = $this->markReceived($income, [
+                'date' => $income->next_expected_date->toDateString(),
+                'amount' => $income->amount,
+                'deductions' => $income->deductions,
+            ]);
             if ($transaction) {
                 $processed++;
             }

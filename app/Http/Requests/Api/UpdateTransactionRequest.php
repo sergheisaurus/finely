@@ -27,6 +27,9 @@ class UpdateTransactionRequest extends FormRequest
             'to_card_id' => ['nullable', 'exists:cards,id'],
             'category_id' => ['nullable', 'exists:categories,id'],
             'merchant_id' => ['nullable', 'exists:merchants,id'],
+            'secret_title' => ['nullable', 'string', 'max:255'],
+            'secret_category_id' => ['nullable', 'exists:categories,id'],
+            'secret_merchant_id' => ['nullable', 'exists:merchants,id'],
         ];
     }
 }

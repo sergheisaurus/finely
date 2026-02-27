@@ -29,6 +29,10 @@ class Transaction extends Model
         'merchant_id',
         'transactionable_type',
         'transactionable_id',
+        'secret_title',
+        'secret_category_id',
+        'secret_merchant_id',
+        'metadata',
     ];
 
     protected function casts(): array
@@ -36,6 +40,7 @@ class Transaction extends Model
         return [
             'amount' => 'decimal:2',
             'transaction_date' => 'date',
+            'metadata' => 'array',
         ];
     }
 
@@ -72,6 +77,16 @@ class Transaction extends Model
     public function merchant(): BelongsTo
     {
         return $this->belongsTo(Merchant::class);
+    }
+
+    public function secretCategory(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'secret_category_id');
+    }
+
+    public function secretMerchant(): BelongsTo
+    {
+        return $this->belongsTo(Merchant::class, 'secret_merchant_id');
     }
 
     public function transactionable(): MorphTo

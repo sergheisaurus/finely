@@ -4,10 +4,16 @@ import { PieChartCard } from '@/components/statistics/charts/pie-chart-card';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import type { Subscription, SubscriptionStats } from '@/types/finance';
+import type { StatisticsFilters } from '@/hooks/use-statistics-filters';
 import { CalendarClock, DollarSign, Hash } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-export function SubscriptionsTab() {
+interface SubscriptionsTabProps {
+    filters: StatisticsFilters;
+    apiFilters: Record<string, unknown>;
+}
+
+export function SubscriptionsTab({ filters, apiFilters }: SubscriptionsTabProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [stats, setStats] = useState<SubscriptionStats | null>(null);
@@ -41,7 +47,7 @@ export function SubscriptionsTab() {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [apiFilters]);
 
     const subscriptionsForChart = subscriptions.map((sub) => ({
         name: sub.name,

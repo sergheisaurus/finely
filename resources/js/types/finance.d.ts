@@ -49,6 +49,8 @@ export interface Category {
     parent?: Category;
     children?: Category[];
     transactions_count?: number;
+    is_secret?: boolean;
+    cover_category_id?: number | null;
     created_at: string;
     updated_at: string;
 }
@@ -57,8 +59,11 @@ export interface Merchant {
     id: number;
     name: string;
     type: 'company' | 'person';
-    image_path?: string;
+    image_path?: string | null;
+    image_url?: string | null;
     transactions_count?: number;
+    is_secret?: boolean;
+    cover_merchant_id?: number | null;
     created_at: string;
     updated_at: string;
 }
@@ -77,6 +82,9 @@ export interface Transaction {
     to_card_id?: number;
     category_id?: number;
     merchant_id?: number;
+    secret_title?: string | null;
+    secret_category_id?: number | null;
+    secret_merchant_id?: number | null;
     from_account?: BankAccount;
     from_card?: Card;
     to_account?: BankAccount;
@@ -85,6 +93,8 @@ export interface Transaction {
     merchant?: Merchant;
     attachments?: TransactionAttachment[];
     attachments_count?: number;
+    is_secret?: boolean;
+    metadata?: TransactionMetadata | null;
     transactionable_type?: string;
     transactionable_id?: number;
     created_at: string;
@@ -176,6 +186,7 @@ export interface RecurringIncome {
     description?: string;
     source?: string;
     amount: number;
+    net_amount?: number;
     currency: string;
     frequency: IncomeFrequency;
     payment_day?: number;
@@ -189,6 +200,7 @@ export interface RecurringIncome {
     reminder_days_before: number;
     color?: string;
     icon?: string;
+    deductions?: SalaryDeduction[] | null;
 
     // Computed fields
     is_overdue: boolean;
@@ -430,4 +442,21 @@ export interface BudgetImpact {
     currently_over_budget: boolean;
     will_be_over_budget: boolean;
     exceeds_by: number;
+}
+
+// Salary Deductions
+export interface SalaryDeduction {
+    name: string;
+    amount: number;
+}
+
+export interface SalaryBreakdownMetadata {
+    gross_amount: number;
+    total_deductions: number;
+    net_amount: number;
+    deductions: SalaryDeduction[];
+}
+
+export interface TransactionMetadata {
+    salary_breakdown?: SalaryBreakdownMetadata;
 }

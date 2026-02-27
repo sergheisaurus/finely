@@ -17,7 +17,16 @@ class Merchant extends Model
         'name',
         'type',
         'image_path',
+        'is_secret',
+        'cover_merchant_id',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_secret' => 'boolean',
+        ];
+    }
 
     public function user(): BelongsTo
     {
@@ -27,6 +36,11 @@ class Merchant extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function coverMerchant(): BelongsTo
+    {
+        return $this->belongsTo(Merchant::class, 'cover_merchant_id');
     }
 
     public function isCompany(): bool

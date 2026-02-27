@@ -1,0 +1,35 @@
+services:
+  finely:
+    image: finely:latest
+    container_name: finely
+    restart: unless-stopped
+    ports:
+      - "3015:8080"
+    volumes:
+      - ./storage:/var/www/html/storage
+    environment:
+      - APP_NAME=Finely
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=https://finely.sergheisaurus.com
+      - ASSET_URL=https://finely.sergheisaurus.com
+      - LOG_CHANNEL=stderr
+      - DB_CONNECTION=sqlite
+      - DB_DATABASE=/var/www/html/storage/database.sqlite
+      - SESSION_DRIVER=database
+      - SESSION_LIFETIME=120
+      - SESSION_ENCRYPT=false
+      - SESSION_PATH=/
+      - SESSION_DOMAIN=
+      - SESSION_SECURE_COOKIE=true
+      - SESSION_HTTP_ONLY=true
+      - SESSION_SAME_SITE=lax
+      - SANCTUM_STATEFUL_DOMAINS=finely.sergheisaurus.com,sergheisaurus.com,localhost,10.10.10.3
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - CDN_LAN_BASE_URL=http://10.10.10.3:5173
+      - CDN_WAN_BASE_URL=https://cdn.sergheisaurus.com
+      - CDN_PANGOLIN_BASIC_AUTH=Basic Q0ROLUhBVVRIOlNhaHJ5ZUhvZ3RpZWREcm9vbGluZw==
+      - CDN_API_TOKEN=${CDN_API_TOKEN}
+      - CDN_PROJECT_ID=${CDN_PROJECT_ID}
+      - QUEUE_CONNECTION=sync
+      - APP_KEY=${APP_KEY}
