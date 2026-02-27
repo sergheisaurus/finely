@@ -21,7 +21,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
-import { journal } from '@/routes';
+import { journal } from '@/routes/pages';
 import { type BreadcrumbItem } from '@/types';
 import type { BankAccount, Card, Category, Merchant } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';

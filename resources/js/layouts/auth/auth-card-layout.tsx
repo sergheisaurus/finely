@@ -6,7 +6,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { dashboard } from '@/routes';
+import { dashboard } from '@/routes/pages';
 import { Link } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
 

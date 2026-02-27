@@ -9,7 +9,7 @@ import { DynamicIcon } from '@/components/ui/dynamic-icon';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
-import { dashboard } from '@/routes';
+import { dashboard } from '@/routes/pages';
 import { type BreadcrumbItem } from '@/types';
 import type { BankAccount, Budget, RecurringIncome, Subscription, Transaction } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';

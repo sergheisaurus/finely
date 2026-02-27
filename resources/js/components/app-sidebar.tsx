@@ -9,7 +9,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard, journal } from '@/routes';
+import { dashboard, journal } from '@/routes/pages';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import {

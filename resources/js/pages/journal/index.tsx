@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
-import { journal } from '@/routes';
+import { journal } from '@/routes/pages';
 import { type BreadcrumbItem } from '@/types';
 import type {
     BankAccount,
