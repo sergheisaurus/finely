@@ -11,7 +11,7 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/home', function () {
-    return redirect()->route('dashboard');
+    return redirect()->route('pages.dashboard');
 })->middleware(['auth', 'verified']);
 
 // Onboarding routes (auth required, but NOT onboarding middleware)
@@ -25,7 +25,7 @@ Route::middleware(['auth', 'verified'])->prefix('onboarding')->name('onboarding.
     Route::post('/skip', [OnboardingController::class, 'skip'])->name('skip');
 });
 
-Route::middleware(['auth', 'verified', 'onboarding'])->group(function () {
+Route::middleware(['auth', 'verified', 'onboarding'])->name('pages.')->group(function () {
     // Dashboard
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
@@ -40,14 +40,6 @@ Route::middleware(['auth', 'verified', 'onboarding'])->group(function () {
     Route::get('journal', function () {
         return Inertia::render('journal/index');
     })->name('journal');
-
-    Route::get('journal/create', function () {
-        return Inertia::render('journal/create');
-    })->name('journal.create');
-
-    Route::get('journal/{id}/edit', function ($id) {
-        return Inertia::render('journal/edit', ['transactionId' => $id]);
-    })->name('journal.edit');
 
     // Bank Accounts
     Route::get('accounts', function () {

@@ -3,7 +3,7 @@
 use App\Models\User;
 
 test('guests are redirected to the login page', function () {
-    $this->get(route('dashboard'))->assertRedirect(route('login'));
+    $this->get(route('pages.dashboard'))->assertRedirect(route('login'));
 });
 
 test('authenticated users can visit the dashboard', function () {
@@ -16,11 +16,11 @@ test('authenticated users can visit the dashboard', function () {
 
     $this->actingAs($user);
 
-    $this->get(route('dashboard'))->assertOk();
+    $this->get(route('pages.dashboard'))->assertOk();
 });
 
 test('authenticated users without onboarding are redirected', function () {
     $this->actingAs($user = User::factory()->create());
 
-    $this->get(route('dashboard'))->assertRedirect(route('onboarding.index'));
+    $this->get(route('pages.dashboard'))->assertRedirect(route('onboarding.index'));
 });

@@ -160,7 +160,7 @@ class OnboardingController extends Controller
 
         return response()->json([
             'message' => 'Onboarding completed!',
-            'redirect' => route('dashboard'),
+            'redirect' => route('pages.dashboard'),
         ]);
     }
 
@@ -172,7 +172,7 @@ class OnboardingController extends Controller
 
         return response()->json([
             'message' => 'Onboarding skipped',
-            'redirect' => route('dashboard'),
+            'redirect' => route('pages.dashboard'),
         ]);
     }
 }

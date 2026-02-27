@@ -24,7 +24,7 @@ test('users can authenticate using the login screen', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('pages.dashboard', absolute: false));
 });
 
 test('new users without onboarding are redirected to onboarding', function () {
