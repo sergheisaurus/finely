@@ -37,26 +37,32 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function CategoriesIndex({
-    categories: initialCategories,
-}: {
-    categories: { data: Category[] };
-}) {
-    const [categories, setCategories] = useState<Category[]>(
-        initialCategories.data,
-    );
-    const [isLoading, setIsLoading] = useState(false);
+export default function CategoriesIndex() {
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('all');
 
     useEffect(() => {
-        setCategories(initialCategories.data);
-    }, [initialCategories]);
+        fetchCategories();
+    }, []);
+
+    const fetchCategories = async () => {
+        try {
+            const response = await api.get('/categories');
+            setCategories(response.data.data);
+        } catch (error) {
+            console.error('Failed to fetch categories:', error);
+            toast.error('Failed to load categories');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleCategoryCreated = (newCategory: Category) => {
         setCategories((prev) => [...prev, newCategory]);
-        router.reload({ only: ['categories'] });
+        // No need to reload page, just update state
     };
 
     const handleDelete = async (categoryId: number) => {
@@ -74,7 +80,7 @@ export default function CategoriesIndex({
             toast.success('Category deleted!', {
                 description: `${category?.name} has been removed.`,
             });
-            router.reload({ only: ['categories'] });
+            await fetchCategories();
         } catch (error) {
             console.error('Failed to delete category:', error);
             toast.error('Failed to delete category', {
@@ -219,7 +225,12 @@ export default function CategoriesIndex({
                         </div>
 
                         <div className="space-y-2">
-                            {filteredCategories.length === 0 ? (
+                            {isLoading ? (
+                                <div className="space-y-4 py-8 text-center">
+                                    <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-muted-foreground border-t-transparent" />
+                                    <p className="text-sm text-muted-foreground">Loading categories...</p>
+                                </div>
+                            ) : filteredCategories.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-12 text-center">
                                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
                                         <Search className="h-8 w-8 text-muted-foreground/50" />
