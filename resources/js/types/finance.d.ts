@@ -85,6 +85,9 @@ export interface Transaction {
     secret_title?: string | null;
     secret_category_id?: number | null;
     secret_merchant_id?: number | null;
+    real_title?: string | null;
+    real_category_id?: number | null;
+    real_merchant_id?: number | null;
     from_account?: BankAccount;
     from_card?: Card;
     to_account?: BankAccount;

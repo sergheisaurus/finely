@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
 import type { Category } from '@/types/finance';
 import { Tag } from 'lucide-react';
 import { useState } from 'react';
@@ -72,6 +73,8 @@ export function CreateCategoryDialog({
     const [selectedType, setSelectedType] = useState<'income' | 'expense'>(
         type || 'expense',
     );
+    const [isSecret, setIsSecret] = useState(false);
+    const [coverCategoryId, setCoverCategoryId] = useState<string>('none');
 
     // If type is provided via props, use it. Otherwise, allow selection (or default)
     // Actually, usually we might want to let user choose type if not enforced
@@ -84,6 +87,10 @@ export function CreateCategoryDialog({
         .filter((c) => c.type === activeType)
         .filter((c) => !c.parent_id);
 
+    const potentialCovers = categories.filter(
+        (c) => c.type === activeType && !c.is_secret,
+    );
+
     const handleCreate = async () => {
         if (!newName) return;
 
@@ -94,10 +101,14 @@ export function CreateCategoryDialog({
                 type: activeType,
                 color: newColor,
                 icon: newIcon,
+                is_secret: isSecret,
             };
 
             if (newParentId !== 'none') {
                 payload.parent_id = parseInt(newParentId);
+            }
+            if (isSecret && coverCategoryId !== 'none') {
+                payload.cover_category_id = parseInt(coverCategoryId);
             }
 
             const response = await api.post('/categories', payload);
@@ -111,6 +122,8 @@ export function CreateCategoryDialog({
             setNewParentId('none');
             setNewColor(PRESET_COLORS[10]);
             setNewIcon('Tag');
+            setIsSecret(false);
+            setCoverCategoryId('none');
 
             // If we are not enforcing type, maybe reset it? Nah.
 
@@ -198,6 +211,59 @@ export function CreateCategoryDialog({
                                         ))}
                                     </SelectContent>
                                 </Select>
+                            </div>
+
+                            <div className="flex flex-col gap-4 rounded-lg border p-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="space-y-0.5">
+                                        <Label className="text-fuchsia-500 dark:text-fuchsia-400">
+                                            🔒 Secret Category
+                                        </Label>
+                                        <p className="text-xs text-muted-foreground">
+                                            Hide this category and its transactions
+                                        </p>
+                                    </div>
+                                    <Switch
+                                        checked={isSecret}
+                                        onCheckedChange={(checked) => {
+                                            setIsSecret(checked);
+                                            if (!checked) setCoverCategoryId('none');
+                                        }}
+                                        className="data-[state=checked]:bg-fuchsia-500"
+                                    />
+                                </div>
+
+                                {isSecret && (
+                                    <div className="space-y-2 pt-2 animate-in fade-in slide-in-from-top-2">
+                                        <Label className="text-fuchsia-500 dark:text-fuchsia-400">
+                                            Cover Category (Optional)
+                                        </Label>
+                                        <p className="text-xs text-muted-foreground mb-2">
+                                            When not in secret mode, this category will masquerade as the selected cover category.
+                                        </p>
+                                        <Select
+                                            value={coverCategoryId}
+                                            onValueChange={setCoverCategoryId}
+                                        >
+                                            <SelectTrigger className="border-fuchsia-500/50 focus:ring-fuchsia-500/50">
+                                                <SelectValue placeholder="Select a safe cover" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">
+                                                    No Cover (Hidden entirely)
+                                                </SelectItem>
+                                                {potentialCovers.map((cat) => (
+                                                    <SelectItem
+                                                        key={cat.id}
+                                                        value={cat.id.toString()}
+                                                    >
+                                                        {cat.icon} {cat.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <div className="flex flex-col items-center space-y-2">

@@ -20,6 +20,7 @@ import api from '@/lib/api';
 import { type BreadcrumbItem } from '@/types';
 import type { Category } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
+import { Switch } from '@/components/ui/switch';
 import { FolderTree } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -41,6 +42,8 @@ export default function CategoryEdit({ categoryId }: CategoryEditProps) {
     const [parentId, setParentId] = useState('');
     const [icon, setIcon] = useState('');
     const [color, setColor] = useState('#3b82f6');
+    const [isSecret, setIsSecret] = useState(false);
+    const [coverCategoryId, setCoverCategoryId] = useState('');
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -63,6 +66,8 @@ export default function CategoryEdit({ categoryId }: CategoryEditProps) {
             setParentId(data.parent_id?.toString() || '');
             setIcon(data.icon || '');
             setColor(data.color);
+            setIsSecret(data.is_secret || false);
+            setCoverCategoryId(data.cover_category_id?.toString() || '');
         } catch (error) {
             console.error('Failed to fetch category:', error);
             toast.error('Failed to load category');
@@ -95,12 +100,19 @@ export default function CategoryEdit({ categoryId }: CategoryEditProps) {
                 name,
                 type,
                 color,
+                is_secret: isSecret,
             };
 
             if (parentId) {
                 payload.parent_id = parseInt(parentId);
             } else {
                 payload.parent_id = null;
+            }
+
+            if (isSecret && coverCategoryId) {
+                payload.cover_category_id = parseInt(coverCategoryId);
+            } else {
+                payload.cover_category_id = null;
             }
 
             if (icon) {
@@ -177,6 +189,10 @@ export default function CategoryEdit({ categoryId }: CategoryEditProps) {
             !c.parent_id &&
             c.id !== category.id &&
             c.parent_id !== category.id,
+    );
+
+    const potentialCovers = categories.filter(
+        (c) => c.type === type && !c.is_secret && c.id !== category.id,
     );
 
     return (
@@ -277,6 +293,62 @@ export default function CategoryEdit({ categoryId }: CategoryEditProps) {
                                         Create a subcategory under an existing
                                         category
                                     </p>
+                                </div>
+
+                                {/* Secret Mode */}
+                                <div className="flex flex-col gap-4 rounded-lg border p-4 md:col-span-2">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-fuchsia-500 dark:text-fuchsia-400">
+                                                🔒 Secret Category
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground">
+                                                Hide this category and its transactions
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={isSecret}
+                                            onCheckedChange={(checked) => {
+                                                setIsSecret(checked);
+                                                if (!checked) setCoverCategoryId('');
+                                            }}
+                                            className="data-[state=checked]:bg-fuchsia-500"
+                                        />
+                                    </div>
+
+                                    {isSecret && (
+                                        <div className="space-y-2 pt-2 animate-in fade-in slide-in-from-top-2">
+                                            <Label className="text-fuchsia-500 dark:text-fuchsia-400">
+                                                Cover Category (Optional)
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground mb-2">
+                                                When not in secret mode, this category will masquerade as the selected cover category.
+                                            </p>
+                                            <Select
+                                                value={coverCategoryId || 'none'}
+                                                onValueChange={(val) =>
+                                                    setCoverCategoryId(val === 'none' ? '' : val)
+                                                }
+                                            >
+                                                <SelectTrigger className="border-fuchsia-500/50 focus:ring-fuchsia-500/50">
+                                                    <SelectValue placeholder="Select a safe cover" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="none">
+                                                        No Cover (Hidden entirely)
+                                                    </SelectItem>
+                                                    {potentialCovers.map((cat) => (
+                                                        <SelectItem
+                                                            key={cat.id}
+                                                            value={cat.id.toString()}
+                                                        >
+                                                            {cat.icon} {cat.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Color */}

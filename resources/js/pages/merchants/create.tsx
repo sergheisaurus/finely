@@ -16,10 +16,12 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
-import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
+import { type BreadcrumbItem } from '@/types';
+import { Switch } from '@/components/ui/switch';
 import { Building2, User } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import type { Merchant } from '@/types/finance';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -41,6 +43,25 @@ export default function MerchantCreate() {
     const [name, setName] = useState('');
     const [type, setType] = useState<'company' | 'person'>('company');
     const [imagePath, setImagePath] = useState('');
+    const [isSecret, setIsSecret] = useState(false);
+    const [coverMerchantId, setCoverMerchantId] = useState('');
+    const [merchants, setMerchants] = useState<Merchant[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+
+    const fetchMerchants = useCallback(async () => {
+        try {
+            const response = await api.get('/merchants');
+            setMerchants(response.data.data);
+        } catch (error) {
+            console.error('Failed to fetch merchants:', error);
+        } finally {
+            setIsLoadingData(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchMerchants();
+    }, [fetchMerchants]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -51,9 +72,13 @@ export default function MerchantCreate() {
             const payload: Record<string, unknown> = {
                 name,
                 type,
+                is_secret: isSecret,
             };
 
             if (imagePath) payload.image_path = imagePath;
+            if (isSecret && coverMerchantId) {
+                payload.cover_merchant_id = parseInt(coverMerchantId);
+            }
 
             await api.post('/merchants', payload);
 
@@ -78,6 +103,21 @@ export default function MerchantCreate() {
             setIsSubmitting(false);
         }
     };
+
+    const potentialCovers = merchants.filter(
+        (m) => m.type === type && !m.is_secret,
+    );
+
+    if (isLoadingData) {
+        return (
+            <AppLayout breadcrumbs={breadcrumbs}>
+                <Head title="Create Merchant" />
+                <div className="mx-auto max-w-3xl space-y-6 p-6">
+                    <div className="h-96 animate-pulse rounded-lg bg-muted" />
+                </div>
+            </AppLayout>
+        );
+    }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -175,6 +215,62 @@ export default function MerchantCreate() {
                                         URL to a logo or image for this merchant
                                     </p>
                                 </div>
+
+                                {/* Secret Mode */}
+                                <div className="flex flex-col gap-4 rounded-lg border p-4 md:col-span-2">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-fuchsia-500 dark:text-fuchsia-400">
+                                                🔒 Secret Merchant
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground">
+                                                Hide this merchant and its transactions
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={isSecret}
+                                            onCheckedChange={(checked) => {
+                                                setIsSecret(checked);
+                                                if (!checked) setCoverMerchantId('');
+                                            }}
+                                            className="data-[state=checked]:bg-fuchsia-500"
+                                        />
+                                    </div>
+
+                                    {isSecret && (
+                                        <div className="space-y-2 pt-2 animate-in fade-in slide-in-from-top-2">
+                                            <Label className="text-fuchsia-500 dark:text-fuchsia-400">
+                                                Cover Merchant (Optional)
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground mb-2">
+                                                When not in secret mode, transactions will masquerade under this merchant.
+                                            </p>
+                                            <Select
+                                                value={coverMerchantId || 'none'}
+                                                onValueChange={(val) =>
+                                                    setCoverMerchantId(val === 'none' ? '' : val)
+                                                }
+                                            >
+                                                <SelectTrigger className="border-fuchsia-500/50 focus:ring-fuchsia-500/50">
+                                                    <SelectValue placeholder="Select a safe cover merchant" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="none">
+                                                        No Cover (Hidden entirely)
+                                                    </SelectItem>
+                                                    {potentialCovers.map((m) => (
+                                                        <SelectItem
+                                                            key={m.id}
+                                                            value={m.id.toString()}
+                                                        >
+                                                            {m.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Preview */}
@@ -182,11 +278,10 @@ export default function MerchantCreate() {
                                 <Label>Preview</Label>
                                 <div className="flex h-20 items-center gap-3 rounded-lg border p-4">
                                     <div
-                                        className={`flex h-12 w-12 items-center justify-center rounded-lg ${
-                                            type === 'company'
-                                                ? 'bg-purple-100'
-                                                : 'bg-green-100'
-                                        }`}
+                                        className={`flex h-12 w-12 items-center justify-center rounded-lg ${type === 'company'
+                                            ? 'bg-purple-100'
+                                            : 'bg-green-100'
+                                            }`}
                                     >
                                         {imagePath ? (
                                             <img

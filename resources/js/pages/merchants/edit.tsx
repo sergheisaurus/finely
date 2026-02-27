@@ -16,9 +16,10 @@ import {
 } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
+import { Head, router } from '@inertiajs/react';
 import { type BreadcrumbItem } from '@/types';
 import type { Merchant } from '@/types/finance';
-import { Head, router } from '@inertiajs/react';
+import { Switch } from '@/components/ui/switch';
 import { Building2, User } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -37,6 +38,9 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
     const [name, setName] = useState('');
     const [type, setType] = useState<'company' | 'person'>('company');
     const [imagePath, setImagePath] = useState('');
+    const [isSecret, setIsSecret] = useState(false);
+    const [coverMerchantId, setCoverMerchantId] = useState('');
+    const [merchants, setMerchants] = useState<Merchant[]>([]);
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -57,6 +61,8 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
             setName(data.name);
             setType(data.type);
             setImagePath(data.image_path || '');
+            setIsSecret(data.is_secret || false);
+            setCoverMerchantId(data.cover_merchant_id?.toString() || '');
         } catch (error) {
             console.error('Failed to fetch merchant:', error);
             toast.error('Failed to load merchant');
@@ -66,9 +72,20 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
         }
     }, [merchantId]);
 
+    const fetchMerchants = useCallback(async () => {
+        try {
+            const response = await api.get('/merchants');
+            setMerchants(response.data.data);
+        } catch (error) {
+            console.error('Failed to fetch merchants:', error);
+        }
+    }, []);
+
     useEffect(() => {
-        fetchMerchant();
-    }, [fetchMerchant]);
+        Promise.all([fetchMerchant(), fetchMerchants()]).finally(() =>
+            setIsLoadingData(false),
+        );
+    }, [fetchMerchant, fetchMerchants]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -79,12 +96,19 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
             const payload: Record<string, unknown> = {
                 name,
                 type,
+                is_secret: isSecret,
             };
 
             if (imagePath) {
                 payload.image_path = imagePath;
             } else {
                 payload.image_path = null;
+            }
+
+            if (isSecret && coverMerchantId) {
+                payload.cover_merchant_id = parseInt(coverMerchantId);
+            } else {
+                payload.cover_merchant_id = null;
             }
 
             await api.put(`/merchants/${merchantId}`, payload);
@@ -147,6 +171,10 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
             </AppLayout>
         );
     }
+
+    const potentialCovers = merchants.filter(
+        (m) => m.type === type && !m.is_secret && m.id !== merchant.id,
+    );
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -244,6 +272,62 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
                                         URL to a logo or image for this merchant
                                     </p>
                                 </div>
+
+                                {/* Secret Mode */}
+                                <div className="flex flex-col gap-4 rounded-lg border p-4 md:col-span-2">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-fuchsia-500 dark:text-fuchsia-400">
+                                                🔒 Secret Merchant
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground">
+                                                Hide this merchant and its transactions
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={isSecret}
+                                            onCheckedChange={(checked) => {
+                                                setIsSecret(checked);
+                                                if (!checked) setCoverMerchantId('');
+                                            }}
+                                            className="data-[state=checked]:bg-fuchsia-500"
+                                        />
+                                    </div>
+
+                                    {isSecret && (
+                                        <div className="space-y-2 pt-2 animate-in fade-in slide-in-from-top-2">
+                                            <Label className="text-fuchsia-500 dark:text-fuchsia-400">
+                                                Cover Merchant (Optional)
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground mb-2">
+                                                When not in secret mode, transactions will masquerade under this merchant.
+                                            </p>
+                                            <Select
+                                                value={coverMerchantId || 'none'}
+                                                onValueChange={(val) =>
+                                                    setCoverMerchantId(val === 'none' ? '' : val)
+                                                }
+                                            >
+                                                <SelectTrigger className="border-fuchsia-500/50 focus:ring-fuchsia-500/50">
+                                                    <SelectValue placeholder="Select a safe cover merchant" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="none">
+                                                        No Cover (Hidden entirely)
+                                                    </SelectItem>
+                                                    {potentialCovers.map((m) => (
+                                                        <SelectItem
+                                                            key={m.id}
+                                                            value={m.id.toString()}
+                                                        >
+                                                            {m.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Preview */}
@@ -251,11 +335,10 @@ export default function MerchantEdit({ merchantId }: MerchantEditProps) {
                                 <Label>Preview</Label>
                                 <div className="flex h-20 items-center gap-3 rounded-lg border p-4">
                                     <div
-                                        className={`flex h-12 w-12 items-center justify-center rounded-lg ${
-                                            type === 'company'
-                                                ? 'bg-purple-100'
-                                                : 'bg-green-100'
-                                        }`}
+                                        className={`flex h-12 w-12 items-center justify-center rounded-lg ${type === 'company'
+                                            ? 'bg-purple-100'
+                                            : 'bg-green-100'
+                                            }`}
                                     >
                                         {imagePath ? (
                                             <img

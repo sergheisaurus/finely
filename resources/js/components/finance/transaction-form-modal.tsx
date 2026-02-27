@@ -72,7 +72,9 @@ export function TransactionFormModal({
     const [toAccountId, setToAccountId] = useState('');
     const [toCardId, setToCardId] = useState('');
     const [categoryId, setCategoryId] = useState('');
+    const [secretCategoryId, setSecretCategoryId] = useState('');
     const [merchantId, setMerchantId] = useState('');
+    const [secretMerchantId, setSecretMerchantId] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'account' | 'card'>('account');
 
     // Sub-modal state
@@ -122,7 +124,7 @@ export function TransactionFormModal({
         setType(transaction.type);
         setAmount(parseFloat(String(transaction.amount ?? 0)).toFixed(2));
         setCurrency(transaction.currency);
-        setTitle(transaction.title);
+        setTitle(transaction.real_title ?? transaction.title);
         setSecretTitle(transaction.secret_title ?? '');
         setDescription(transaction.description ?? '');
         setTransactionDate(transaction.transaction_date);
@@ -131,13 +133,11 @@ export function TransactionFormModal({
         setToAccountId(transaction.to_account_id?.toString() ?? '');
         setToCardId(transaction.to_card_id?.toString() ?? '');
 
-        if (isSecretModeActive && transaction.is_secret) {
-            setCategoryId(transaction.secret_category_id?.toString() ?? transaction.category_id?.toString() ?? '');
-            setMerchantId(transaction.secret_merchant_id?.toString() ?? transaction.merchant_id?.toString() ?? '');
-        } else {
-            setCategoryId(transaction.category_id?.toString() ?? '');
-            setMerchantId(transaction.merchant_id?.toString() ?? '');
-        }
+        // Use the explicit 'real' properties sent by the resource for forms
+        setCategoryId(transaction.real_category_id?.toString() ?? transaction.category_id?.toString() ?? '');
+        setSecretCategoryId(transaction.secret_category_id?.toString() ?? '');
+        setMerchantId(transaction.real_merchant_id?.toString() ?? transaction.merchant_id?.toString() ?? '');
+        setSecretMerchantId(transaction.secret_merchant_id?.toString() ?? '');
 
         if (transaction.type === 'expense' || transaction.type === 'income') {
             setPaymentMethod(
@@ -164,7 +164,9 @@ export function TransactionFormModal({
                 setToAccountId('');
                 setToCardId('');
                 setCategoryId('');
+                setSecretCategoryId('');
                 setMerchantId('');
+                setSecretMerchantId('');
                 setPaymentMethod('account');
             }
         }
@@ -201,11 +203,19 @@ export function TransactionFormModal({
             payload.from_card_id = fromCardId ? parseInt(fromCardId) : null;
             payload.category_id = categoryId ? parseInt(categoryId) : null;
             payload.merchant_id = merchantId ? parseInt(merchantId) : null;
+            if (isSecretModeActive) {
+                payload.secret_category_id = secretCategoryId ? parseInt(secretCategoryId) : null;
+                payload.secret_merchant_id = secretMerchantId ? parseInt(secretMerchantId) : null;
+            }
         } else if (type === 'income') {
             payload.to_account_id = toAccountId ? parseInt(toAccountId) : null;
             payload.to_card_id = toCardId ? parseInt(toCardId) : null;
             payload.category_id = categoryId ? parseInt(categoryId) : null;
             payload.merchant_id = merchantId ? parseInt(merchantId) : null;
+            if (isSecretModeActive) {
+                payload.secret_category_id = secretCategoryId ? parseInt(secretCategoryId) : null;
+                payload.secret_merchant_id = secretMerchantId ? parseInt(secretMerchantId) : null;
+            }
         } else if (type === 'transfer') {
             payload.from_account_id = fromAccountId ? parseInt(fromAccountId) : null;
             payload.to_account_id = toAccountId ? parseInt(toAccountId) : null;
@@ -245,14 +255,18 @@ export function TransactionFormModal({
 
     // Filtered lists
     const filteredCategories = categories.filter((c) => {
-        if (!isSecretModeActive && c.is_secret) return false;
+        // For Safe/Cover category dropdown, we ONLY show non-secret categories.
+        // For Secret category dropdown, we show all categories of that type.
         if (type === 'income') return c.type === 'income';
         if (type === 'expense') return c.type === 'expense';
         return false;
     });
-    const visibleMerchants = merchants.filter(
-        (m) => isSecretModeActive || !m.is_secret,
-    );
+
+    const safeCategories = filteredCategories.filter(c => !c.is_secret);
+    const secretCategories = filteredCategories; // Can pick any as the "real" secret category
+
+    const safeMerchants = merchants.filter(m => !m.is_secret);
+    const secretMerchants = merchants; // Can pick any as the "real" secret merchant
     const creditCards = cards.filter((c) => c.type === 'credit');
 
     const modalTitle = isEditMode
@@ -264,73 +278,113 @@ export function TransactionFormModal({
             : 'New Transaction';
 
     // Helper: Category select field with "+ Create new" button
-    const CategorySelectField = () => (
-        <div className="space-y-1">
-            <Label>Category</Label>
-            <div className="flex gap-2">
-                <Select value={categoryId} onValueChange={setCategoryId}>
-                    <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {filteredCategories.length === 0 && (
-                            <div className="px-3 py-2 text-sm text-muted-foreground">No categories</div>
-                        )}
-                        {filteredCategories.map((c) => (
-                            <SelectItem key={c.id} value={c.id.toString()}>
-                                {c.parent && '└ '}
-                                {c.icon} {c.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setShowCreateCategory(true)}
-                    title="Create new category"
-                >
-                    <Plus className="h-4 w-4" />
-                </Button>
+    const CategorySelectField = ({ isSecretField = false } = {}) => {
+        const value = isSecretField ? secretCategoryId : categoryId;
+        const setValue = isSecretField ? (val: string) => {
+            setSecretCategoryId(val);
+            if (val && isSecretModeActive) {
+                const cat = categories.find(c => c.id.toString() === val);
+                if (cat?.cover_category_id) {
+                    setCategoryId(cat.cover_category_id.toString());
+                }
+            }
+        } : setCategoryId;
+        const options = (isSecretField && isSecretModeActive) ? secretCategories : safeCategories;
+        const labelText = isSecretField ? 'Secret Category' : (isSecretModeActive ? 'Cover Category (Safe)' : 'Category');
+
+        return (
+            <div className="space-y-1">
+                <Label className={isSecretField ? 'text-fuchsia-500 dark:text-fuchsia-400' : ''}>
+                    {isSecretField ? '🔒 ' : ''}{labelText}
+                </Label>
+                <div className="flex gap-2">
+                    <Select value={value} onValueChange={setValue}>
+                        <SelectTrigger className={`flex-1 ${isSecretField ? 'border-fuchsia-500/50 focus:ring-fuchsia-500/50' : ''}`}>
+                            <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {options.length === 0 && (
+                                <div className="px-3 py-2 text-sm text-muted-foreground">No categories</div>
+                            )}
+                            {options.map((c) => (
+                                <SelectItem key={c.id} value={c.id.toString()}>
+                                    {c.parent && '└ '}
+                                    {c.icon} {c.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {!isSecretField && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setShowCreateCategory(true)}
+                            title="Create new category"
+                        >
+                            <Plus className="h-4 w-4" />
+                        </Button>
+                    )}
+                </div>
+                {errors.category_id && !isSecretField && <p className="text-sm text-red-500">{errors.category_id}</p>}
+                {errors.secret_category_id && isSecretField && <p className="text-sm text-red-500">{errors.secret_category_id}</p>}
             </div>
-            {errors.category_id && <p className="text-sm text-red-500">{errors.category_id}</p>}
-        </div>
-    );
+        );
+    };
 
     // Helper: Merchant select field with "+ Create new" button
-    const MerchantSelectField = () => (
-        <div className="space-y-1">
-            <Label>Merchant</Label>
-            <div className="flex gap-2">
-                <Select value={merchantId} onValueChange={setMerchantId}>
-                    <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Select merchant" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {visibleMerchants.length === 0 && (
-                            <div className="px-3 py-2 text-sm text-muted-foreground">No merchants</div>
-                        )}
-                        {visibleMerchants.map((m) => (
-                            <SelectItem key={m.id} value={m.id.toString()}>
-                                {m.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setShowCreateMerchant(true)}
-                    title="Create new merchant"
-                >
-                    <Plus className="h-4 w-4" />
-                </Button>
+    const MerchantSelectField = ({ isSecretField = false } = {}) => {
+        const value = isSecretField ? secretMerchantId : merchantId;
+        const setValue = isSecretField ? (val: string) => {
+            setSecretMerchantId(val);
+            if (val && isSecretModeActive) {
+                const m = merchants.find(m => m.id.toString() === val);
+                if (m?.cover_merchant_id) {
+                    setMerchantId(m.cover_merchant_id.toString());
+                }
+            }
+        } : setMerchantId;
+        const options = (isSecretField && isSecretModeActive) ? secretMerchants : safeMerchants;
+        const labelText = isSecretField ? 'Secret Merchant' : (isSecretModeActive ? 'Cover Merchant (Safe)' : 'Merchant');
+
+        return (
+            <div className="space-y-1">
+                <Label className={isSecretField ? 'text-fuchsia-500 dark:text-fuchsia-400' : ''}>
+                    {isSecretField ? '🔒 ' : ''}{labelText}
+                </Label>
+                <div className="flex gap-2">
+                    <Select value={value} onValueChange={setValue}>
+                        <SelectTrigger className={`flex-1 ${isSecretField ? 'border-fuchsia-500/50 focus:ring-fuchsia-500/50' : ''}`}>
+                            <SelectValue placeholder="Select merchant" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {options.length === 0 && (
+                                <div className="px-3 py-2 text-sm text-muted-foreground">No merchants</div>
+                            )}
+                            {options.map((m) => (
+                                <SelectItem key={m.id} value={m.id.toString()}>
+                                    {m.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {!isSecretField && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => setShowCreateMerchant(true)}
+                            title="Create new merchant"
+                        >
+                            <Plus className="h-4 w-4" />
+                        </Button>
+                    )}
+                </div>
+                {errors.merchant_id && !isSecretField && <p className="text-sm text-red-500">{errors.merchant_id}</p>}
+                {errors.secret_merchant_id && isSecretField && <p className="text-sm text-red-500">{errors.secret_merchant_id}</p>}
             </div>
-            {errors.merchant_id && <p className="text-sm text-red-500">{errors.merchant_id}</p>}
-        </div>
-    );
+        );
+    };
 
     return (
         <>
@@ -423,9 +477,9 @@ export function TransactionFormModal({
                                 </div>
                             </div>
 
-                            {/* Title */}
+                            {/* Title (Cover) */}
                             <div className="space-y-1">
-                                <Label htmlFor="tfm-title">Title *</Label>
+                                <Label htmlFor="tfm-title">{isSecretModeActive ? 'Cover Title (Safe) *' : 'Title *'}</Label>
                                 <Input
                                     id="tfm-title"
                                     value={title}
@@ -521,13 +575,20 @@ export function TransactionFormModal({
                                         </div>
                                     )}
 
-                                    <div className="grid gap-4 sm:grid-cols-2">
+                                    {isSecretModeActive && (
+                                        <div className="grid gap-4 sm:grid-cols-2 mt-4 rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/5 p-4">
+                                            <CategorySelectField isSecretField={true} />
+                                            <MerchantSelectField isSecretField={true} />
+                                        </div>
+                                    )}
+
+                                    <div className="grid gap-4 sm:grid-cols-2 mt-2">
                                         <CategorySelectField />
                                         <MerchantSelectField />
                                     </div>
 
                                     <BudgetIndicator
-                                        categoryId={categoryId ? parseInt(categoryId) : null}
+                                        categoryId={isSecretModeActive && secretCategoryId ? parseInt(secretCategoryId) : (categoryId ? parseInt(categoryId) : null)}
                                         transactionAmount={parseFloat(amount) || 0}
                                         transactionType={type}
                                         currency={currency}
@@ -599,7 +660,14 @@ export function TransactionFormModal({
                                         </div>
                                     )}
 
-                                    <div className="grid gap-4 sm:grid-cols-2">
+                                    {isSecretModeActive && (
+                                        <div className="grid gap-4 sm:grid-cols-2 mt-4 rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/5 p-4">
+                                            <CategorySelectField isSecretField={true} />
+                                            <MerchantSelectField isSecretField={true} />
+                                        </div>
+                                    )}
+
+                                    <div className="grid gap-4 sm:grid-cols-2 mt-2">
                                         <CategorySelectField />
                                         <MerchantSelectField />
                                     </div>
