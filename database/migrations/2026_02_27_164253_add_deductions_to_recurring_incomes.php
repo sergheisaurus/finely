@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('recurring_incomes', function (Blueprint $table) {
-            $table->json('deductions')->nullable();
-        });
+        if (!Schema::hasColumn('recurring_incomes', 'deductions')) {
+            Schema::table('recurring_incomes', function (Blueprint $table) {
+                $table->json('deductions')->nullable();
+            });
+        }
     }
 
     /**

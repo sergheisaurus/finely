@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('transactions', function (Blueprint $table) {
-            $table->json('metadata')->nullable();
-        });
+        if (!Schema::hasColumn('transactions', 'metadata')) {
+            Schema::table('transactions', function (Blueprint $table) {
+                $table->json('metadata')->nullable();
+            });
+        }
     }
 
     /**
