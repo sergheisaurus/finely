@@ -12,6 +12,11 @@ declare module '@/routes' {
     export const register: any;
 }
 
+declare module '@/routes/pages' {
+    export const dashboard: any;
+    export const journal: any;
+}
+
 declare module '@/routes/appearance' {
     export const edit: any;
 }
