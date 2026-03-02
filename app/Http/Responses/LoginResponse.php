@@ -9,13 +9,7 @@ class LoginResponse implements LoginResponseContract
 {
     public function toResponse($request)
     {
-        $user = $request->user();
-
-        $needsOnboarding = $user->needsOnboarding();
-
-        $redirectUrl = $needsOnboarding
-            ? route('onboarding.index')
-            : config('fortify.home', '/dashboard');
+        $redirectUrl = config('fortify.home', '/dashboard');
 
         return $request->wantsJson()
             ? new JsonResponse(['two_factor' => false], 200)

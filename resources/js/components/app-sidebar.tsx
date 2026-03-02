@@ -21,6 +21,7 @@ import {
     FolderTree,
     LayoutGrid,
     MessageSquare,
+    Package,
     PiggyBank,
     Store,
     TrendingUp,
@@ -83,6 +84,16 @@ const mainNavItems: NavItem[] = [
         title: 'Invoices',
         href: { url: '/invoices', method: 'get' },
         icon: FileText,
+    },
+    {
+        title: 'Orders',
+        href: { url: '/orders', method: 'get' },
+        icon: Package,
+    },
+    {
+        title: 'Inventory',
+        href: { url: '/inventory', method: 'get' },
+        icon: Package,
     },
     // Organization
     {

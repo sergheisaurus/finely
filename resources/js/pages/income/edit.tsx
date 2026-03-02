@@ -20,15 +20,21 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
+import {
+    calculateExpectedNetFromRules,
+    createPercentDeductionRule,
+    normalizeSalaryDeductionRules,
+} from '@/lib/salary-deductions';
 import { type BreadcrumbItem } from '@/types';
 import type {
     BankAccount,
     Category,
     IncomeFrequency,
     RecurringIncome,
+    SalaryDeductionRule,
 } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 const frequencies: { value: IncomeFrequency; label: string }[] = [
@@ -62,8 +68,19 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
     const [toAccountId, setToAccountId] = useState('');
     const [isActive, setIsActive] = useState(true);
     const [autoCreateTransaction, setAutoCreateTransaction] = useState(false);
+    const [isSalary, setIsSalary] = useState(false);
+    const [grossAmount, setGrossAmount] = useState('');
+    const [deductionRules, setDeductionRules] = useState<SalaryDeductionRule[]>(
+        [],
+    );
     const [color, setColor] = useState('#10b981');
     const [icon, setIcon] = useState('');
+
+    const expectedNet = useMemo(() => {
+        if (!isSalary || !grossAmount) return null;
+        const gross = Number(grossAmount || 0);
+        return calculateExpectedNetFromRules(gross, deductionRules);
+    }, [isSalary, grossAmount, deductionRules]);
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -106,6 +123,11 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
             setToAccountId(inc.to_account_id?.toString() || '');
             setIsActive(inc.is_active);
             setAutoCreateTransaction(inc.auto_create_transaction);
+            setIsSalary(inc.is_salary);
+            setGrossAmount(inc.gross_amount ? String(inc.gross_amount) : '');
+            setDeductionRules(
+                normalizeSalaryDeductionRules(inc.deduction_rules || []),
+            );
             setColor(inc.color || '#10b981');
             setIcon(inc.icon || '');
         } catch (error) {
@@ -132,15 +154,22 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
         setErrors({});
 
         try {
+            const resolvedAmount = amount
+                ? parseFloat(amount)
+                : expectedNet !== null
+                  ? expectedNet
+                  : NaN;
+
             const payload: Record<string, unknown> = {
                 name,
-                amount: parseFloat(amount),
+                amount: resolvedAmount,
                 currency,
                 frequency,
                 payment_day: parseInt(paymentDay),
                 start_date: startDate,
                 is_active: isActive,
                 auto_create_transaction: autoCreateTransaction,
+                is_salary: isSalary,
                 color,
             };
 
@@ -150,6 +179,11 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
             if (categoryId) payload.category_id = parseInt(categoryId);
             if (toAccountId) payload.to_account_id = parseInt(toAccountId);
             if (icon) payload.icon = icon;
+            if (isSalary && grossAmount)
+                payload.gross_amount = Number(grossAmount);
+            if (isSalary)
+                payload.deduction_rules =
+                    normalizeSalaryDeductionRules(deductionRules);
 
             await api.put(`/recurring-incomes/${incomeId}`, payload);
 
@@ -449,8 +483,193 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
                         </CardContent>
                     </CardUI>
 
+                    {isSalary && (
+                        <CardUI className="animate-fade-in-up stagger-4 opacity-0">
+                            <CardHeader>
+                                <CardTitle>Salary Breakdown</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="gross_amount">
+                                        Gross salary
+                                    </Label>
+                                    <Input
+                                        id="gross_amount"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={grossAmount}
+                                        onChange={(e) =>
+                                            setGrossAmount(e.target.value)
+                                        }
+                                    />
+                                </div>
+
+                                <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
+                                    Expected net from deductions:{' '}
+                                    {expectedNet !== null
+                                        ? `${expectedNet.toFixed(2)} ${currency}`
+                                        : '-'}
+                                </div>
+
+                                {expectedNet !== null && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() =>
+                                            setAmount(expectedNet.toFixed(2))
+                                        }
+                                    >
+                                        Use expected net as recurring amount
+                                    </Button>
+                                )}
+
+                                <div className="space-y-2">
+                                    <Label>Deductions</Label>
+                                    {deductionRules.map((rule, idx) => (
+                                        <div
+                                            key={`${rule.name}-${idx}`}
+                                            className="grid grid-cols-12 gap-2"
+                                        >
+                                            <Input
+                                                className="col-span-6"
+                                                value={rule.name}
+                                                onChange={(e) => {
+                                                    const next = [
+                                                        ...deductionRules,
+                                                    ];
+                                                    next[idx] = {
+                                                        ...next[idx],
+                                                        name: e.target.value,
+                                                    };
+                                                    setDeductionRules(next);
+                                                }}
+                                                placeholder="AHV/AVS"
+                                            />
+                                            <Select
+                                                value={rule.type || 'percent'}
+                                                onValueChange={(value) => {
+                                                    const next = [
+                                                        ...deductionRules,
+                                                    ];
+                                                    next[idx] = {
+                                                        ...next[idx],
+                                                        type: value as
+                                                            | 'percent'
+                                                            | 'fixed',
+                                                        percent:
+                                                            value === 'percent'
+                                                                ? Number(
+                                                                      next[idx]
+                                                                          .percent ||
+                                                                          0,
+                                                                  )
+                                                                : 0,
+                                                        fixed_amount:
+                                                            value === 'fixed'
+                                                                ? Number(
+                                                                      next[idx]
+                                                                          .fixed_amount ||
+                                                                          0,
+                                                                  )
+                                                                : 0,
+                                                    };
+                                                    setDeductionRules(next);
+                                                }}
+                                            >
+                                                <SelectTrigger className="col-span-2">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="percent">
+                                                        %
+                                                    </SelectItem>
+                                                    <SelectItem value="fixed">
+                                                        Fixed
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <Input
+                                                className="col-span-3"
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                max={
+                                                    rule.type === 'fixed'
+                                                        ? undefined
+                                                        : '100'
+                                                }
+                                                value={
+                                                    rule.type === 'fixed'
+                                                        ? Number(
+                                                              rule.fixed_amount ||
+                                                                  0,
+                                                          )
+                                                        : Number(
+                                                              rule.percent || 0,
+                                                          )
+                                                }
+                                                onChange={(e) => {
+                                                    const next = [
+                                                        ...deductionRules,
+                                                    ];
+                                                    if (rule.type === 'fixed') {
+                                                        next[idx] = {
+                                                            ...next[idx],
+                                                            fixed_amount:
+                                                                Number(
+                                                                    e.target
+                                                                        .value ||
+                                                                        0,
+                                                                ),
+                                                        };
+                                                    } else {
+                                                        next[idx] = {
+                                                            ...next[idx],
+                                                            percent: Number(
+                                                                e.target
+                                                                    .value || 0,
+                                                            ),
+                                                        };
+                                                    }
+                                                    setDeductionRules(next);
+                                                }}
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="col-span-1 px-0"
+                                                onClick={() =>
+                                                    setDeductionRules((prev) =>
+                                                        prev.filter(
+                                                            (_, i) => i !== idx,
+                                                        ),
+                                                    )
+                                                }
+                                            >
+                                                x
+                                            </Button>
+                                        </div>
+                                    ))}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() =>
+                                            setDeductionRules((prev) => [
+                                                ...prev,
+                                                createPercentDeductionRule(),
+                                            ])
+                                        }
+                                    >
+                                        Add deduction
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </CardUI>
+                    )}
+
                     {/* Settings */}
-                    <CardUI className="animate-fade-in-up stagger-4 opacity-0">
+                    <CardUI className="animate-fade-in-up stagger-5 opacity-0">
                         <CardHeader>
                             <CardTitle>Settings</CardTitle>
                         </CardHeader>
@@ -480,10 +699,24 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
                                     onCheckedChange={setAutoCreateTransaction}
                                 />
                             </div>
+
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-0.5">
+                                    <Label>Salary mode</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Track gross salary, deductions, and net
+                                        payout expectations.
+                                    </p>
+                                </div>
+                                <Switch
+                                    checked={isSalary}
+                                    onCheckedChange={setIsSalary}
+                                />
+                            </div>
                         </CardContent>
                     </CardUI>
 
-                    <div className="animate-fade-in-up stagger-5 flex gap-4 opacity-0">
+                    <div className="animate-fade-in-up stagger-6 flex gap-4 opacity-0">
                         <Button
                             type="button"
                             variant="outline"

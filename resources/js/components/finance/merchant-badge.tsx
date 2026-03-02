@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { Merchant } from '@/types/finance';
 import { Building2, User } from 'lucide-react';
@@ -20,6 +20,12 @@ export function MerchantBadge({
         <Badge variant="outline" className={`gap-1.5 ${className}`}>
             {showAvatar && (
                 <Avatar className="h-4 w-4">
+                    {merchant.image_url && (
+                        <AvatarImage
+                            src={merchant.image_url}
+                            alt={merchant.name}
+                        />
+                    )}
                     <AvatarFallback className="text-[10px]">
                         <Icon className="h-3 w-3" />
                     </AvatarFallback>

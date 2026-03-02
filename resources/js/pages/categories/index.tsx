@@ -254,6 +254,9 @@ export default function CategoriesIndex() {
                                                 allCategories={
                                                     filteredCategories
                                                 } // Pass filtered list to show relevant children
+                                                allCategoriesForTotals={
+                                                    categories
+                                                }
                                                 onDelete={handleDelete}
                                             />
                                         ))}
@@ -271,10 +274,12 @@ export default function CategoriesIndex() {
 function CategoryRow({
     category,
     allCategories,
+    allCategoriesForTotals,
     onDelete,
 }: {
     category: Category;
     allCategories: Category[];
+    allCategoriesForTotals: Category[];
     onDelete: (id: number) => void;
 }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -287,6 +292,13 @@ function CategoryRow({
     // So we just look for children in 'allCategories' which IS the filtered list.
     const children = allCategories.filter((c) => c.parent_id === category.id);
     const hasChildren = children.length > 0;
+
+    const rolledUpTransactionsCount =
+        (category.transactions_count || 0) +
+        allCategoriesForTotals.reduce((acc, curr) => {
+            if (curr.parent_id !== category.id) return acc;
+            return acc + (curr.transactions_count || 0);
+        }, 0);
 
     const IconComponent = category.icon ? getIconByName(category.icon) : Tag;
 
@@ -344,7 +356,7 @@ function CategoryRow({
                             )}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            {category.transactions_count || 0} transactions
+                            {rolledUpTransactionsCount} transactions
                         </p>
                     </div>
                 </div>

@@ -12,6 +12,7 @@ use App\Models\Subscription;
 use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -33,41 +34,66 @@ class StatisticsService
         return Cache::remember($cacheKey, self::CACHE_TTL_REALTIME, function () use ($user, $filters) {
             $dateRange = $this->parseDateFilters($filters);
 
+            $typeFilter = $this->getStringArrayFilter($filters, 'type');
+            $compareToPrevious = filter_var($filters['compare_to_previous'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
             // Get total balance across all accounts
-            $totalBalance = BankAccount::where('user_id', $user->id)
-                ->sum('balance');
+            $accountsQuery = BankAccount::query()->where('user_id', $user->id);
+            $accountIds = $this->getIntArrayFilter($filters, 'account_id');
+            if (count($accountIds) > 0) {
+                $accountsQuery->whereIn('id', $accountIds);
+            }
+            $totalBalance = $accountsQuery->sum('balance');
 
             // Get total income for the period
-            $totalIncome = Transaction::where('user_id', $user->id)
-                ->where('type', 'income')
-                ->when($dateRange, function ($q) use ($dateRange) {
-                    return $q->whereBetween('transaction_date', [$dateRange['from'], $dateRange['to']]);
-                })
-                ->sum('amount');
+            $totalIncome = 0.0;
+            if (count($typeFilter) === 0 || in_array('income', $typeFilter, true)) {
+                $incomeQuery = Transaction::query()->where('type', 'income');
+                $this->applyTransactionFilters($incomeQuery, $user, $filters, $dateRange);
+                $totalIncome = (float) $incomeQuery->sum('amount');
+            }
 
             // Get total expenses for the period
-            $totalExpenses = Transaction::where('user_id', $user->id)
-                ->where('type', 'expense')
-                ->when($dateRange, function ($q) use ($dateRange) {
-                    return $q->whereBetween('transaction_date', [$dateRange['from'], $dateRange['to']]);
-                })
-                ->sum('amount');
+            $totalExpenses = 0.0;
+            if (count($typeFilter) === 0 || in_array('expense', $typeFilter, true)) {
+                $expenseQuery = Transaction::query()->where('type', 'expense');
+                $this->applyTransactionFilters($expenseQuery, $user, $filters, $dateRange);
+                $totalExpenses = (float) $expenseQuery->sum('amount');
+            }
 
             // Calculate net savings
             $netSavings = $totalIncome - $totalExpenses;
             $savingsRate = $totalIncome > 0 ? ($netSavings / $totalIncome) * 100 : 0;
 
-            // Get previous period data for comparison
-            $previousPeriod = $this->getPreviousPeriod($dateRange);
-            $previousIncome = Transaction::where('user_id', $user->id)
-                ->where('type', 'income')
-                ->whereBetween('transaction_date', [$previousPeriod['from'], $previousPeriod['to']])
-                ->sum('amount');
+            $incomeTrend = [
+                'percentage' => 0.0,
+                'direction' => 'neutral',
+            ];
+            $expensesTrend = [
+                'percentage' => 0.0,
+                'direction' => 'neutral',
+            ];
 
-            $previousExpenses = Transaction::where('user_id', $user->id)
-                ->where('type', 'expense')
-                ->whereBetween('transaction_date', [$previousPeriod['from'], $previousPeriod['to']])
-                ->sum('amount');
+            if ($compareToPrevious) {
+                $previousPeriod = $this->getPreviousPeriod($dateRange);
+
+                $previousIncome = 0.0;
+                if (count($typeFilter) === 0 || in_array('income', $typeFilter, true)) {
+                    $prevIncomeQuery = Transaction::query()->where('type', 'income');
+                    $this->applyTransactionFilters($prevIncomeQuery, $user, $filters, $previousPeriod);
+                    $previousIncome = (float) $prevIncomeQuery->sum('amount');
+                }
+
+                $previousExpenses = 0.0;
+                if (count($typeFilter) === 0 || in_array('expense', $typeFilter, true)) {
+                    $prevExpenseQuery = Transaction::query()->where('type', 'expense');
+                    $this->applyTransactionFilters($prevExpenseQuery, $user, $filters, $previousPeriod);
+                    $previousExpenses = (float) $prevExpenseQuery->sum('amount');
+                }
+
+                $incomeTrend = $this->calculateTrend($totalIncome, $previousIncome);
+                $expensesTrend = $this->calculateTrend($totalExpenses, $previousExpenses);
+            }
 
             return [
                 'total_balance' => (float) $totalBalance,
@@ -75,8 +101,8 @@ class StatisticsService
                 'total_expenses' => (float) $totalExpenses,
                 'net_savings' => (float) $netSavings,
                 'savings_rate' => round($savingsRate, 2),
-                'income_trend' => $this->calculateTrend($totalIncome, $previousIncome),
-                'expenses_trend' => $this->calculateTrend($totalExpenses, $previousExpenses),
+                'income_trend' => $incomeTrend,
+                'expenses_trend' => $expensesTrend,
                 'period_days' => $dateRange ? $dateRange['from']->diffInDays($dateRange['to']) + 1 : 0,
             ];
         });
@@ -96,12 +122,9 @@ class StatisticsService
             $currentBalance = BankAccount::where('user_id', $user->id)->sum('balance');
 
             // Calculate historical balance by subtracting/adding transactions
-            $transactions = Transaction::where('user_id', $user->id)
-                ->when($dateRange, function ($q) use ($dateRange) {
-                    return $q->whereBetween('transaction_date', [$dateRange['from'], $dateRange['to']]);
-                })
-                ->orderBy('transaction_date', 'asc')
-                ->get();
+            $transactionsQuery = Transaction::query()->whereIn('type', ['income', 'expense']);
+            $this->applyTransactionFilters($transactionsQuery, $user, $filters, $dateRange);
+            $transactions = $transactionsQuery->orderBy('transaction_date', 'asc')->get();
 
             $dateFormat = $this->getDateFormatForGrouping($groupBy);
             $trend = [];
@@ -144,11 +167,16 @@ class StatisticsService
             $dateRange = $this->parseDateFilters($filters);
             $dateFormatSql = $this->getDbDateFormatSql($groupBy);
 
-            $cashFlow = Transaction::where('user_id', $user->id)
-                ->whereIn('type', ['income', 'expense'])
-                ->when($dateRange, function ($q) use ($dateRange) {
-                    return $q->whereBetween('transaction_date', [$dateRange['from'], $dateRange['to']]);
-                })
+            $typeFilter = $this->getStringArrayFilter($filters, 'type');
+            $allowedTypes = ['income', 'expense'];
+            if (count($typeFilter) > 0) {
+                $allowedTypes = array_values(array_intersect($allowedTypes, $typeFilter));
+            }
+
+            $cashFlowQuery = Transaction::query()->whereIn('type', $allowedTypes);
+            $this->applyTransactionFilters($cashFlowQuery, $user, $filters, $dateRange);
+
+            $cashFlow = $cashFlowQuery
                 ->select(
                     DB::raw("{$dateFormatSql} as period"),
                     'type',
@@ -193,12 +221,24 @@ class StatisticsService
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($user, $limit, $filters) {
             $dateRange = $this->parseDateFilters($filters);
 
-            $topCategories = Transaction::where('transactions.user_id', $user->id)
+            $typeFilter = $this->getStringArrayFilter($filters, 'type');
+            if (count($typeFilter) > 0 && ! in_array('expense', $typeFilter, true)) {
+                return [];
+            }
+
+            $topCategoriesQuery = Transaction::query()
                 ->where('transactions.type', 'expense')
-                ->whereNotNull('transactions.category_id')
-                ->when($dateRange, function ($q) use ($dateRange) {
-                    return $q->whereBetween('transactions.transaction_date', [$dateRange['from'], $dateRange['to']]);
-                })
+                ->whereNotNull('transactions.category_id');
+            $this->applyTransactionFilters(
+                $topCategoriesQuery,
+                $user,
+                $filters,
+                $dateRange,
+                tablePrefix: 'transactions.',
+                extraSearchColumns: ['categories.name'],
+            );
+
+            $topCategories = $topCategoriesQuery
                 ->join('categories', 'transactions.category_id', '=', 'categories.id')
                 ->select(
                     'categories.id',
@@ -239,12 +279,24 @@ class StatisticsService
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($user, $limit, $filters) {
             $dateRange = $this->parseDateFilters($filters);
 
-            return Transaction::where('transactions.user_id', $user->id)
+            $typeFilter = $this->getStringArrayFilter($filters, 'type');
+            if (count($typeFilter) > 0 && ! in_array('expense', $typeFilter, true)) {
+                return [];
+            }
+
+            $topMerchantsQuery = Transaction::query()
                 ->where('transactions.type', 'expense')
-                ->whereNotNull('transactions.merchant_id')
-                ->when($dateRange, function ($q) use ($dateRange) {
-                    return $q->whereBetween('transactions.transaction_date', [$dateRange['from'], $dateRange['to']]);
-                })
+                ->whereNotNull('transactions.merchant_id');
+            $this->applyTransactionFilters(
+                $topMerchantsQuery,
+                $user,
+                $filters,
+                $dateRange,
+                tablePrefix: 'transactions.',
+                extraSearchColumns: ['merchants.name'],
+            );
+
+            return $topMerchantsQuery
                 ->join('merchants', 'transactions.merchant_id', '=', 'merchants.id')
                 ->select(
                     'merchants.id',
@@ -273,12 +325,165 @@ class StatisticsService
     }
 
     /**
+     * Apply shared transaction filters used by all statistics queries.
+     *
+     * @param  Builder<Transaction>  $query
+     * @param  array{from: Carbon, to: Carbon}|null  $dateRange
+     * @param  array<int, string>  $extraSearchColumns
+     */
+    private function applyTransactionFilters(
+        Builder $query,
+        User $user,
+        array $filters,
+        ?array $dateRange,
+        string $tablePrefix = '',
+        array $extraSearchColumns = [],
+    ): void {
+        $query->where($tablePrefix . 'user_id', $user->id);
+
+        if ($dateRange) {
+            $query->whereBetween($tablePrefix . 'transaction_date', [$dateRange['from'], $dateRange['to']]);
+        }
+
+        $categoryIds = $this->getIntArrayFilter($filters, 'category_id');
+        if (count($categoryIds) > 0) {
+            $query->whereIn($tablePrefix . 'category_id', $categoryIds);
+        }
+
+        $merchantIds = $this->getIntArrayFilter($filters, 'merchant_id');
+        if (count($merchantIds) > 0) {
+            $query->whereIn($tablePrefix . 'merchant_id', $merchantIds);
+        }
+
+        $accountIds = $this->getIntArrayFilter($filters, 'account_id');
+        if (count($accountIds) > 0) {
+            $query->where(function (Builder $q) use ($tablePrefix, $accountIds) {
+                $q->whereIn($tablePrefix . 'from_account_id', $accountIds)
+                    ->orWhereIn($tablePrefix . 'to_account_id', $accountIds);
+            });
+        }
+
+        $cardIds = $this->getIntArrayFilter($filters, 'card_id');
+        if (count($cardIds) > 0) {
+            $query->where(function (Builder $q) use ($tablePrefix, $cardIds) {
+                $q->whereIn($tablePrefix . 'from_card_id', $cardIds)
+                    ->orWhereIn($tablePrefix . 'to_card_id', $cardIds);
+            });
+        }
+
+        $amountMin = $this->getNumericFilter($filters, 'amount_min');
+        if ($amountMin !== null) {
+            $query->where($tablePrefix . 'amount', '>=', $amountMin);
+        }
+
+        $amountMax = $this->getNumericFilter($filters, 'amount_max');
+        if ($amountMax !== null) {
+            $query->where($tablePrefix . 'amount', '<=', $amountMax);
+        }
+
+        $search = trim((string) ($filters['q'] ?? ''));
+        if ($search !== '') {
+            $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $search) . '%';
+            $searchColumns = array_values(array_unique(array_merge([
+                $tablePrefix . 'title',
+                $tablePrefix . 'description',
+            ], $extraSearchColumns)));
+
+            $query->where(function (Builder $q) use ($searchColumns, $like) {
+                foreach ($searchColumns as $idx => $col) {
+                    if ($idx === 0) {
+                        $q->where($col, 'like', $like);
+                    } else {
+                        $q->orWhere($col, 'like', $like);
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function getIntArrayFilter(array $filters, string $key): array
+    {
+        $raw = $filters[$key] ?? null;
+
+        if ($raw === null || $raw === '') {
+            return [];
+        }
+
+        $values = [];
+
+        if (is_array($raw)) {
+            $values = $raw;
+        } elseif (is_string($raw) && str_contains($raw, ',')) {
+            $values = explode(',', $raw);
+        } else {
+            $values = [$raw];
+        }
+
+        return collect($values)
+            ->map(fn ($v) => is_numeric($v) ? (int) $v : null)
+            ->filter(fn ($v) => is_int($v) && $v > 0)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function getStringArrayFilter(array $filters, string $key): array
+    {
+        $raw = $filters[$key] ?? null;
+
+        if ($raw === null || $raw === '') {
+            return [];
+        }
+
+        $values = [];
+
+        if (is_array($raw)) {
+            $values = $raw;
+        } elseif (is_string($raw) && str_contains($raw, ',')) {
+            $values = explode(',', $raw);
+        } else {
+            $values = [$raw];
+        }
+
+        return collect($values)
+            ->map(fn ($v) => trim((string) $v))
+            ->filter(fn ($v) => $v !== '')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function getNumericFilter(array $filters, string $key): ?float
+    {
+        $raw = $filters[$key] ?? null;
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        if (is_array($raw)) {
+            return null;
+        }
+
+        if (! is_numeric($raw)) {
+            return null;
+        }
+
+        return (float) $raw;
+    }
+
+    /**
      * Parse date filters and return Carbon date range
      */
     private function parseDateFilters(array $filters): ?array
     {
-        if (isset($filters['date_preset'])) {
-            return $this->parseDatePreset($filters['date_preset']);
+        if (isset($filters['date_preset']) && $filters['date_preset'] !== 'custom') {
+            return $this->parseDatePreset((string) $filters['date_preset']);
         }
 
         if (isset($filters['date_from']) && isset($filters['date_to'])) {

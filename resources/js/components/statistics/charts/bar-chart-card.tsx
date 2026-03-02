@@ -124,24 +124,24 @@ export function BarChartCard({
                         <XAxis
                             dataKey={xAxisKey}
                             className="text-xs"
-                            tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                            stroke="hsl(var(--border))"
+                            tick={{ fill: 'var(--muted-foreground)' }}
+                            stroke="var(--border)"
                         />
                         <YAxis
                             className="text-xs"
-                            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                            tick={{ fill: 'var(--muted-foreground)' }}
                             tickFormatter={valueFormatter}
-                            stroke="hsl(var(--border))"
+                            stroke="var(--border)"
                         />
                         <Tooltip
                             contentStyle={{
-                                backgroundColor: 'hsl(var(--popover))',
-                                border: '1px solid hsl(var(--border))',
+                                backgroundColor: 'var(--popover)',
+                                border: '1px solid var(--border)',
                                 borderRadius: '8px',
                                 boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                             }}
                             labelStyle={{
-                                color: 'hsl(var(--popover-foreground))',
+                                color: 'var(--popover-foreground)',
                             }}
                             formatter={valueFormatter}
                         />

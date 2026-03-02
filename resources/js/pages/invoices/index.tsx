@@ -1,3 +1,4 @@
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -72,10 +73,16 @@ const statusIcons: Record<
     cancelled: Ban,
 };
 
-export default function InvoicesIndex() {
-    const [invoices, setInvoices] = useState<Invoice[]>([]);
-    const [stats, setStats] = useState<InvoiceStats | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+export default function InvoicesIndex({
+    invoices: initialInvoices,
+    stats: initialStats,
+}: {
+    invoices: { data: Invoice[] };
+    stats: InvoiceStats;
+}) {
+    const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices.data);
+    const [stats, setStats] = useState<InvoiceStats | null>(initialStats);
+    const [isLoading] = useState(false);
 
     // Payment dialog state
     const [isPayDialogOpen, setIsPayDialogOpen] = useState(false);
@@ -92,7 +99,11 @@ export default function InvoicesIndex() {
     const [selectedCardId, setSelectedCardId] = useState<string>('');
 
     useEffect(() => {
-        fetchData();
+        setInvoices(initialInvoices.data);
+        setStats(initialStats);
+    }, [initialInvoices, initialStats]);
+
+    useEffect(() => {
         fetchPaymentMethods();
     }, []);
 
@@ -133,18 +144,7 @@ export default function InvoicesIndex() {
     };
 
     const fetchData = async () => {
-        try {
-            const [invoicesResponse, statsResponse] = await Promise.all([
-                api.get('/invoices'),
-                api.get('/invoices/stats'),
-            ]);
-            setInvoices(invoicesResponse.data.data);
-            setStats(statsResponse.data);
-        } catch (error) {
-            console.error('Failed to fetch invoices:', error);
-        } finally {
-            setIsLoading(false);
-        }
+        router.reload({ only: ['invoices', 'stats'] });
     };
 
     const handleDelete = async (invoice: Invoice) => {
@@ -159,7 +159,7 @@ export default function InvoicesIndex() {
         try {
             await api.delete(`/invoices/${invoice.id}`);
             toast.success('Invoice deleted!');
-            await fetchData();
+            fetchData();
         } catch (error) {
             console.error('Failed to delete invoice:', error);
             toast.error('Failed to delete invoice');
@@ -190,7 +190,7 @@ export default function InvoicesIndex() {
             toast.success('Invoice marked as paid!');
             setIsPayDialogOpen(false);
             setSelectedInvoice(null);
-            await fetchData();
+            fetchData();
         } catch (error) {
             console.error('Failed to mark invoice as paid:', error);
             toast.error('Failed to update invoice');
@@ -618,18 +618,27 @@ function InvoiceCard({
             <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                        <div
-                            className="flex h-12 w-12 items-center justify-center rounded-lg transition-transform group-hover:scale-110"
+                        <Avatar
+                            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-110"
                             style={{
                                 backgroundColor: invoice.color || '#8b5cf6',
                             }}
                         >
-                            <DynamicIcon
-                                name={invoice.icon}
-                                fallback={FileText}
-                                className="h-6 w-6 text-white"
-                            />
-                        </div>
+                            {invoice.merchant?.image_url && (
+                                <AvatarImage
+                                    src={invoice.merchant.image_url}
+                                    alt={invoice.creditor_name || 'Invoice'}
+                                    className="object-cover"
+                                />
+                            )}
+                            <AvatarFallback className="bg-transparent text-white">
+                                <DynamicIcon
+                                    name={invoice.icon}
+                                    fallback={FileText}
+                                    className="h-6 w-6"
+                                />
+                            </AvatarFallback>
+                        </Avatar>
                         <div>
                             <h3 className="font-semibold">
                                 {invoice.creditor_name ||

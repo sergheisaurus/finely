@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import type { Budget } from '@/types/finance';
 import { router } from '@inertiajs/react';
 import { AlertTriangle, X, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface BudgetAlertProps {
     budgets: Budget[];
@@ -131,7 +131,7 @@ export function BudgetAlertBanner({ className }: BudgetAlertBannerProps) {
     const [loading, setLoading] = useState(true);
 
     // This component fetches its own data
-    useState(() => {
+    useEffect(() => {
         const fetchBudgets = async () => {
             try {
                 const { default: api } = await import('@/lib/api');
@@ -144,7 +144,7 @@ export function BudgetAlertBanner({ className }: BudgetAlertBannerProps) {
             }
         };
         fetchBudgets();
-    });
+    }, []);
 
     if (loading || budgets.length === 0) return null;
 

@@ -21,7 +21,6 @@
 - ✅ Stats cards for dashboard
 - ✅ **AI Chat Interface** (Streaming, Tool Calls)
 - ✅ **Statistics Charts** (Recharts integration)
-- ✅ **Onboarding Wizard** (Multi-step flow)
 - ✅ Badge components (Account, Card, Category, Merchant, Type)
 - ✅ 3D CSS utilities
 - ✅ Card payment dialog
@@ -35,7 +34,6 @@
 - ✅ **Subscriptions** - List, View, Stats, Analytics
 - ✅ **Statistics** - Overview, Spending, Income, Budgets
 - ✅ **AI Chat** - Conversational interface with financial context
-- ✅ **Onboarding** - Guided setup for new users
 - ✅ **Transaction Creation** - Full page form with dynamic fields
 - ✅ **Card Details** - View with payment functionality
 
@@ -48,7 +46,6 @@
 - ✅ Subscriptions (`/subscriptions`, `/subscriptions/:id`)
 - ✅ Statistics (`/statistics`)
 - ✅ AI Chat (`/chat`)
-- ✅ Onboarding (`/onboarding`)
 
 ## 🚧 TODO - Next Steps
 

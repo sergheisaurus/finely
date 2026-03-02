@@ -27,6 +27,9 @@ class RecurringIncomeResource extends JsonResource
             'next_expected_date' => $this->next_expected_date?->toDateString(),
             'is_active' => $this->is_active,
             'auto_create_transaction' => $this->auto_create_transaction,
+            'is_salary' => (bool) $this->is_salary,
+            'gross_amount' => $this->gross_amount,
+            'deduction_rules' => $this->deduction_rules ?? [],
             'reminder_days_before' => $this->reminder_days_before,
             'color' => $this->color,
             'icon' => $this->icon,
@@ -37,6 +40,13 @@ class RecurringIncomeResource extends JsonResource
             'is_expected_soon' => $this->isExpectedSoon(),
             'monthly_equivalent' => round($this->getMonthlyEquivalent(), 2),
             'yearly_total' => round($this->getYearlyTotal(), 2),
+            'deduction_percent_total' => round($this->getDeductionPercentTotal(), 2),
+            'deduction_fixed_total' => round($this->getDeductionFixedTotal(), 2),
+            'deduction_amount_total' => round($this->getDeductionAmountTotal(), 2),
+            'deduction_breakdown' => $this->getDeductionBreakdown(),
+            'expected_net_from_gross' => $this->is_salary && $this->gross_amount
+                ? $this->calculateNetFromGross()
+                : null,
 
             // Relationships
             'category' => new CategoryResource($this->whenLoaded('category')),

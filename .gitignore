@@ -26,3 +26,6 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Deployment artifacts
+/deploy_package.tar.gz

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export interface StatisticsFilters {
+    q: string;
     date_preset: string;
     date_from: string | null;
     date_to: string | null;
@@ -9,11 +10,14 @@ export interface StatisticsFilters {
     account_ids: number[];
     card_ids: number[];
     type: string[];
+    amount_min: number | null;
+    amount_max: number | null;
     group_by: 'day' | 'week' | 'month' | 'quarter' | 'year';
     compare_to_previous: boolean;
 }
 
 const DEFAULT_FILTERS: StatisticsFilters = {
+    q: '',
     date_preset: 'last_30_days',
     date_from: null,
     date_to: null,
@@ -22,6 +26,8 @@ const DEFAULT_FILTERS: StatisticsFilters = {
     account_ids: [],
     card_ids: [],
     type: [],
+    amount_min: null,
+    amount_max: null,
     group_by: 'month',
     compare_to_previous: false,
 };
@@ -30,6 +36,9 @@ const DEFAULT_FILTERS: StatisticsFilters = {
 function parseQueryParams(): Partial<StatisticsFilters> {
     const params = new URLSearchParams(window.location.search);
     const parsed: Partial<StatisticsFilters> = {};
+
+    const q = params.get('q');
+    if (q) parsed.q = q;
 
     const datePreset = params.get('date_preset');
     if (datePreset) parsed.date_preset = datePreset;
@@ -55,6 +64,18 @@ function parseQueryParams(): Partial<StatisticsFilters> {
     const type = params.get('type');
     if (type) parsed.type = type.split(',');
 
+    const amountMin = params.get('amount_min');
+    if (amountMin) {
+        const n = Number(amountMin);
+        parsed.amount_min = Number.isFinite(n) ? n : null;
+    }
+
+    const amountMax = params.get('amount_max');
+    if (amountMax) {
+        const n = Number(amountMax);
+        parsed.amount_max = Number.isFinite(n) ? n : null;
+    }
+
     const groupBy = params.get('group_by');
     if (groupBy) parsed.group_by = groupBy as StatisticsFilters['group_by'];
 
@@ -69,7 +90,11 @@ function parseQueryParams(): Partial<StatisticsFilters> {
 function buildQueryString(filters: StatisticsFilters): string {
     const params = new URLSearchParams();
 
-    if (filters.date_preset && filters.date_preset !== 'custom') {
+    if (filters.q) {
+        params.set('q', filters.q);
+    }
+
+    if (filters.date_preset) {
         params.set('date_preset', filters.date_preset);
     }
 
@@ -99,6 +124,14 @@ function buildQueryString(filters: StatisticsFilters): string {
 
     if (filters.type.length > 0) {
         params.set('type', filters.type.join(','));
+    }
+
+    if (filters.amount_min !== null) {
+        params.set('amount_min', String(filters.amount_min));
+    }
+
+    if (filters.amount_max !== null) {
+        params.set('amount_max', String(filters.amount_max));
     }
 
     params.set('group_by', filters.group_by);
@@ -148,7 +181,11 @@ export function useStatisticsFilters() {
     const apiFilters = useMemo(() => {
         const result: Record<string, unknown> = {};
 
-        if (filters.date_preset && filters.date_preset !== 'custom') {
+        if (filters.q) {
+            result.q = filters.q;
+        }
+
+        if (filters.date_preset) {
             result.date_preset = filters.date_preset;
         }
 
@@ -178,6 +215,14 @@ export function useStatisticsFilters() {
 
         if (filters.type.length > 0) {
             result.type = filters.type;
+        }
+
+        if (filters.amount_min !== null) {
+            result.amount_min = filters.amount_min;
+        }
+
+        if (filters.amount_max !== null) {
+            result.amount_max = filters.amount_max;
         }
 
         result.group_by = filters.group_by;

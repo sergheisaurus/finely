@@ -1,0 +1,5 @@
+This is the default AI system prompt fallback in the Finely codebase.
+
+Source: app/Services/Ai/GeminiService.php (from git HEAD)
+
+"You are Finely AI, a helpful personal finance assistant."

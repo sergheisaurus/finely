@@ -1,3 +1,4 @@
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
@@ -16,24 +17,19 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function MerchantsIndex() {
-    const [merchants, setMerchants] = useState<Merchant[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export default function MerchantsIndex({
+    merchants: initialMerchants,
+}: {
+    merchants: { data: Merchant[] };
+}) {
+    const [merchants, setMerchants] = useState<Merchant[]>(
+        initialMerchants.data,
+    );
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        fetchMerchants();
-    }, []);
-
-    const fetchMerchants = async () => {
-        try {
-            const response = await api.get('/merchants');
-            setMerchants(response.data.data);
-        } catch (error) {
-            console.error('Failed to fetch merchants:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        setMerchants(initialMerchants.data);
+    }, [initialMerchants]);
 
     const handleDelete = async (merchantId: number) => {
         const merchant = merchants.find((m) => m.id === merchantId);
@@ -50,7 +46,7 @@ export default function MerchantsIndex() {
             toast.success('Merchant deleted!', {
                 description: `${merchant?.name} has been removed.`,
             });
-            await fetchMerchants();
+            router.reload({ only: ['merchants'] });
         } catch (error) {
             console.error('Failed to delete merchant:', error);
             toast.error('Failed to delete merchant', {
@@ -184,9 +180,22 @@ export default function MerchantsIndex() {
                                             <CardContent className="p-4">
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 transition-transform group-hover:scale-110 dark:bg-purple-900/50">
-                                                            <Building2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                                                        </div>
+                                                        <Avatar className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-110">
+                                                            {merchant.image_url && (
+                                                                <AvatarImage
+                                                                    src={
+                                                                        merchant.image_url
+                                                                    }
+                                                                    alt={
+                                                                        merchant.name
+                                                                    }
+                                                                    className="object-cover"
+                                                                />
+                                                            )}
+                                                            <AvatarFallback className="rounded-lg bg-purple-100 dark:bg-purple-900/50">
+                                                                <Building2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                                                            </AvatarFallback>
+                                                        </Avatar>
                                                         <div>
                                                             <h3 className="font-semibold">
                                                                 {merchant.name}
@@ -244,9 +253,22 @@ export default function MerchantsIndex() {
                                             <CardContent className="p-4">
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 transition-transform group-hover:scale-110 dark:bg-green-900/50">
-                                                            <User className="h-6 w-6 text-green-600 dark:text-green-400" />
-                                                        </div>
+                                                        <Avatar className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-110">
+                                                            {merchant.image_url && (
+                                                                <AvatarImage
+                                                                    src={
+                                                                        merchant.image_url
+                                                                    }
+                                                                    alt={
+                                                                        merchant.name
+                                                                    }
+                                                                    className="object-cover"
+                                                                />
+                                                            )}
+                                                            <AvatarFallback className="rounded-lg bg-green-100 dark:bg-green-900/50">
+                                                                <User className="h-6 w-6 text-green-600 dark:text-green-400" />
+                                                            </AvatarFallback>
+                                                        </Avatar>
                                                         <div>
                                                             <h3 className="font-semibold">
                                                                 {merchant.name}

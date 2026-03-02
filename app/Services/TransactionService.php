@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\RecurringIncome;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -9,6 +10,10 @@ use Illuminate\Support\Facades\DB;
 
 class TransactionService
 {
+    public function __construct(
+        protected RecurringIncomeService $recurringIncomeService
+    ) {}
+
     public function getFilteredTransactions(Request $request, int $userId): LengthAwarePaginator
     {
         $query = Transaction::where('user_id', $userId)
@@ -106,11 +111,21 @@ class TransactionService
     public function updateTransaction(Transaction $transaction, array $data): Transaction
     {
         $oldTransaction = $transaction->replicate();
+        $oldRecurringIncome = $this->resolveRecurringIncome($transaction);
 
-        return DB::transaction(function () use ($transaction, $oldTransaction, $data) {
+        return DB::transaction(function () use ($transaction, $oldTransaction, $oldRecurringIncome, $data) {
             $this->reverseBalances($oldTransaction);
             $transaction->update($data);
-            $this->updateBalances($transaction->fresh());
+            $updated = $transaction->fresh();
+            $this->updateBalances($updated);
+
+            $newRecurringIncome = $this->resolveRecurringIncome($updated);
+            if ($oldRecurringIncome && (! $newRecurringIncome || $newRecurringIncome->id !== $oldRecurringIncome->id)) {
+                $this->recurringIncomeService->recalculateScheduleFromTransactions($oldRecurringIncome);
+            }
+            if ($newRecurringIncome) {
+                $this->recurringIncomeService->recalculateScheduleFromTransactions($newRecurringIncome);
+            }
 
             return $transaction;
         });
@@ -118,10 +133,16 @@ class TransactionService
 
     public function deleteTransaction(Transaction $transaction): void
     {
+        $linkedIncome = $this->resolveRecurringIncome($transaction);
+
         DB::transaction(function () use ($transaction) {
             $this->reverseBalances($transaction);
             $transaction->delete();
         });
+
+        if ($linkedIncome) {
+            $this->recurringIncomeService->recalculateScheduleFromTransactions($linkedIncome);
+        }
     }
 
     public function updateBalances(Transaction $transaction): void
@@ -228,5 +249,16 @@ class TransactionService
                 }
                 break;
         }
+    }
+
+    private function resolveRecurringIncome(Transaction $transaction): ?RecurringIncome
+    {
+        if ($transaction->transactionable_type !== (new RecurringIncome)->getMorphClass()) {
+            return null;
+        }
+
+        return RecurringIncome::query()
+            ->where('id', $transaction->transactionable_id)
+            ->first();
     }
 }

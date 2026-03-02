@@ -11,6 +11,8 @@ class GeminiService
 {
     protected string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
 
+    private const DEFAULT_PERSONA = 'You are Finely, a helpful personal finance assistant.';
+
     public const CORE_INSTRUCTIONS = "You have access to tools to manage transactions, accounts, categories, and merchants.
     RULES:
     1. EXECUTE TOOLS IMMEDIATELY. Do not describe what you are going to do. Just do it.
@@ -34,12 +36,7 @@ class GeminiService
             return ['text' => "Error: Gemini API key is not configured.", 'tool_calls' => []];
         }
 
-        $preference = UserPreference::where('user_id', $userId)->first();
-        $model = $preference->ai_model ?? 'gemini-2.5-flash';
-        $userPersona = $preference->ai_system_prompt ?? "You are Finely AI, a helpful personal finance assistant.";
-        $userContext = $preference->ai_user_context ? "\n\nUSER CONTEXT:\n" . $preference->ai_user_context : "";
-        
-        $combinedSystemPrompt = $userPersona . $userContext . "\n\n" . self::CORE_INSTRUCTIONS;
+        [$model, $combinedSystemPrompt] = $this->buildSystemPrompt($userId);
 
         $tools = $this->toolRegistry->getTools();
         
@@ -75,6 +72,24 @@ class GeminiService
         ];
 
         return $this->callGemini($payload, $userId, $apiKey, $geminiTools, $model);
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    protected function buildSystemPrompt(int $userId): array
+    {
+        $preference = UserPreference::where('user_id', $userId)->first();
+
+        $model = $preference?->ai_model ?? 'gemini-2.5-flash';
+        $userPersona = $preference?->ai_system_prompt ?? self::DEFAULT_PERSONA;
+        $userContext = $preference?->ai_user_context
+            ? "\n\nUSER CONTEXT:\n" . $preference->ai_user_context
+            : '';
+
+        $combinedSystemPrompt = $userPersona . $userContext . "\n\n" . self::CORE_INSTRUCTIONS;
+
+        return [$model, $combinedSystemPrompt];
     }
 
     protected function callGemini(array $payload, int $userId, string $apiKey, array $geminiTools, string $model, int $retryCount = 0): array
@@ -202,10 +217,7 @@ class GeminiService
             'tools' => [$geminiTools],
         ];
 
-        $preference = UserPreference::where('user_id', $userId)->first();
-        $userPersona = $preference->ai_system_prompt ?? "You are Finely AI, a helpful personal finance assistant.";
-        $userContext = $preference->ai_user_context ? "\n\nUSER CONTEXT:\n" . $preference->ai_user_context : "";
-        $combinedSystemPrompt = $userPersona . $userContext . "\n\n" . self::CORE_INSTRUCTIONS;
+        [, $combinedSystemPrompt] = $this->buildSystemPrompt($userId);
         
         $payload['system_instruction'] = [
             'parts' => [['text' => $combinedSystemPrompt]]

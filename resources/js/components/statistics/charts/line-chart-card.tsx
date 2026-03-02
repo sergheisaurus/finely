@@ -38,6 +38,8 @@ interface LineChartCardProps {
         color?: string;
     }[];
     xAxisKey: string;
+    xAxisTickFormatter?: (value: any) => string;
+    xAxisInterval?: number | 'preserveStartEnd';
     isLoading?: boolean;
     className?: string;
     height?: number;
@@ -50,6 +52,8 @@ export function LineChartCard({
     data,
     dataKeys,
     xAxisKey,
+    xAxisTickFormatter,
+    xAxisInterval,
     isLoading,
     className,
     height = 350,
@@ -124,24 +128,26 @@ export function LineChartCard({
                         <XAxis
                             dataKey={xAxisKey}
                             className="text-xs"
-                            tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                            stroke="hsl(var(--border))"
+                            tick={{ fill: 'var(--muted-foreground)' }}
+                            stroke="var(--border)"
+                            tickFormatter={xAxisTickFormatter}
+                            interval={xAxisInterval}
                         />
                         <YAxis
                             className="text-xs"
-                            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                            tick={{ fill: 'var(--muted-foreground)' }}
                             tickFormatter={valueFormatter}
-                            stroke="hsl(var(--border))"
+                            stroke="var(--border)"
                         />
                         <Tooltip
                             contentStyle={{
-                                backgroundColor: 'hsl(var(--popover))',
-                                border: '1px solid hsl(var(--border))',
+                                backgroundColor: 'var(--popover)',
+                                border: '1px solid var(--border)',
                                 borderRadius: '8px',
                                 boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                             }}
                             labelStyle={{
-                                color: 'hsl(var(--popover-foreground))',
+                                color: 'var(--popover-foreground)',
                             }}
                             formatter={valueFormatter}
                         />

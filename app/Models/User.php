@@ -25,7 +25,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'onboarding_completed_at',
     ];
 
     /**
@@ -51,7 +50,6 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
-            'onboarding_completed_at' => 'datetime',
         ];
     }
 
@@ -95,24 +93,24 @@ class User extends Authenticatable
         return $this->hasMany(RecurringIncome::class);
     }
 
+    public function recurringIncomeSalaryAdjustments(): HasMany
+    {
+        return $this->hasMany(RecurringIncomeSalaryAdjustment::class);
+    }
+
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
     }
 
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
     public function budgets(): HasMany
     {
         return $this->hasMany(Budget::class);
-    }
-
-    public function hasCompletedOnboarding(): bool
-    {
-        return ! is_null($this->onboarding_completed_at) && $this->bankAccounts()->count() > 0;
-    }
-
-    public function needsOnboarding(): bool
-    {
-        return is_null($this->onboarding_completed_at) || $this->bankAccounts()->count() === 0;
     }
 
     public function aiConversations(): HasMany

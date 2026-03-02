@@ -26,30 +26,25 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function AccountsIndex() {
-    const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export default function AccountsIndex({
+    accounts,
+}: {
+    accounts: { data: BankAccount[] };
+}) {
+    const [bankAccounts, setBankAccounts] = useState<BankAccount[]>(
+        accounts.data,
+    );
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        fetchAccounts();
-    }, []);
-
-    const fetchAccounts = async () => {
-        try {
-            const response = await api.get('/accounts');
-            setBankAccounts(response.data.data);
-        } catch (error) {
-            console.error('Failed to fetch accounts:', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        setBankAccounts(accounts.data);
+    }, [accounts]);
 
     const handleSetDefault = async (accountId: number) => {
         try {
             const account = bankAccounts.find((acc) => acc.id === accountId);
             await api.post(`/accounts/${accountId}/set-default`);
-            await fetchAccounts();
+            router.reload({ only: ['accounts'] });
             toast.success('Default account updated!', {
                 description: `${account?.name} is now your default account.`,
             });
@@ -69,7 +64,7 @@ export default function AccountsIndex() {
             toast.success('Account deleted!', {
                 description: `${account?.name} has been removed.`,
             });
-            await fetchAccounts();
+            router.reload({ only: ['accounts'] });
         } catch (error) {
             console.error('Failed to delete account:', error);
         }

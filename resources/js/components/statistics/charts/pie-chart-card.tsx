@@ -127,8 +127,8 @@ export function PieChartCard({
                         </Pie>
                         <Tooltip
                             contentStyle={{
-                                backgroundColor: 'hsl(var(--popover))',
-                                border: '1px solid hsl(var(--border))',
+                                backgroundColor: 'var(--popover)',
+                                border: '1px solid var(--border)',
                                 borderRadius: '8px',
                                 boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                             }}

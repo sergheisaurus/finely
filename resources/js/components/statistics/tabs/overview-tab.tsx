@@ -12,21 +12,48 @@ import type {
     Trend,
 } from '@/types/statistics';
 import { DollarSign, PiggyBank, TrendingDown, TrendingUp } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface OverviewTabProps {
     filters: StatisticsFilters;
     apiFilters: Record<string, unknown>;
+    initialData?: {
+        snapshot: FinancialSnapshot;
+        cash_flow: CashFlowItem[];
+        top_categories: TopCategory[];
+        top_merchants: TopMerchant[];
+    };
 }
 
-export function OverviewTab({ apiFilters }: OverviewTabProps) {
-    const [isLoading, setIsLoading] = useState(true);
-    const [snapshot, setSnapshot] = useState<FinancialSnapshot | null>(null);
-    const [cashFlow, setCashFlow] = useState<CashFlowItem[]>([]);
-    const [topCategories, setTopCategories] = useState<TopCategory[]>([]);
-    const [topMerchants, setTopMerchants] = useState<TopMerchant[]>([]);
+export function OverviewTab({
+    apiFilters,
+    initialData,
+    filters,
+}: OverviewTabProps) {
+    const [isLoading, setIsLoading] = useState(!initialData);
+    const [snapshot, setSnapshot] = useState<FinancialSnapshot | null>(
+        initialData?.snapshot || null,
+    );
+    const [cashFlow, setCashFlow] = useState<CashFlowItem[]>(
+        initialData?.cash_flow || [],
+    );
+    const [topCategories, setTopCategories] = useState<TopCategory[]>(
+        initialData?.top_categories || [],
+    );
+    const [topMerchants, setTopMerchants] = useState<TopMerchant[]>(
+        initialData?.top_merchants || [],
+    );
+
+    // Better approach:
+    // Use a ref to track if we should fetch.
+    const shouldFetch = useRef(!initialData);
 
     useEffect(() => {
+        if (!shouldFetch.current) {
+            shouldFetch.current = true; // Next time (filter change), we fetch.
+            return;
+        }
+
         let cancelled = false;
 
         const fetchData = async () => {
@@ -101,7 +128,7 @@ export function OverviewTab({ apiFilters }: OverviewTabProps) {
                     description="For selected period"
                     icon={TrendingUp}
                     trend={
-                        snapshot
+                        snapshot && filters.compare_to_previous
                             ? formatTrend(snapshot.income_trend)
                             : undefined
                     }
@@ -117,7 +144,7 @@ export function OverviewTab({ apiFilters }: OverviewTabProps) {
                     description="For selected period"
                     icon={TrendingDown}
                     trend={
-                        snapshot
+                        snapshot && filters.compare_to_previous
                             ? formatTrend(snapshot.expenses_trend)
                             : undefined
                     }

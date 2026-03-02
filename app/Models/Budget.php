@@ -391,4 +391,14 @@ class Budget extends Model
 
         return $this->isNearLimit() || $this->isOverBudget();
     }
+
+    public function getMonthlyEquivalent(): float
+    {
+        return match ($this->period) {
+            'monthly' => (float) $this->amount,
+            'quarterly' => (float) $this->amount / 3,
+            'yearly' => (float) $this->amount / 12,
+            default => (float) $this->amount,
+        };
+    }
 }

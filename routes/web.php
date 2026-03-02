@@ -152,6 +152,28 @@ Route::middleware(['auth', 'verified', 'onboarding'])->name('pages.')->group(fun
         return Inertia::render('invoices/edit', ['invoiceId' => $id]);
     })->name('invoices.edit');
 
+    // Orders
+    Route::get('orders', function () {
+        return Inertia::render('orders/index');
+    })->name('orders.index');
+
+    Route::get('orders/create', function () {
+        return Inertia::render('orders/create');
+    })->name('orders.create');
+
+    Route::get('orders/{id}', function ($id) {
+        return Inertia::render('orders/view', ['orderId' => $id]);
+    })->name('orders.view');
+
+    Route::get('orders/{id}/edit', function ($id) {
+        return Inertia::render('orders/edit', ['orderId' => $id]);
+    })->name('orders.edit');
+
+    // Inventory
+    Route::get('inventory', function () {
+        return Inertia::render('inventory/index');
+    })->name('inventory.index');
+
     // Budgets
     Route::get('budgets', function () {
         return Inertia::render('budgets/index');
