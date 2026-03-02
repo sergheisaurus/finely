@@ -56,7 +56,13 @@ class User extends Authenticatable
 
     public function needsOnboarding(): bool
     {
-        return $this->onboarding_completed_at === null;
+        if ($this->onboarding_completed_at !== null) {
+            return false;
+        }
+
+        // Backwards-compatible: older users may not have `onboarding_completed_at`
+        // set, but already have accounts.
+        return ! $this->bankAccounts()->exists();
     }
 
     public function bankAccounts(): HasMany
