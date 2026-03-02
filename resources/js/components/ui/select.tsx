@@ -76,11 +76,11 @@ function SelectContent({
 
     return (
         <BaseSelect.Portal>
-            <BaseSelect.Positioner sideOffset={6}>
+            <BaseSelect.Positioner sideOffset={6} className="!z-[120]">
                 <BaseSelect.Popup
                     data-slot="select-content"
                     className={cn(
-                        'z-[80] max-h-96 min-w-[8rem] overflow-hidden rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-xl transition-[transform,opacity] data-[starting-style]:scale-95 data-[starting-style]:opacity-0 data-[ending-style]:scale-95 data-[ending-style]:opacity-0',
+                        '!z-[120] max-h-96 min-w-[8rem] overflow-hidden rounded-xl border border-border/70 bg-popover text-popover-foreground shadow-xl transition-[transform,opacity] data-[starting-style]:scale-95 data-[starting-style]:opacity-0 data-[ending-style]:scale-95 data-[ending-style]:opacity-0',
                         className,
                     )}
                     {...contentProps}
