@@ -68,8 +68,8 @@ export function StatsCard({
                                 className={cn(
                                     'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-medium',
                                     trend.isPositive
-                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400'
-                                        : 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400',
+                                        ? 'bg-emerald-500/10 text-emerald-400'
+                                        : 'bg-red-500/10 text-red-400',
                                 )}
                             >
                                 {trend.isPositive ? '↑' : '↓'} {trend.value}

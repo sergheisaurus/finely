@@ -1,11 +1,11 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MerchantFormModal } from '@/components/finance/merchant-form-modal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { type BreadcrumbItem } from '@/types';
 import type { Merchant } from '@/types/finance';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { Building2, Edit, Plus, Store, Trash2, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -17,19 +17,28 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function MerchantsIndex({
-    merchants: initialMerchants,
-}: {
-    merchants: { data: Merchant[] };
-}) {
-    const [merchants, setMerchants] = useState<Merchant[]>(
-        initialMerchants.data,
+export default function MerchantsIndex() {
+    const [merchants, setMerchants] = useState<Merchant[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [editingMerchant, setEditingMerchant] = useState<Merchant | null>(
+        null,
     );
-    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        setMerchants(initialMerchants.data);
-    }, [initialMerchants]);
+        fetchMerchants();
+    }, []);
+
+    const fetchMerchants = async () => {
+        try {
+            const response = await api.get('/merchants');
+            setMerchants(response?.data?.data || []);
+        } catch (error) {
+            console.error('Failed to fetch merchants:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleDelete = async (merchantId: number) => {
         const merchant = merchants.find((m) => m.id === merchantId);
@@ -46,7 +55,7 @@ export default function MerchantsIndex({
             toast.success('Merchant deleted!', {
                 description: `${merchant?.name} has been removed.`,
             });
-            router.reload({ only: ['merchants'] });
+            await fetchMerchants();
         } catch (error) {
             console.error('Failed to delete merchant:', error);
             toast.error('Failed to delete merchant', {
@@ -54,6 +63,20 @@ export default function MerchantsIndex({
                     'This merchant may be in use by existing transactions.',
             });
         }
+    };
+
+    const handleFormSuccess = () => {
+        fetchMerchants();
+    };
+
+    const handleCreateMerchant = () => {
+        setEditingMerchant(null);
+        setIsFormOpen(true);
+    };
+
+    const handleEditMerchant = (merchant: Merchant) => {
+        setEditingMerchant(merchant);
+        setIsFormOpen(true);
     };
 
     const companies = merchants.filter((m) => m.type === 'company');
@@ -73,13 +96,25 @@ export default function MerchantsIndex({
                             with
                         </p>
                     </div>
-                    <Button
-                        onClick={() => router.visit('/merchants/create')}
-                        className="bg-gradient-to-r from-rose-500 to-pink-500 shadow-lg shadow-rose-500/25 transition-all hover:from-rose-600 hover:to-pink-600 hover:shadow-xl hover:shadow-rose-500/30"
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Merchant
-                    </Button>
+                    <MerchantFormModal
+                        open={isFormOpen}
+                        onOpenChange={(open) => {
+                            setIsFormOpen(open);
+                            if (!open) setEditingMerchant(null);
+                        }}
+                        merchants={merchants}
+                        merchant={editingMerchant}
+                        onSuccess={handleFormSuccess}
+                        trigger={
+                            <Button
+                                onClick={handleCreateMerchant}
+                                className="bg-gradient-to-r from-rose-500 to-pink-500 shadow-lg shadow-rose-500/25 transition-all hover:from-rose-600 hover:to-pink-600 hover:shadow-xl hover:shadow-rose-500/30"
+                            >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add Merchant
+                            </Button>
+                        }
+                    />
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -155,9 +190,7 @@ export default function MerchantsIndex({
                             </p>
                             <Button
                                 className="mt-4 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600"
-                                onClick={() =>
-                                    router.visit('/merchants/create')
-                                }
+                                onClick={handleCreateMerchant}
                             >
                                 <Plus className="mr-2 h-4 w-4" />
                                 Add Merchant
@@ -180,22 +213,9 @@ export default function MerchantsIndex({
                                             <CardContent className="p-4">
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex items-center gap-3">
-                                                        <Avatar className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-110">
-                                                            {merchant.image_url && (
-                                                                <AvatarImage
-                                                                    src={
-                                                                        merchant.image_url
-                                                                    }
-                                                                    alt={
-                                                                        merchant.name
-                                                                    }
-                                                                    className="object-cover"
-                                                                />
-                                                            )}
-                                                            <AvatarFallback className="rounded-lg bg-purple-100 dark:bg-purple-900/50">
-                                                                <Building2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                                                            </AvatarFallback>
-                                                        </Avatar>
+                                                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 transition-transform group-hover:scale-110 dark:bg-purple-900/50">
+                                                            <Building2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                                                        </div>
                                                         <div>
                                                             <h3 className="font-semibold">
                                                                 {merchant.name}
@@ -212,8 +232,8 @@ export default function MerchantsIndex({
                                                             variant="ghost"
                                                             size="sm"
                                                             onClick={() =>
-                                                                router.visit(
-                                                                    `/merchants/${merchant.id}/edit`,
+                                                                handleEditMerchant(
+                                                                    merchant,
                                                                 )
                                                             }
                                                         >
@@ -253,22 +273,9 @@ export default function MerchantsIndex({
                                             <CardContent className="p-4">
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex items-center gap-3">
-                                                        <Avatar className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-110">
-                                                            {merchant.image_url && (
-                                                                <AvatarImage
-                                                                    src={
-                                                                        merchant.image_url
-                                                                    }
-                                                                    alt={
-                                                                        merchant.name
-                                                                    }
-                                                                    className="object-cover"
-                                                                />
-                                                            )}
-                                                            <AvatarFallback className="rounded-lg bg-green-100 dark:bg-green-900/50">
-                                                                <User className="h-6 w-6 text-green-600 dark:text-green-400" />
-                                                            </AvatarFallback>
-                                                        </Avatar>
+                                                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 transition-transform group-hover:scale-110 dark:bg-green-900/50">
+                                                            <User className="h-6 w-6 text-green-600 dark:text-green-400" />
+                                                        </div>
                                                         <div>
                                                             <h3 className="font-semibold">
                                                                 {merchant.name}
@@ -285,8 +292,8 @@ export default function MerchantsIndex({
                                                             variant="ghost"
                                                             size="sm"
                                                             onClick={() =>
-                                                                router.visit(
-                                                                    `/merchants/${merchant.id}/edit`,
+                                                                handleEditMerchant(
+                                                                    merchant,
                                                                 )
                                                             }
                                                         >

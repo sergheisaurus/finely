@@ -44,7 +44,7 @@ export function TransactionDeductionsModal({
                     ) : (
                         <div className="py-8 text-center">
                             <p className="text-sm text-muted-foreground">
-                                No deduction breakdown recorded for this
+                                No salary breakdown recorded for this
                                 transaction.
                             </p>
                             <p className="mt-2 text-lg font-bold text-green-600">

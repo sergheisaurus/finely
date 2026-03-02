@@ -203,12 +203,8 @@ export interface RecurringIncome {
     reminder_days_before: number;
     color?: string;
     icon?: string;
-    deductions?: SalaryDeduction[] | null;
-    is_salary: boolean;
-    gross_amount?: number | null;
-    deduction_rules?: SalaryDeductionRule[] | null;
-    deduction_percent_total?: number;
-    deduction_fixed_total?: number;
+    deductions?: SalaryAdjustment[] | null;
+    additions?: SalaryAdjustment[] | null;
 
     // Computed fields
     is_overdue: boolean;
@@ -223,13 +219,6 @@ export interface RecurringIncome {
 
     created_at: string;
     updated_at: string;
-}
-
-export interface SalaryDeductionRule {
-    name: string;
-    type?: 'percent' | 'fixed' | string;
-    percent?: number;
-    fixed_amount?: number;
 }
 
 export interface SubscriptionStats {
@@ -459,76 +448,22 @@ export interface BudgetImpact {
     exceeds_by: number;
 }
 
-// Order Types
-export type OrderStatus =
-    | 'placed'
-    | 'shipped'
-    | 'delivered'
-    | 'cancelled'
-    | 'returned'
-    | 'partial';
-
-export interface OrderItem {
-    id: number;
-    order_id: number;
-    name: string;
-    quantity: number;
-    unit_price: number | null;
-    amount: number | null;
-    product_url: string | null;
-    external_item_id: string | null;
-    ordered_at: string | null;
-    delivered_at: string | null;
-    returned_at: string | null;
-    status: string;
-    sort_order: number;
-    created_at: string;
-    updated_at: string;
-}
-
-export interface Order {
-    id: number;
-    provider: string | null;
-    order_site: string | null;
-    order_number: string | null;
-    order_url: string | null;
-    ordered_at: string;
-    delivered_at: string | null;
-    status: OrderStatus;
-    merchant_id: number | null;
-    category_id: number | null;
-    amount: number;
-    currency: string;
-    source_currency: string | null;
-    fx_rate: number | null;
-    fx_fee_amount: number | null;
-    notes: string | null;
-    items?: OrderItem[];
-    items_count?: number;
-    merchant?: Merchant;
-    category?: Category;
-    transactions_count?: number;
-    created_at: string;
-    updated_at: string;
-}
-
-export interface OrderStats {
-    total_count: number;
-    delivered_count: number;
-    total_amount: number;
-}
-
-// Salary Deductions
-export interface SalaryDeduction {
+// Salary Adjustments (Deductions & Additions)
+export interface SalaryAdjustment {
     name: string;
     amount: number;
+    type?: 'fixed' | 'percentage';
+    value?: number;
+    is_overridden?: boolean;
 }
 
 export interface SalaryBreakdownMetadata {
     gross_amount: number;
+    total_additions: number;
     total_deductions: number;
     net_amount: number;
-    deductions: SalaryDeduction[];
+    additions: SalaryAdjustment[];
+    deductions: SalaryAdjustment[];
 }
 
 export interface TransactionMetadata {

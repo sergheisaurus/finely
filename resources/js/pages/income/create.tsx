@@ -20,20 +20,12 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
-import {
-    calculateExpectedNetFromRules,
-    createPercentDeductionRule,
-    normalizeSalaryDeductionRules,
-} from '@/lib/salary-deductions';
+import { formatCurrency } from '@/lib/format';
 import { type BreadcrumbItem } from '@/types';
-import type {
-    BankAccount,
-    Category,
-    IncomeFrequency,
-    SalaryDeductionRule,
-} from '@/types/finance';
+import type { BankAccount, Category, IncomeFrequency, SalaryAdjustment } from '@/types/finance';
+import { Plus, Trash2 } from 'lucide-react';
 import { Head, router } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -79,19 +71,64 @@ export default function IncomeCreate() {
     const [toAccountId, setToAccountId] = useState('');
     const [isActive, setIsActive] = useState(true);
     const [autoCreateTransaction, setAutoCreateTransaction] = useState(false);
-    const [isSalary, setIsSalary] = useState(false);
-    const [grossAmount, setGrossAmount] = useState('');
-    const [deductionRules, setDeductionRules] = useState<SalaryDeductionRule[]>(
-        [],
-    );
     const [color, setColor] = useState('#10b981');
     const [icon, setIcon] = useState('');
 
-    const expectedNet = useMemo(() => {
-        if (!isSalary || !grossAmount) return null;
-        const gross = Number(grossAmount || 0);
-        return calculateExpectedNetFromRules(gross, deductionRules);
-    }, [isSalary, grossAmount, deductionRules]);
+    const [additions, setAdditions] = useState<SalaryAdjustment[]>([]);
+    const [deductions, setDeductions] = useState<SalaryAdjustment[]>([]);
+
+    const addAdjustment = (isAddition: boolean) => {
+        const newAdjustment: SalaryAdjustment = {
+            name: '',
+            amount: 0,
+            type: 'fixed',
+            value: 0,
+        };
+        if (isAddition) {
+            setAdditions([...additions, newAdjustment]);
+        } else {
+            setDeductions([...deductions, newAdjustment]);
+        }
+    };
+
+    const removeAdjustment = (index: number, isAddition: boolean) => {
+        if (isAddition) {
+            setAdditions(additions.filter((_, i) => i !== index));
+        } else {
+            setDeductions(deductions.filter((_, i) => i !== index));
+        }
+    };
+
+    const updateAdjustment = (
+        index: number,
+        field: keyof SalaryAdjustment,
+        value: string | number,
+        isAddition: boolean,
+    ) => {
+        const list = isAddition ? [...additions] : [...deductions];
+        const item = { ...list[index] };
+
+        if (field === 'name') {
+            item.name = value as string;
+        } else if (field === 'type') {
+            item.type = value as 'fixed' | 'percentage';
+            item.value = 0;
+            item.is_overridden = false;
+        } else if (field === 'value') {
+            item.value = Number(value) || 0;
+            item.is_overridden = false;
+        } else if (field === 'amount') {
+            item.amount = Number(value) || 0;
+            item.is_overridden = true;
+        }
+
+        list[index] = item;
+        if (isAddition) {
+            setAdditions(list);
+        } else {
+            setDeductions(list);
+        }
+    };
 
     useEffect(() => {
         fetchData();
@@ -126,23 +163,18 @@ export default function IncomeCreate() {
         setErrors({});
 
         try {
-            const resolvedAmount = amount
-                ? parseFloat(amount)
-                : expectedNet !== null
-                  ? expectedNet
-                  : NaN;
-
             const payload: Record<string, unknown> = {
                 name,
-                amount: resolvedAmount,
+                amount: parseFloat(amount),
                 currency,
                 frequency,
                 payment_day: parseInt(paymentDay),
                 start_date: startDate,
                 is_active: isActive,
                 auto_create_transaction: autoCreateTransaction,
-                is_salary: isSalary,
                 color,
+                additions: additions.filter(a => a.name),
+                deductions: deductions.filter(d => d.name),
             };
 
             if (description) payload.description = description;
@@ -151,11 +183,6 @@ export default function IncomeCreate() {
             if (categoryId) payload.category_id = parseInt(categoryId);
             if (toAccountId) payload.to_account_id = parseInt(toAccountId);
             if (icon) payload.icon = icon;
-            if (isSalary && grossAmount)
-                payload.gross_amount = Number(grossAmount);
-            if (isSalary)
-                payload.deduction_rules =
-                    normalizeSalaryDeductionRules(deductionRules);
 
             await api.post('/recurring-incomes', payload);
 
@@ -186,6 +213,22 @@ export default function IncomeCreate() {
             setIsSubmitting(false);
         }
     };
+
+    const gross = Number(amount) || 0;
+    const computedAdditions = additions.map((a) => {
+        const calcAmount = a.type === 'percentage' ? gross * ((Number(a.value) || 0) / 100) : (Number(a.value) || 0);
+        return a.is_overridden ? (a.amount || 0) : calcAmount;
+    });
+    const totalAdditions = computedAdditions.reduce((sum, val) => sum + val, 0);
+
+    const grossPlusAdditions = gross + totalAdditions;
+
+    const computedDeductions = deductions.map((d) => {
+        const calcAmount = d.type === 'percentage' ? grossPlusAdditions * ((Number(d.value) || 0) / 100) : (Number(d.value) || 0);
+        return d.is_overridden ? (d.amount || 0) : calcAmount;
+    });
+    const totalDeductions = computedDeductions.reduce((sum, val) => sum + val, 0);
+    const netAmount = gross + totalAdditions - totalDeductions;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -239,7 +282,7 @@ export default function IncomeCreate() {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="amount">Amount *</Label>
+                                    <Label htmlFor="amount">Base Amount *</Label>
                                     <Input
                                         id="amount"
                                         type="number"
@@ -374,6 +417,179 @@ export default function IncomeCreate() {
                         </CardContent>
                     </CardUI>
 
+                    {/* Fiche de Salaire Layout */}
+                    <CardUI className="animate-fade-in-up stagger-2 opacity-0 overflow-hidden">
+                        <div className="grid grid-cols-[1fr_120px_120px_40px] gap-2 bg-muted/50 p-4 text-[13px] font-semibold text-muted-foreground uppercase tracking-wider border-b">
+                            <div>Description</div>
+                            <div className="text-right">Rate / Basis</div>
+                            <div className="text-right">Amount</div>
+                            <div></div>
+                        </div>
+
+                        <div className="p-4 space-y-4">
+                            <div className="grid grid-cols-[1fr_120px_120px_40px] gap-2 items-center text-sm">
+                                <div className="font-medium">Salaire de base</div>
+                                <div className="text-right text-muted-foreground">-</div>
+                                <div className="text-right font-medium">{formatCurrency(gross, currency)}</div>
+                                <div></div>
+                            </div>
+
+                            {/* Additions Section */}
+                            <div className="pt-2">
+                                <div className="flex items-center justify-between mb-3">
+                                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Allocations / Prestations</Label>
+                                    <Button type="button" variant="ghost" size="sm" onClick={() => addAdjustment(true)} className="h-7 px-2 text-xs">
+                                        <Plus className="mr-1 h-3 w-3" /> Add
+                                    </Button>
+                                </div>
+                                <div className="space-y-2">
+                                    {additions.length === 0 && (
+                                        <div className="text-xs text-muted-foreground italic pl-1">No allocations configured</div>
+                                    )}
+                                    {additions.map((addition, index) => {
+                                        const calcAmount = addition.type === 'percentage' ? gross * ((Number(addition.value) || 0) / 100) : (Number(addition.value) || 0);
+                                        return (
+                                            <div key={`add-${index}`} className="grid grid-cols-[1fr_120px_120px_40px] gap-2 items-center">
+                                                <Input
+                                                    placeholder="e.g. Bonus"
+                                                    className="h-9 text-sm focus-visible:ring-1"
+                                                    value={addition.name}
+                                                    onChange={(e) => updateAdjustment(index, 'name', e.target.value, true)}
+                                                />
+                                                <div className="flex items-center gap-1">
+                                                    <Input
+                                                        type="number" step="0.001" min="0"
+                                                        className="h-9 text-sm text-right px-2 focus-visible:ring-1"
+                                                        value={addition.value || ''}
+                                                        onChange={(e) => updateAdjustment(index, 'value', e.target.value, true)}
+                                                    />
+                                                    <Select value={addition.type || 'fixed'} onValueChange={(val) => updateAdjustment(index, 'type', val, true)}>
+                                                        <SelectTrigger className="h-9 w-[50px] px-1.5 text-xs"><SelectValue /></SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="fixed">$</SelectItem>
+                                                            <SelectItem value="percentage">%</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="flex flex-col items-end pr-1 justify-center relative min-w-[70px]">
+                                                    <div className="flex items-center gap-1 group">
+                                                        <span className="text-green-600 font-medium">+</span>
+                                                        <Input
+                                                            type="number" step="0.01"
+                                                            className="h-9 w-[80px] text-right text-sm text-green-600 font-medium bg-transparent border-transparent hover:border-input focus-visible:ring-1 focus-visible:border-input focus-visible:bg-background px-1 transition-all"
+                                                            value={addition.is_overridden ? addition.amount : calcAmount.toFixed(2)}
+                                                            onChange={(e) => updateAdjustment(index, 'amount', e.target.value, true)}
+                                                        />
+                                                    </div>
+                                                    {addition.is_overridden && (
+                                                        <span className="text-[10px] text-muted-foreground absolute -bottom-3 right-2 whitespace-nowrap">
+                                                            Calc: {calcAmount.toFixed(2)} (Diff: {((addition.amount || 0) - calcAmount).toFixed(2)})
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <Button type="button" variant="ghost" size="icon" onClick={() => removeAdjustment(index, true)} className="h-9 w-9 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Subtotal: Gross Salary */}
+                            <div className="my-4 border-y border-border py-3 grid grid-cols-[1fr_120px_120px_40px] gap-2 items-center text-sm font-bold bg-muted/20 -mx-4 px-4">
+                                <div>Salaire Brut (Gross)</div>
+                                <div className="text-right text-muted-foreground">-</div>
+                                <div className="text-right text-green-600">{formatCurrency(gross + totalAdditions, currency)}</div>
+                                <div></div>
+                            </div>
+
+                            {/* Deductions Section */}
+                            <div className="pt-2">
+                                <div className="flex items-center justify-between mb-3">
+                                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Cotisations Sociales / Impôts</Label>
+                                    <Button type="button" variant="ghost" size="sm" onClick={() => addAdjustment(false)} className="h-7 px-2 text-xs">
+                                        <Plus className="mr-1 h-3 w-3" /> Add
+                                    </Button>
+                                </div>
+                                <div className="space-y-2">
+                                    {deductions.length === 0 && (
+                                        <div className="text-xs text-muted-foreground italic pl-1">No deductions configured</div>
+                                    )}
+                                    {deductions.map((deduction, index) => {
+                                        const calcAmount = deduction.type === 'percentage' ? gross * ((Number(deduction.value) || 0) / 100) : (Number(deduction.value) || 0);
+                                        return (
+                                            <div key={`ded-${index}`} className="grid grid-cols-[1fr_120px_120px_40px] gap-2 items-center">
+                                                <div className="flex bg-background border rounded-md focus-within:ring-1 focus-within:ring-ring">
+                                                    <Select onValueChange={(val) => val !== 'custom' && updateAdjustment(index, 'name', val, false)}>
+                                                        <SelectTrigger className="h-9 w-[30px] px-1.5 bg-transparent border-0 focus:ring-0 shadow-none"><Plus className="h-3.5 w-3.5 mx-auto" /></SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="AVS/AI/APG">AVS/AI/APG</SelectItem>
+                                                            <SelectItem value="AC (Chômage)">AC (Chômage)</SelectItem>
+                                                            <SelectItem value="LPP (Prévoyance)">LPP (Prévoyance)</SelectItem>
+                                                            <SelectItem value="LAA (Accident non prof.)">LAA (Accident)</SelectItem>
+                                                            <SelectItem value="IJM (Maladie)">IJM (Maladie)</SelectItem>
+                                                            <SelectItem value="Impôt à la source">Impôt à la source</SelectItem>
+                                                            <SelectItem value="custom">Custom...</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <Input
+                                                        placeholder="e.g. AVS, LPP"
+                                                        className="h-9 text-sm flex-1 border-0 focus-visible:ring-0 rounded-none shadow-none px-2"
+                                                        value={deduction.name}
+                                                        onChange={(e) => updateAdjustment(index, 'name', e.target.value, false)}
+                                                    />
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Input
+                                                        type="number" step="0.001" min="0"
+                                                        className="h-9 text-sm text-right px-2 focus-visible:ring-1"
+                                                        value={deduction.value || ''}
+                                                        onChange={(e) => updateAdjustment(index, 'value', e.target.value, false)}
+                                                    />
+                                                    <Select value={deduction.type || 'fixed'} onValueChange={(val) => updateAdjustment(index, 'type', val, false)}>
+                                                        <SelectTrigger className="h-9 w-[50px] px-1.5 text-xs"><SelectValue /></SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="fixed">$</SelectItem>
+                                                            <SelectItem value="percentage">%</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="flex flex-col items-end pr-1 justify-center relative min-w-[70px]">
+                                                    <div className="flex items-center gap-1 group">
+                                                        <span className="text-red-600 font-medium">-</span>
+                                                        <Input
+                                                            type="number" step="0.01"
+                                                            className="h-9 w-[80px] text-right text-sm text-red-600 font-medium bg-transparent border-transparent hover:border-input focus-visible:ring-1 focus-visible:border-input focus-visible:bg-background px-1 transition-all"
+                                                            value={deduction.is_overridden ? deduction.amount : calcAmount.toFixed(2)}
+                                                            onChange={(e) => updateAdjustment(index, 'amount', e.target.value, false)}
+                                                        />
+                                                    </div>
+                                                    {deduction.is_overridden && (
+                                                        <span className="text-[10px] text-muted-foreground absolute -bottom-3 right-2 whitespace-nowrap">
+                                                            Calc: {calcAmount.toFixed(2)} (Diff: {((deduction.amount || 0) - calcAmount).toFixed(2)})
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <Button type="button" variant="ghost" size="icon" onClick={() => removeAdjustment(index, false)} className="h-9 w-9 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Final Net Salary */}
+                            <div className="mt-5 border-t-[3px] border-border pt-4 grid grid-cols-[1fr_120px_120px_40px] gap-2 items-center text-lg font-bold">
+                                <div>Salaire Net Estimé</div>
+                                <div className="text-right text-muted-foreground">-</div>
+                                <div className="text-right">{formatCurrency(netAmount, currency)}</div>
+                                <div></div>
+                            </div>
+                        </div>
+                    </CardUI>
+
                     {/* Categorization */}
                     <CardUI className="animate-fade-in-up stagger-2 opacity-0">
                         <CardHeader>
@@ -460,193 +676,8 @@ export default function IncomeCreate() {
                         </CardContent>
                     </CardUI>
 
-                    {isSalary && (
-                        <CardUI className="animate-fade-in-up stagger-4 opacity-0">
-                            <CardHeader>
-                                <CardTitle>Salary Breakdown</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="gross_amount">
-                                        Gross salary
-                                    </Label>
-                                    <Input
-                                        id="gross_amount"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={grossAmount}
-                                        onChange={(e) =>
-                                            setGrossAmount(e.target.value)
-                                        }
-                                    />
-                                </div>
-
-                                <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
-                                    Expected net from deductions:{' '}
-                                    {expectedNet !== null
-                                        ? `${expectedNet.toFixed(2)} ${currency}`
-                                        : '-'}
-                                </div>
-
-                                {expectedNet !== null && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() =>
-                                            setAmount(expectedNet.toFixed(2))
-                                        }
-                                    >
-                                        Use expected net as recurring amount
-                                    </Button>
-                                )}
-
-                                <div className="space-y-2">
-                                    <Label>Deductions</Label>
-                                    {deductionRules.map((rule, idx) => (
-                                        <div
-                                            key={`${rule.name}-${idx}`}
-                                            className="grid grid-cols-12 gap-2"
-                                        >
-                                            <Input
-                                                className="col-span-6"
-                                                value={rule.name}
-                                                onChange={(e) => {
-                                                    const next = [
-                                                        ...deductionRules,
-                                                    ];
-                                                    next[idx] = {
-                                                        ...next[idx],
-                                                        name: e.target.value,
-                                                    };
-                                                    setDeductionRules(next);
-                                                }}
-                                                placeholder="AHV/AVS"
-                                            />
-                                            <Select
-                                                value={rule.type || 'percent'}
-                                                onValueChange={(value) => {
-                                                    const next = [
-                                                        ...deductionRules,
-                                                    ];
-                                                    next[idx] = {
-                                                        ...next[idx],
-                                                        type: value as
-                                                            | 'percent'
-                                                            | 'fixed',
-                                                        percent:
-                                                            value === 'percent'
-                                                                ? Number(
-                                                                      next[idx]
-                                                                          .percent ||
-                                                                          0,
-                                                                  )
-                                                                : 0,
-                                                        fixed_amount:
-                                                            value === 'fixed'
-                                                                ? Number(
-                                                                      next[idx]
-                                                                          .fixed_amount ||
-                                                                          0,
-                                                                  )
-                                                                : 0,
-                                                    };
-                                                    setDeductionRules(next);
-                                                }}
-                                            >
-                                                <SelectTrigger className="col-span-2">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="percent">
-                                                        %
-                                                    </SelectItem>
-                                                    <SelectItem value="fixed">
-                                                        Fixed
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <Input
-                                                className="col-span-3"
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                max={
-                                                    rule.type === 'fixed'
-                                                        ? undefined
-                                                        : '100'
-                                                }
-                                                value={
-                                                    rule.type === 'fixed'
-                                                        ? Number(
-                                                              rule.fixed_amount ||
-                                                                  0,
-                                                          )
-                                                        : Number(
-                                                              rule.percent || 0,
-                                                          )
-                                                }
-                                                onChange={(e) => {
-                                                    const next = [
-                                                        ...deductionRules,
-                                                    ];
-                                                    if (rule.type === 'fixed') {
-                                                        next[idx] = {
-                                                            ...next[idx],
-                                                            fixed_amount:
-                                                                Number(
-                                                                    e.target
-                                                                        .value ||
-                                                                        0,
-                                                                ),
-                                                        };
-                                                    } else {
-                                                        next[idx] = {
-                                                            ...next[idx],
-                                                            percent: Number(
-                                                                e.target
-                                                                    .value || 0,
-                                                            ),
-                                                        };
-                                                    }
-                                                    setDeductionRules(next);
-                                                }}
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                className="col-span-1 px-0"
-                                                onClick={() =>
-                                                    setDeductionRules((prev) =>
-                                                        prev.filter(
-                                                            (_, i) => i !== idx,
-                                                        ),
-                                                    )
-                                                }
-                                            >
-                                                x
-                                            </Button>
-                                        </div>
-                                    ))}
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() =>
-                                            setDeductionRules((prev) => [
-                                                ...prev,
-                                                createPercentDeductionRule(),
-                                            ])
-                                        }
-                                    >
-                                        Add deduction
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </CardUI>
-                    )}
-
                     {/* Settings */}
-                    <CardUI className="animate-fade-in-up stagger-5 opacity-0">
+                    <CardUI className="animate-fade-in-up stagger-4 opacity-0">
                         <CardHeader>
                             <CardTitle>Settings</CardTitle>
                         </CardHeader>
@@ -676,24 +707,10 @@ export default function IncomeCreate() {
                                     onCheckedChange={setAutoCreateTransaction}
                                 />
                             </div>
-
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-0.5">
-                                    <Label>Salary mode</Label>
-                                    <p className="text-sm text-muted-foreground">
-                                        Track gross salary, deductions, and net
-                                        payout expectations.
-                                    </p>
-                                </div>
-                                <Switch
-                                    checked={isSalary}
-                                    onCheckedChange={setIsSalary}
-                                />
-                            </div>
                         </CardContent>
                     </CardUI>
 
-                    <div className="animate-fade-in-up stagger-6 flex gap-4 opacity-0">
+                    <div className="animate-fade-in-up stagger-5 flex gap-4 opacity-0">
                         <Button
                             type="button"
                             variant="outline"

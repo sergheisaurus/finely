@@ -19,7 +19,6 @@ import {
     RefreshCw,
     Trash2,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -44,16 +43,8 @@ export default function SubscriptionsIndex({
     subscriptions: { data: Subscription[] };
     stats: SubscriptionStats;
 }) {
-    const [subscriptions, setSubscriptions] = useState<Subscription[]>(
-        initialSubscriptions.data,
-    );
-    const [stats, setStats] = useState<SubscriptionStats | null>(initialStats);
-    const [isLoading, setIsLoading] = useState(false);
-
-    useEffect(() => {
-        setSubscriptions(initialSubscriptions.data);
-        setStats(initialStats);
-    }, [initialSubscriptions, initialStats]);
+    const subscriptions = initialSubscriptions?.data || [];
+    const stats = initialStats;
 
     const fetchData = async () => {
         router.reload({ only: ['subscriptions', 'stats'] });
@@ -196,16 +187,7 @@ export default function SubscriptionsIndex({
                     </Card>
                 </div>
 
-                {isLoading ? (
-                    <div className="animate-fade-in-up stagger-5 grid gap-4 opacity-0 sm:grid-cols-2 lg:grid-cols-3">
-                        {[1, 2, 3].map((i) => (
-                            <div
-                                key={i}
-                                className="h-40 animate-pulse rounded-xl bg-muted"
-                            />
-                        ))}
-                    </div>
-                ) : subscriptions.length === 0 ? (
+                {subscriptions.length === 0 ? (
                     <Card className="animate-fade-in-up stagger-5 overflow-hidden opacity-0">
                         <CardContent className="p-12 text-center">
                             <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50">

@@ -1,3 +1,4 @@
+import { CategorySelect } from '@/components/finance/category-select';
 import { Button } from '@/components/ui/button';
 import {
     CardContent,
@@ -380,29 +381,32 @@ export default function BudgetEdit({ budgetId }: { budgetId: number }) {
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label>Category</Label>
-                                <Select
+                                <CategorySelect
                                     value={categoryId || '__all__'}
                                     onValueChange={(v) =>
                                         setCategoryId(v === '__all__' ? '' : v)
                                     }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Overall Budget (all expenses)" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="__all__">
-                                            Overall Budget (all expenses)
-                                        </SelectItem>
-                                        {categories.map((category) => (
-                                            <SelectItem
-                                                key={category.id}
-                                                value={category.id.toString()}
-                                            >
-                                                {category.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    categories={categories}
+                                    type="expense"
+                                    allowCreate={true}
+                                    specialOptions={[
+                                        {
+                                            value: '__all__',
+                                            label: 'Overall Budget (all expenses)',
+                                        },
+                                    ]}
+                                    placeholder="Overall Budget (all expenses)"
+                                    onCategoryCreated={(newCategory) => {
+                                        setCategories((prev) =>
+                                            [...prev, newCategory].sort(
+                                                (a, b) =>
+                                                    a.name.localeCompare(
+                                                        b.name,
+                                                    ),
+                                            ),
+                                        );
+                                    }}
+                                />
                                 <p className="text-xs text-muted-foreground">
                                     {categoryId
                                         ? 'This budget will track spending in the selected category only'

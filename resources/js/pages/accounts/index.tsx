@@ -26,25 +26,30 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function AccountsIndex({
-    accounts,
-}: {
-    accounts: { data: BankAccount[] };
-}) {
-    const [bankAccounts, setBankAccounts] = useState<BankAccount[]>(
-        accounts.data,
-    );
-    const [isLoading, setIsLoading] = useState(false);
+export default function AccountsIndex() {
+    const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        setBankAccounts(accounts.data);
-    }, [accounts]);
+        fetchAccounts();
+    }, []);
+
+    const fetchAccounts = async () => {
+        try {
+            const response = await api.get('/accounts');
+            setBankAccounts(response?.data?.data || []);
+        } catch (error) {
+            console.error('Failed to fetch accounts:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleSetDefault = async (accountId: number) => {
         try {
             const account = bankAccounts.find((acc) => acc.id === accountId);
             await api.post(`/accounts/${accountId}/set-default`);
-            router.reload({ only: ['accounts'] });
+            await fetchAccounts();
             toast.success('Default account updated!', {
                 description: `${account?.name} is now your default account.`,
             });
@@ -64,7 +69,7 @@ export default function AccountsIndex({
             toast.success('Account deleted!', {
                 description: `${account?.name} has been removed.`,
             });
-            router.reload({ only: ['accounts'] });
+            await fetchAccounts();
         } catch (error) {
             console.error('Failed to delete account:', error);
         }
@@ -229,7 +234,7 @@ export default function AccountsIndex({
                                                     {account.cards_count !==
                                                         undefined &&
                                                         account.cards_count >
-                                                            0 && (
+                                                        0 && (
                                                             <span className="rounded-full bg-muted px-2 py-1 text-xs">
                                                                 {
                                                                     account.cards_count

@@ -35,6 +35,7 @@ class RecurringIncome extends Model
         'color',
         'icon',
         'deductions',
+        'additions',
     ];
 
     protected function casts(): array
@@ -51,6 +52,7 @@ class RecurringIncome extends Model
             'payment_month' => 'integer',
             'reminder_days_before' => 'integer',
             'deductions' => 'array',
+            'additions' => 'array',
         ];
     }
 
@@ -200,27 +202,62 @@ class RecurringIncome extends Model
         return $next;
     }
 
+    public function getNetAmount(): float
+    {
+        $gross = (float) $this->amount;
+        $totalAdditions = 0;
+        $totalDeductions = 0;
+
+        if (is_array($this->additions)) {
+            foreach ($this->additions as $addition) {
+                $val = (float) ($addition['value'] ?? $addition['amount'] ?? 0);
+                if (($addition['type'] ?? 'fixed') === 'percentage') {
+                    $totalAdditions += $gross * ($val / 100);
+                } else {
+                    $totalAdditions += $val;
+                }
+            }
+        }
+
+        $grossPlusAdditions = $gross + $totalAdditions;
+
+        if (is_array($this->deductions)) {
+            foreach ($this->deductions as $deduction) {
+                $val = (float) ($deduction['value'] ?? $deduction['amount'] ?? 0);
+                if (($deduction['type'] ?? 'fixed') === 'percentage') {
+                    $totalDeductions += $grossPlusAdditions * ($val / 100);
+                } else {
+                    $totalDeductions += $val;
+                }
+            }
+        }
+
+        return $gross + $totalAdditions - $totalDeductions;
+    }
+
     public function getMonthlyEquivalent(): float
     {
+        $amount = $this->getNetAmount();
         return match ($this->frequency) {
-            'weekly' => $this->amount * 4.33,
-            'bi_weekly' => $this->amount * 2.17,
-            'monthly' => $this->amount,
-            'quarterly' => $this->amount / 3,
-            'yearly' => $this->amount / 12,
-            default => $this->amount,
+            'weekly' => $amount * 4.33,
+            'bi_weekly' => $amount * 2.17,
+            'monthly' => $amount,
+            'quarterly' => $amount / 3,
+            'yearly' => $amount / 12,
+            default => $amount,
         };
     }
 
     public function getYearlyTotal(): float
     {
+        $amount = $this->getNetAmount();
         return match ($this->frequency) {
-            'weekly' => $this->amount * 52,
-            'bi_weekly' => $this->amount * 26,
-            'monthly' => $this->amount * 12,
-            'quarterly' => $this->amount * 4,
-            'yearly' => $this->amount,
-            default => $this->amount * 12,
+            'weekly' => $amount * 52,
+            'bi_weekly' => $amount * 26,
+            'monthly' => $amount * 12,
+            'quarterly' => $amount * 4,
+            'yearly' => $amount,
+            default => $amount * 12,
         };
     }
 }

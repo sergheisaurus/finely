@@ -1,4 +1,4 @@
-import { CreateCategoryDialog } from '@/components/finance/create-category-dialog';
+import { CategoryFormModal } from '@/components/finance/category-form-modal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -7,7 +7,6 @@ import {
     CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { DynamicIcon } from '@/components/ui/dynamic-icon';
-import { getIconByName } from '@/components/ui/icon-picker';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppLayout from '@/layouts/app-layout';
@@ -15,7 +14,7 @@ import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import type { Category } from '@/types/finance';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import {
     ChevronDown,
     ChevronRight,
@@ -40,7 +39,10 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function CategoriesIndex() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [editingCategory, setEditingCategory] = useState<Category | null>(
+        null,
+    );
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('all');
 
@@ -51,7 +53,7 @@ export default function CategoriesIndex() {
     const fetchCategories = async () => {
         try {
             const response = await api.get('/categories');
-            setCategories(response.data.data);
+            setCategories(response?.data?.data || []);
         } catch (error) {
             console.error('Failed to fetch categories:', error);
             toast.error('Failed to load categories');
@@ -60,9 +62,8 @@ export default function CategoriesIndex() {
         }
     };
 
-    const handleCategoryCreated = (newCategory: Category) => {
-        setCategories((prev) => [...prev, newCategory]);
-        // No need to reload page, just update state
+    const handleFormSuccess = () => {
+        fetchCategories();
     };
 
     const handleDelete = async (categoryId: number) => {
@@ -88,6 +89,16 @@ export default function CategoriesIndex() {
                     'This category may be in use by transactions or have subcategories.',
             });
         }
+    };
+
+    const handleEditCategory = (category: Category) => {
+        setEditingCategory(category);
+        setIsFormOpen(true);
+    };
+
+    const handleCreateCategory = () => {
+        setEditingCategory(null);
+        setIsFormOpen(true);
     };
 
     const filteredCategories = categories.filter((category) => {
@@ -120,13 +131,20 @@ export default function CategoriesIndex() {
                             Organize your income and expenses
                         </p>
                     </div>
-                    <CreateCategoryDialog
-                        open={isCreateOpen}
-                        onOpenChange={setIsCreateOpen}
+                    <CategoryFormModal
+                        open={isFormOpen}
+                        onOpenChange={(open) => {
+                            setIsFormOpen(open);
+                            if (!open) setEditingCategory(null);
+                        }}
                         categories={categories}
-                        onCategoryCreated={handleCategoryCreated}
+                        category={editingCategory}
+                        onSuccess={handleFormSuccess}
                         trigger={
-                            <Button className="bg-gradient-to-r from-orange-500 to-amber-500 shadow-lg shadow-orange-500/25 transition-all hover:from-orange-600 hover:to-amber-600 hover:shadow-xl hover:shadow-orange-500/30">
+                            <Button
+                                onClick={handleCreateCategory}
+                                className="bg-gradient-to-r from-orange-500 to-amber-500 shadow-lg shadow-orange-500/25 transition-all hover:from-orange-600 hover:to-amber-600 hover:shadow-xl hover:shadow-orange-500/30"
+                            >
                                 <Plus className="mr-2 h-4 w-4" />
                                 Add Category
                             </Button>
@@ -228,7 +246,9 @@ export default function CategoriesIndex() {
                             {isLoading ? (
                                 <div className="space-y-4 py-8 text-center">
                                     <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-muted-foreground border-t-transparent" />
-                                    <p className="text-sm text-muted-foreground">Loading categories...</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Loading categories...
+                                    </p>
                                 </div>
                             ) : filteredCategories.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -254,9 +274,7 @@ export default function CategoriesIndex() {
                                                 allCategories={
                                                     filteredCategories
                                                 } // Pass filtered list to show relevant children
-                                                allCategoriesForTotals={
-                                                    categories
-                                                }
+                                                onEdit={handleEditCategory}
                                                 onDelete={handleDelete}
                                             />
                                         ))}
@@ -274,12 +292,12 @@ export default function CategoriesIndex() {
 function CategoryRow({
     category,
     allCategories,
-    allCategoriesForTotals,
+    onEdit,
     onDelete,
 }: {
     category: Category;
     allCategories: Category[];
-    allCategoriesForTotals: Category[];
+    onEdit: (category: Category) => void;
     onDelete: (id: number) => void;
 }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -292,15 +310,6 @@ function CategoryRow({
     // So we just look for children in 'allCategories' which IS the filtered list.
     const children = allCategories.filter((c) => c.parent_id === category.id);
     const hasChildren = children.length > 0;
-
-    const rolledUpTransactionsCount =
-        (category.transactions_count || 0) +
-        allCategoriesForTotals.reduce((acc, curr) => {
-            if (curr.parent_id !== category.id) return acc;
-            return acc + (curr.transactions_count || 0);
-        }, 0);
-
-    const IconComponent = category.icon ? getIconByName(category.icon) : Tag;
 
     return (
         <Collapsible
@@ -332,9 +341,11 @@ function CategoryRow({
                         className="flex h-10 w-10 items-center justify-center rounded-lg shadow-sm"
                         style={{ backgroundColor: category.color }}
                     >
-                        {IconComponent && (
-                            <IconComponent className="h-5 w-5 text-white" />
-                        )}
+                        <DynamicIcon
+                            name={category.icon}
+                            fallback={Tag}
+                            className="h-5 w-5 text-white"
+                        />
                     </div>
 
                     <div>
@@ -356,7 +367,7 @@ function CategoryRow({
                             )}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            {rolledUpTransactionsCount} transactions
+                            {category.transactions_count || 0} transactions
                         </p>
                     </div>
                 </div>
@@ -365,9 +376,7 @@ function CategoryRow({
                     <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() =>
-                            router.visit(`/categories/${category.id}/edit`)
-                        }
+                        onClick={() => onEdit(category)}
                     >
                         <Edit className="h-4 w-4 text-muted-foreground" />
                     </Button>
@@ -416,11 +425,7 @@ function CategoryRow({
                                         variant="ghost"
                                         size="icon"
                                         className="h-8 w-8"
-                                        onClick={() =>
-                                            router.visit(
-                                                `/categories/${child.id}/edit`,
-                                            )
-                                        }
+                                        onClick={() => onEdit(child)}
                                     >
                                         <Edit className="h-3.5 w-3.5 text-muted-foreground" />
                                     </Button>

@@ -1,5 +1,7 @@
 import { AmountInput } from '@/components/finance/amount-input';
 import { BudgetIndicator } from '@/components/finance/budget-indicator';
+import { CategorySelect } from '@/components/finance/category-select';
+import { MerchantSelect } from '@/components/finance/merchant-select';
 import { QuickCreateCategoryModal } from '@/components/finance/quick-create-category-modal';
 import { QuickCreateMerchantModal } from '@/components/finance/quick-create-merchant-modal';
 import { Button } from '@/components/ui/button';
@@ -21,7 +23,13 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import api from '@/lib/api';
 import { useSecretStore } from '@/stores/useSecretStore';
-import type { BankAccount, Card, Category, Merchant, Transaction } from '@/types/finance';
+import type {
+    BankAccount,
+    Card,
+    Category,
+    Merchant,
+    Transaction,
+} from '@/types/finance';
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -75,7 +83,9 @@ export function TransactionFormModal({
     const [secretCategoryId, setSecretCategoryId] = useState('');
     const [merchantId, setMerchantId] = useState('');
     const [secretMerchantId, setSecretMerchantId] = useState('');
-    const [paymentMethod, setPaymentMethod] = useState<'account' | 'card'>('account');
+    const [paymentMethod, setPaymentMethod] = useState<'account' | 'card'>(
+        'account',
+    );
 
     // Sub-modal state
     const [showCreateCategory, setShowCreateCategory] = useState(false);
@@ -94,17 +104,19 @@ export function TransactionFormModal({
                     api.get('/categories?flat=1'),
                     api.get('/merchants'),
                 ]);
-                const accs: BankAccount[] = accRes.data.data;
+                const accs: BankAccount[] = accRes?.data?.data || [];
                 setAccounts(accs);
-                setCards(cardRes.data.data);
-                setCategories(catRes.data.data);
-                setMerchants(merRes.data.data);
+                setCards(cardRes?.data?.data || []);
+                setCategories(catRes?.data?.data || []);
+                setMerchants(merRes?.data?.data || []);
 
                 // In create mode, pre-fill the default account
                 if (!isEditMode) {
                     const def = accs.find((a) => a.is_default);
-                    if (def && defaultType === 'expense') setFromAccountId(def.id.toString());
-                    else if (def && defaultType === 'income') setToAccountId(def.id.toString());
+                    if (def && defaultType === 'expense')
+                        setFromAccountId(def.id.toString());
+                    else if (def && defaultType === 'income')
+                        setToAccountId(def.id.toString());
                 }
             } catch {
                 toast.error('Failed to load form data');
@@ -134,17 +146,27 @@ export function TransactionFormModal({
         setToCardId(transaction.to_card_id?.toString() ?? '');
 
         // Use the explicit 'real' properties sent by the resource for forms
-        setCategoryId(transaction.real_category_id?.toString() ?? transaction.category_id?.toString() ?? '');
+        setCategoryId(
+            transaction.real_category_id?.toString() ??
+                transaction.category_id?.toString() ??
+                '',
+        );
         setSecretCategoryId(transaction.secret_category_id?.toString() ?? '');
-        setMerchantId(transaction.real_merchant_id?.toString() ?? transaction.merchant_id?.toString() ?? '');
+        setMerchantId(
+            transaction.real_merchant_id?.toString() ??
+                transaction.merchant_id?.toString() ??
+                '',
+        );
         setSecretMerchantId(transaction.secret_merchant_id?.toString() ?? '');
 
         if (transaction.type === 'expense' || transaction.type === 'income') {
             setPaymentMethod(
-                transaction.from_card_id || transaction.to_card_id ? 'card' : 'account',
+                transaction.from_card_id || transaction.to_card_id
+                    ? 'card'
+                    : 'account',
             );
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, [open, transaction]);
 
     // Reset when modal closes
@@ -199,13 +221,19 @@ export function TransactionFormModal({
         };
 
         if (type === 'expense') {
-            payload.from_account_id = fromAccountId ? parseInt(fromAccountId) : null;
+            payload.from_account_id = fromAccountId
+                ? parseInt(fromAccountId)
+                : null;
             payload.from_card_id = fromCardId ? parseInt(fromCardId) : null;
             payload.category_id = categoryId ? parseInt(categoryId) : null;
             payload.merchant_id = merchantId ? parseInt(merchantId) : null;
             if (isSecretModeActive) {
-                payload.secret_category_id = secretCategoryId ? parseInt(secretCategoryId) : null;
-                payload.secret_merchant_id = secretMerchantId ? parseInt(secretMerchantId) : null;
+                payload.secret_category_id = secretCategoryId
+                    ? parseInt(secretCategoryId)
+                    : null;
+                payload.secret_merchant_id = secretMerchantId
+                    ? parseInt(secretMerchantId)
+                    : null;
             }
         } else if (type === 'income') {
             payload.to_account_id = toAccountId ? parseInt(toAccountId) : null;
@@ -213,14 +241,22 @@ export function TransactionFormModal({
             payload.category_id = categoryId ? parseInt(categoryId) : null;
             payload.merchant_id = merchantId ? parseInt(merchantId) : null;
             if (isSecretModeActive) {
-                payload.secret_category_id = secretCategoryId ? parseInt(secretCategoryId) : null;
-                payload.secret_merchant_id = secretMerchantId ? parseInt(secretMerchantId) : null;
+                payload.secret_category_id = secretCategoryId
+                    ? parseInt(secretCategoryId)
+                    : null;
+                payload.secret_merchant_id = secretMerchantId
+                    ? parseInt(secretMerchantId)
+                    : null;
             }
         } else if (type === 'transfer') {
-            payload.from_account_id = fromAccountId ? parseInt(fromAccountId) : null;
+            payload.from_account_id = fromAccountId
+                ? parseInt(fromAccountId)
+                : null;
             payload.to_account_id = toAccountId ? parseInt(toAccountId) : null;
         } else if (type === 'card_payment') {
-            payload.from_account_id = fromAccountId ? parseInt(fromAccountId) : null;
+            payload.from_account_id = fromAccountId
+                ? parseInt(fromAccountId)
+                : null;
             payload.to_card_id = toCardId ? parseInt(toCardId) : null;
         }
 
@@ -233,7 +269,10 @@ export function TransactionFormModal({
         setErrors({});
         try {
             if (isEditMode && transaction) {
-                await api.put(`/transactions/${transaction.id}`, buildPayload());
+                await api.put(
+                    `/transactions/${transaction.id}`,
+                    buildPayload(),
+                );
                 toast.success('Transaction updated!', { description: title });
             } else {
                 await api.post('/transactions', buildPayload());
@@ -242,7 +281,9 @@ export function TransactionFormModal({
             onSuccess?.();
             handleOpenChange(false);
         } catch (err: unknown) {
-            const e = err as { response?: { data?: { errors?: Record<string, string> } } };
+            const e = err as {
+                response?: { data?: { errors?: Record<string, string> } };
+            };
             if (e.response?.data?.errors) {
                 setErrors(e.response.data.errors);
             } else {
@@ -262,10 +303,10 @@ export function TransactionFormModal({
         return false;
     });
 
-    const safeCategories = filteredCategories.filter(c => !c.is_secret);
+    const safeCategories = filteredCategories.filter((c) => !c.is_secret);
     const secretCategories = filteredCategories; // Can pick any as the "real" secret category
 
-    const safeMerchants = merchants.filter(m => !m.is_secret);
+    const safeMerchants = merchants.filter((m) => !m.is_secret);
     const secretMerchants = merchants; // Can pick any as the "real" secret merchant
     const creditCards = cards.filter((c) => c.type === 'credit');
 
@@ -274,46 +315,67 @@ export function TransactionFormModal({
             ? 'Edit Your Dirty Little Secret 🔒'
             : 'Edit Transaction'
         : isSecretModeActive
-            ? 'New Slutty Expense 🔒'
-            : 'New Transaction';
+          ? 'New Slutty Expense 🔒'
+          : 'New Transaction';
 
     // Helper: Category select field with "+ Create new" button
     const CategorySelectField = ({ isSecretField = false } = {}) => {
         const value = isSecretField ? secretCategoryId : categoryId;
-        const setValue = isSecretField ? (val: string) => {
-            setSecretCategoryId(val);
-            if (val && isSecretModeActive) {
-                const cat = categories.find(c => c.id.toString() === val);
-                if (cat?.cover_category_id) {
-                    setCategoryId(cat.cover_category_id.toString());
-                }
-            }
-        } : setCategoryId;
-        const options = (isSecretField && isSecretModeActive) ? secretCategories : safeCategories;
-        const labelText = isSecretField ? 'Secret Category' : (isSecretModeActive ? 'Cover Category (Safe)' : 'Category');
+        const setValue = isSecretField
+            ? (val: string) => {
+                  setSecretCategoryId(val);
+                  if (val && isSecretModeActive) {
+                      const cat = categories.find(
+                          (c) => c.id.toString() === val,
+                      );
+                      if (cat?.cover_category_id) {
+                          setCategoryId(cat.cover_category_id.toString());
+                      }
+                  }
+              }
+            : setCategoryId;
+        const options =
+            isSecretField && isSecretModeActive
+                ? secretCategories
+                : safeCategories;
+        const labelText = isSecretField
+            ? 'Secret Category'
+            : isSecretModeActive
+              ? 'Cover Category (Safe)'
+              : 'Category';
+
+        const fieldError = isSecretField
+            ? errors.secret_category_id
+            : errors.category_id;
 
         return (
             <div className="space-y-1">
-                <Label className={isSecretField ? 'text-fuchsia-500 dark:text-fuchsia-400' : ''}>
-                    {isSecretField ? '🔒 ' : ''}{labelText}
+                <Label
+                    className={
+                        isSecretField
+                            ? 'text-fuchsia-500 dark:text-fuchsia-400'
+                            : ''
+                    }
+                >
+                    {isSecretField ? '🔒 ' : ''}
+                    {labelText}
                 </Label>
                 <div className="flex gap-2">
-                    <Select value={value} onValueChange={setValue}>
-                        <SelectTrigger className={`flex-1 ${isSecretField ? 'border-fuchsia-500/50 focus:ring-fuchsia-500/50' : ''}`}>
-                            <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {options.length === 0 && (
-                                <div className="px-3 py-2 text-sm text-muted-foreground">No categories</div>
-                            )}
-                            {options.map((c) => (
-                                <SelectItem key={c.id} value={c.id.toString()}>
-                                    {c.parent && '└ '}
-                                    {c.icon} {c.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex-1">
+                        <CategorySelect
+                            value={value}
+                            onValueChange={setValue}
+                            categories={options}
+                            placeholder="Select category"
+                            error={fieldError}
+                            allowCreate={false}
+                            triggerClassName={
+                                isSecretField
+                                    ? 'border-fuchsia-500/50 focus-visible:ring-fuchsia-500/50'
+                                    : ''
+                            }
+                        />
+                    </div>
                     {!isSecretField && (
                         <Button
                             type="button"
@@ -326,8 +388,6 @@ export function TransactionFormModal({
                         </Button>
                     )}
                 </div>
-                {errors.category_id && !isSecretField && <p className="text-sm text-red-500">{errors.category_id}</p>}
-                {errors.secret_category_id && isSecretField && <p className="text-sm text-red-500">{errors.secret_category_id}</p>}
             </div>
         );
     };
@@ -335,39 +395,59 @@ export function TransactionFormModal({
     // Helper: Merchant select field with "+ Create new" button
     const MerchantSelectField = ({ isSecretField = false } = {}) => {
         const value = isSecretField ? secretMerchantId : merchantId;
-        const setValue = isSecretField ? (val: string) => {
-            setSecretMerchantId(val);
-            if (val && isSecretModeActive) {
-                const m = merchants.find(m => m.id.toString() === val);
-                if (m?.cover_merchant_id) {
-                    setMerchantId(m.cover_merchant_id.toString());
-                }
-            }
-        } : setMerchantId;
-        const options = (isSecretField && isSecretModeActive) ? secretMerchants : safeMerchants;
-        const labelText = isSecretField ? 'Secret Merchant' : (isSecretModeActive ? 'Cover Merchant (Safe)' : 'Merchant');
+        const setValue = isSecretField
+            ? (val: string) => {
+                  setSecretMerchantId(val);
+                  if (val && isSecretModeActive) {
+                      const m = merchants.find((m) => m.id.toString() === val);
+                      if (m?.cover_merchant_id) {
+                          setMerchantId(m.cover_merchant_id.toString());
+                      }
+                  }
+              }
+            : setMerchantId;
+        const options =
+            isSecretField && isSecretModeActive
+                ? secretMerchants
+                : safeMerchants;
+        const labelText = isSecretField
+            ? 'Secret Merchant'
+            : isSecretModeActive
+              ? 'Cover Merchant (Safe)'
+              : 'Merchant';
+
+        const fieldError = isSecretField
+            ? errors.secret_merchant_id
+            : errors.merchant_id;
 
         return (
             <div className="space-y-1">
-                <Label className={isSecretField ? 'text-fuchsia-500 dark:text-fuchsia-400' : ''}>
-                    {isSecretField ? '🔒 ' : ''}{labelText}
+                <Label
+                    className={
+                        isSecretField
+                            ? 'text-fuchsia-500 dark:text-fuchsia-400'
+                            : ''
+                    }
+                >
+                    {isSecretField ? '🔒 ' : ''}
+                    {labelText}
                 </Label>
                 <div className="flex gap-2">
-                    <Select value={value} onValueChange={setValue}>
-                        <SelectTrigger className={`flex-1 ${isSecretField ? 'border-fuchsia-500/50 focus:ring-fuchsia-500/50' : ''}`}>
-                            <SelectValue placeholder="Select merchant" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {options.length === 0 && (
-                                <div className="px-3 py-2 text-sm text-muted-foreground">No merchants</div>
-                            )}
-                            {options.map((m) => (
-                                <SelectItem key={m.id} value={m.id.toString()}>
-                                    {m.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex-1">
+                        <MerchantSelect
+                            value={value}
+                            onValueChange={setValue}
+                            merchants={options}
+                            placeholder="Select merchant"
+                            error={fieldError}
+                            allowCreate={false}
+                            triggerClassName={
+                                isSecretField
+                                    ? 'border-fuchsia-500/50 focus-visible:ring-fuchsia-500/50'
+                                    : ''
+                            }
+                        />
+                    </div>
                     {!isSecretField && (
                         <Button
                             type="button"
@@ -380,8 +460,6 @@ export function TransactionFormModal({
                         </Button>
                     )}
                 </div>
-                {errors.merchant_id && !isSecretField && <p className="text-sm text-red-500">{errors.merchant_id}</p>}
-                {errors.secret_merchant_id && isSecretField && <p className="text-sm text-red-500">{errors.secret_merchant_id}</p>}
             </div>
         );
     };
@@ -397,15 +475,23 @@ export function TransactionFormModal({
                     {isLoadingData ? (
                         <div className="space-y-3 py-6">
                             {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="h-9 animate-pulse rounded bg-muted" />
+                                <div
+                                    key={i}
+                                    className="h-9 animate-pulse rounded bg-muted"
+                                />
                             ))}
                         </div>
                     ) : (
-                        <form onSubmit={handleSubmit} className="space-y-5 py-2">
+                        <form
+                            onSubmit={handleSubmit}
+                            className="space-y-5 py-2"
+                        >
                             {/* Row 1: Type + Date */}
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="space-y-1">
-                                    <Label htmlFor="tfm-type">Transaction Type *</Label>
+                                    <Label htmlFor="tfm-type">
+                                        Transaction Type *
+                                    </Label>
                                     <Select
                                         value={type}
                                         onValueChange={(v: TransactionType) => {
@@ -423,13 +509,25 @@ export function TransactionFormModal({
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="expense">Expense</SelectItem>
-                                            <SelectItem value="income">Income</SelectItem>
-                                            <SelectItem value="transfer">Transfer</SelectItem>
-                                            <SelectItem value="card_payment">Card Payment</SelectItem>
+                                            <SelectItem value="expense">
+                                                Expense
+                                            </SelectItem>
+                                            <SelectItem value="income">
+                                                Income
+                                            </SelectItem>
+                                            <SelectItem value="transfer">
+                                                Transfer
+                                            </SelectItem>
+                                            <SelectItem value="card_payment">
+                                                Card Payment
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    {errors.type && <p className="text-sm text-red-500">{errors.type}</p>}
+                                    {errors.type && (
+                                        <p className="text-sm text-red-500">
+                                            {errors.type}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="space-y-1">
@@ -438,11 +536,15 @@ export function TransactionFormModal({
                                         id="tfm-date"
                                         type="date"
                                         value={transactionDate}
-                                        onChange={(e) => setTransactionDate(e.target.value)}
+                                        onChange={(e) =>
+                                            setTransactionDate(e.target.value)
+                                        }
                                         required
                                     />
                                     {errors.transaction_date && (
-                                        <p className="text-sm text-red-500">{errors.transaction_date}</p>
+                                        <p className="text-sm text-red-500">
+                                            {errors.transaction_date}
+                                        </p>
                                     )}
                                 </div>
                             </div>
@@ -454,24 +556,43 @@ export function TransactionFormModal({
                                     <AmountInput
                                         name="amount"
                                         value={parseFloat(amount) || 0}
-                                        onChange={(v) => setAmount(v.toString())}
+                                        onChange={(v) =>
+                                            setAmount(v.toString())
+                                        }
                                         currency={currency}
                                         required
                                     />
-                                    {errors.amount && <p className="text-sm text-red-500">{errors.amount}</p>}
+                                    {errors.amount && (
+                                        <p className="text-sm text-red-500">
+                                            {errors.amount}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="space-y-1">
-                                    <Label htmlFor="tfm-currency">Currency *</Label>
-                                    <Select value={currency} onValueChange={setCurrency}>
+                                    <Label htmlFor="tfm-currency">
+                                        Currency *
+                                    </Label>
+                                    <Select
+                                        value={currency}
+                                        onValueChange={setCurrency}
+                                    >
                                         <SelectTrigger id="tfm-currency">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="CHF">CHF (Fr)</SelectItem>
-                                            <SelectItem value="EUR">EUR (€)</SelectItem>
-                                            <SelectItem value="USD">USD ($)</SelectItem>
-                                            <SelectItem value="GBP">GBP (£)</SelectItem>
+                                            <SelectItem value="CHF">
+                                                CHF (Fr)
+                                            </SelectItem>
+                                            <SelectItem value="EUR">
+                                                EUR (€)
+                                            </SelectItem>
+                                            <SelectItem value="USD">
+                                                USD ($)
+                                            </SelectItem>
+                                            <SelectItem value="GBP">
+                                                GBP (£)
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -479,7 +600,11 @@ export function TransactionFormModal({
 
                             {/* Title (Cover) */}
                             <div className="space-y-1">
-                                <Label htmlFor="tfm-title">{isSecretModeActive ? 'Cover Title (Safe) *' : 'Title *'}</Label>
+                                <Label htmlFor="tfm-title">
+                                    {isSecretModeActive
+                                        ? 'Cover Title (Safe) *'
+                                        : 'Title *'}
+                                </Label>
                                 <Input
                                     id="tfm-title"
                                     value={title}
@@ -488,7 +613,11 @@ export function TransactionFormModal({
                                     required
                                     maxLength={255}
                                 />
-                                {errors.title && <p className="text-sm text-red-500">{errors.title}</p>}
+                                {errors.title && (
+                                    <p className="text-sm text-red-500">
+                                        {errors.title}
+                                    </p>
+                                )}
                             </div>
 
                             {/* Secret Title */}
@@ -503,7 +632,9 @@ export function TransactionFormModal({
                                     <Input
                                         id="tfm-secret-title"
                                         value={secretTitle}
-                                        onChange={(e) => setSecretTitle(e.target.value)}
+                                        onChange={(e) =>
+                                            setSecretTitle(e.target.value)
+                                        }
                                         placeholder="Only visible in Secret Mode"
                                         className="border-fuchsia-500/50 focus-visible:ring-fuchsia-500/50"
                                         maxLength={255}
@@ -518,16 +649,20 @@ export function TransactionFormModal({
                                         <Label>Payment Method *</Label>
                                         <Select
                                             value={paymentMethod}
-                                            onValueChange={(v: 'account' | 'card') =>
-                                                setPaymentMethod(v)
-                                            }
+                                            onValueChange={(
+                                                v: 'account' | 'card',
+                                            ) => setPaymentMethod(v)}
                                         >
                                             <SelectTrigger>
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="account">Bank Account</SelectItem>
-                                                <SelectItem value="card">Card</SelectItem>
+                                                <SelectItem value="account">
+                                                    Bank Account
+                                                </SelectItem>
+                                                <SelectItem value="card">
+                                                    Card
+                                                </SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -535,32 +670,51 @@ export function TransactionFormModal({
                                     {paymentMethod === 'account' ? (
                                         <div className="space-y-1">
                                             <Label>From Account *</Label>
-                                            <Select value={fromAccountId} onValueChange={setFromAccountId}>
+                                            <Select
+                                                value={fromAccountId}
+                                                onValueChange={setFromAccountId}
+                                            >
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select account" />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {accounts.map((a) => (
-                                                        <SelectItem key={a.id} value={a.id.toString()}>
-                                                            {a.name} ({a.currency} {a.balance.toFixed(2)})
+                                                        <SelectItem
+                                                            key={a.id}
+                                                            value={a.id.toString()}
+                                                        >
+                                                            {a.name} (
+                                                            {a.currency}{' '}
+                                                            {a.balance.toFixed(
+                                                                2,
+                                                            )}
+                                                            )
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
                                             {errors.from_account_id && (
-                                                <p className="text-sm text-red-500">{errors.from_account_id}</p>
+                                                <p className="text-sm text-red-500">
+                                                    {errors.from_account_id}
+                                                </p>
                                             )}
                                         </div>
                                     ) : (
                                         <div className="space-y-1">
                                             <Label>From Card *</Label>
-                                            <Select value={fromCardId} onValueChange={setFromCardId}>
+                                            <Select
+                                                value={fromCardId}
+                                                onValueChange={setFromCardId}
+                                            >
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select card" />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {cards.map((c) => (
-                                                        <SelectItem key={c.id} value={c.id.toString()}>
+                                                        <SelectItem
+                                                            key={c.id}
+                                                            value={c.id.toString()}
+                                                        >
                                                             {c.card_holder_name}
                                                             {c.card_number
                                                                 ? ` - •••• ${c.card_number.slice(-4)}`
@@ -570,26 +724,41 @@ export function TransactionFormModal({
                                                 </SelectContent>
                                             </Select>
                                             {errors.from_card_id && (
-                                                <p className="text-sm text-red-500">{errors.from_card_id}</p>
+                                                <p className="text-sm text-red-500">
+                                                    {errors.from_card_id}
+                                                </p>
                                             )}
                                         </div>
                                     )}
 
                                     {isSecretModeActive && (
-                                        <div className="grid gap-4 sm:grid-cols-2 mt-4 rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/5 p-4">
-                                            <CategorySelectField isSecretField={true} />
-                                            <MerchantSelectField isSecretField={true} />
+                                        <div className="mt-4 grid gap-4 rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/5 p-4 sm:grid-cols-2">
+                                            <CategorySelectField
+                                                isSecretField={true}
+                                            />
+                                            <MerchantSelectField
+                                                isSecretField={true}
+                                            />
                                         </div>
                                     )}
 
-                                    <div className="grid gap-4 sm:grid-cols-2 mt-2">
+                                    <div className="mt-2 grid gap-4 sm:grid-cols-2">
                                         <CategorySelectField />
                                         <MerchantSelectField />
                                     </div>
 
                                     <BudgetIndicator
-                                        categoryId={isSecretModeActive && secretCategoryId ? parseInt(secretCategoryId) : (categoryId ? parseInt(categoryId) : null)}
-                                        transactionAmount={parseFloat(amount) || 0}
+                                        categoryId={
+                                            isSecretModeActive &&
+                                            secretCategoryId
+                                                ? parseInt(secretCategoryId)
+                                                : categoryId
+                                                  ? parseInt(categoryId)
+                                                  : null
+                                        }
+                                        transactionAmount={
+                                            parseFloat(amount) || 0
+                                        }
                                         transactionType={type}
                                         currency={currency}
                                     />
@@ -603,16 +772,20 @@ export function TransactionFormModal({
                                         <Label>Deposit To *</Label>
                                         <Select
                                             value={paymentMethod}
-                                            onValueChange={(v: 'account' | 'card') =>
-                                                setPaymentMethod(v)
-                                            }
+                                            onValueChange={(
+                                                v: 'account' | 'card',
+                                            ) => setPaymentMethod(v)}
                                         >
                                             <SelectTrigger>
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="account">Bank Account</SelectItem>
-                                                <SelectItem value="card">Card (Cashback/Refund)</SelectItem>
+                                                <SelectItem value="account">
+                                                    Bank Account
+                                                </SelectItem>
+                                                <SelectItem value="card">
+                                                    Card (Cashback/Refund)
+                                                </SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -620,32 +793,51 @@ export function TransactionFormModal({
                                     {paymentMethod === 'account' ? (
                                         <div className="space-y-1">
                                             <Label>To Account *</Label>
-                                            <Select value={toAccountId} onValueChange={setToAccountId}>
+                                            <Select
+                                                value={toAccountId}
+                                                onValueChange={setToAccountId}
+                                            >
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select account" />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {accounts.map((a) => (
-                                                        <SelectItem key={a.id} value={a.id.toString()}>
-                                                            {a.name} ({a.currency} {a.balance.toFixed(2)})
+                                                        <SelectItem
+                                                            key={a.id}
+                                                            value={a.id.toString()}
+                                                        >
+                                                            {a.name} (
+                                                            {a.currency}{' '}
+                                                            {a.balance.toFixed(
+                                                                2,
+                                                            )}
+                                                            )
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
                                             {errors.to_account_id && (
-                                                <p className="text-sm text-red-500">{errors.to_account_id}</p>
+                                                <p className="text-sm text-red-500">
+                                                    {errors.to_account_id}
+                                                </p>
                                             )}
                                         </div>
                                     ) : (
                                         <div className="space-y-1">
                                             <Label>To Card *</Label>
-                                            <Select value={toCardId} onValueChange={setToCardId}>
+                                            <Select
+                                                value={toCardId}
+                                                onValueChange={setToCardId}
+                                            >
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select card" />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {cards.map((c) => (
-                                                        <SelectItem key={c.id} value={c.id.toString()}>
+                                                        <SelectItem
+                                                            key={c.id}
+                                                            value={c.id.toString()}
+                                                        >
                                                             {c.card_holder_name}
                                                             {c.card_number
                                                                 ? ` - •••• ${c.card_number.slice(-4)}`
@@ -655,19 +847,25 @@ export function TransactionFormModal({
                                                 </SelectContent>
                                             </Select>
                                             {errors.to_card_id && (
-                                                <p className="text-sm text-red-500">{errors.to_card_id}</p>
+                                                <p className="text-sm text-red-500">
+                                                    {errors.to_card_id}
+                                                </p>
                                             )}
                                         </div>
                                     )}
 
                                     {isSecretModeActive && (
-                                        <div className="grid gap-4 sm:grid-cols-2 mt-4 rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/5 p-4">
-                                            <CategorySelectField isSecretField={true} />
-                                            <MerchantSelectField isSecretField={true} />
+                                        <div className="mt-4 grid gap-4 rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/5 p-4 sm:grid-cols-2">
+                                            <CategorySelectField
+                                                isSecretField={true}
+                                            />
+                                            <MerchantSelectField
+                                                isSecretField={true}
+                                            />
                                         </div>
                                     )}
 
-                                    <div className="grid gap-4 sm:grid-cols-2 mt-2">
+                                    <div className="mt-2 grid gap-4 sm:grid-cols-2">
                                         <CategorySelectField />
                                         <MerchantSelectField />
                                     </div>
@@ -679,41 +877,67 @@ export function TransactionFormModal({
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <div className="space-y-1">
                                         <Label>From Account *</Label>
-                                        <Select value={fromAccountId} onValueChange={setFromAccountId}>
+                                        <Select
+                                            value={fromAccountId}
+                                            onValueChange={setFromAccountId}
+                                        >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select account" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {accounts.map((a) => (
-                                                    <SelectItem key={a.id} value={a.id.toString()}>
-                                                        {a.name} ({a.currency} {a.balance.toFixed(2)})
+                                                    <SelectItem
+                                                        key={a.id}
+                                                        value={a.id.toString()}
+                                                    >
+                                                        {a.name} ({a.currency}{' '}
+                                                        {a.balance.toFixed(2)})
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
                                         {errors.from_account_id && (
-                                            <p className="text-sm text-red-500">{errors.from_account_id}</p>
+                                            <p className="text-sm text-red-500">
+                                                {errors.from_account_id}
+                                            </p>
                                         )}
                                     </div>
 
                                     <div className="space-y-1">
                                         <Label>To Account *</Label>
-                                        <Select value={toAccountId} onValueChange={setToAccountId}>
+                                        <Select
+                                            value={toAccountId}
+                                            onValueChange={setToAccountId}
+                                        >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select account" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {accounts
-                                                    .filter((a) => a.id.toString() !== fromAccountId)
+                                                    .filter(
+                                                        (a) =>
+                                                            a.id.toString() !==
+                                                            fromAccountId,
+                                                    )
                                                     .map((a) => (
-                                                        <SelectItem key={a.id} value={a.id.toString()}>
-                                                            {a.name} ({a.currency} {a.balance.toFixed(2)})
+                                                        <SelectItem
+                                                            key={a.id}
+                                                            value={a.id.toString()}
+                                                        >
+                                                            {a.name} (
+                                                            {a.currency}{' '}
+                                                            {a.balance.toFixed(
+                                                                2,
+                                                            )}
+                                                            )
                                                         </SelectItem>
                                                     ))}
                                             </SelectContent>
                                         </Select>
                                         {errors.to_account_id && (
-                                            <p className="text-sm text-red-500">{errors.to_account_id}</p>
+                                            <p className="text-sm text-red-500">
+                                                {errors.to_account_id}
+                                            </p>
                                         )}
                                     </div>
                                 </div>
@@ -724,32 +948,47 @@ export function TransactionFormModal({
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <div className="space-y-1">
                                         <Label>From Account *</Label>
-                                        <Select value={fromAccountId} onValueChange={setFromAccountId}>
+                                        <Select
+                                            value={fromAccountId}
+                                            onValueChange={setFromAccountId}
+                                        >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select account" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {accounts.map((a) => (
-                                                    <SelectItem key={a.id} value={a.id.toString()}>
-                                                        {a.name} ({a.currency} {a.balance.toFixed(2)})
+                                                    <SelectItem
+                                                        key={a.id}
+                                                        value={a.id.toString()}
+                                                    >
+                                                        {a.name} ({a.currency}{' '}
+                                                        {a.balance.toFixed(2)})
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
                                         {errors.from_account_id && (
-                                            <p className="text-sm text-red-500">{errors.from_account_id}</p>
+                                            <p className="text-sm text-red-500">
+                                                {errors.from_account_id}
+                                            </p>
                                         )}
                                     </div>
 
                                     <div className="space-y-1">
                                         <Label>Credit Card *</Label>
-                                        <Select value={toCardId} onValueChange={setToCardId}>
+                                        <Select
+                                            value={toCardId}
+                                            onValueChange={setToCardId}
+                                        >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select card" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {creditCards.map((c) => (
-                                                    <SelectItem key={c.id} value={c.id.toString()}>
+                                                    <SelectItem
+                                                        key={c.id}
+                                                        value={c.id.toString()}
+                                                    >
                                                         {c.card_holder_name}
                                                         {c.card_number
                                                             ? ` - •••• ${c.card_number.slice(-4)}`
@@ -759,7 +998,9 @@ export function TransactionFormModal({
                                             </SelectContent>
                                         </Select>
                                         {errors.to_card_id && (
-                                            <p className="text-sm text-red-500">{errors.to_card_id}</p>
+                                            <p className="text-sm text-red-500">
+                                                {errors.to_card_id}
+                                            </p>
                                         )}
                                     </div>
                                 </div>
@@ -771,7 +1012,9 @@ export function TransactionFormModal({
                                 <Textarea
                                     id="tfm-desc"
                                     value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
+                                    onChange={(e) =>
+                                        setDescription(e.target.value)
+                                    }
                                     placeholder="Optional notes…"
                                     rows={2}
                                 />
@@ -790,15 +1033,15 @@ export function TransactionFormModal({
                                 <Button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+                                    className="bg-emerald-500 text-white hover:bg-emerald-600"
                                 >
                                     {isSubmitting
                                         ? isEditMode
                                             ? 'Saving…'
                                             : 'Creating…'
                                         : isEditMode
-                                            ? 'Save Changes'
-                                            : 'Create Transaction'}
+                                          ? 'Save Changes'
+                                          : 'Create Transaction'}
                                 </Button>
                             </div>
                         </form>
@@ -811,6 +1054,7 @@ export function TransactionFormModal({
                 open={showCreateCategory}
                 onOpenChange={setShowCreateCategory}
                 defaultType={type === 'income' ? 'income' : 'expense'}
+                lockType={true}
                 existingCategories={categories}
                 onCreated={(cat) => {
                     setCategories((prev) => [...prev, cat]);

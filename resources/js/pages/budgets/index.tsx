@@ -58,28 +58,28 @@ const healthBgColors: Record<string, string> = {
     exceeded: 'bg-red-100 dark:bg-red-900/50',
 };
 
-export default function BudgetsIndex({
-    budgets: initialBudgets,
-    stats: initialStats,
-}: {
-    budgets: { data: Budget[] };
-    stats: BudgetStats;
-}) {
-    const [budgets, setBudgets] = useState<Budget[]>(initialBudgets.data);
-    const [stats, setStats] = useState<BudgetStats | null>(initialStats);
-    const [isLoading, setIsLoading] = useState(false);
+export default function BudgetsIndex() {
+    const [budgets, setBudgets] = useState<Budget[]>([]);
+    const [stats, setStats] = useState<BudgetStats | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        setBudgets(initialBudgets.data);
-        setStats(initialStats);
-    }, [initialBudgets, initialStats]);
+        fetchData();
+    }, []);
 
     const fetchData = async () => {
-        // ... (Keep existing fetch logic but maybe optimize it or remove if we trust router reload)
-        // For simplicity, we can keep using router.reload({ only: ['budgets', 'stats'] })
-        // instead of manual fetch if we want to be fully Inertia.
-        // But for actions like "Toggle", we might want to refresh.
-        router.reload({ only: ['budgets', 'stats'] });
+        try {
+            const [budgetsRes, statsRes] = await Promise.all([
+                api.get('/budgets'),
+                api.get('/budgets/stats'),
+            ]);
+            setBudgets(budgetsRes?.data?.data || []);
+            setStats(statsRes?.data || null);
+        } catch (error) {
+            console.error('Failed to fetch budgets:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleToggle = async (budget: Budget) => {
@@ -91,7 +91,7 @@ export default function BudgetsIndex({
                     description: `${budget.name} has been ${budget.is_active ? 'paused' : 'resumed'}.`,
                 },
             );
-            fetchData();
+            await fetchData();
         } catch (error) {
             console.error('Failed to toggle budget:', error);
             toast.error('Failed to update budget');
@@ -104,7 +104,7 @@ export default function BudgetsIndex({
             toast.success('Budget refreshed!', {
                 description: `Spending for ${budget.name} has been recalculated.`,
             });
-            fetchData();
+            await fetchData();
         } catch (error) {
             console.error('Failed to refresh budget:', error);
             toast.error('Failed to refresh budget');
@@ -125,7 +125,7 @@ export default function BudgetsIndex({
             toast.success('Budget deleted!', {
                 description: `${budget.name} has been removed.`,
             });
-            fetchData();
+            await fetchData();
         } catch (error) {
             console.error('Failed to delete budget:', error);
             toast.error('Failed to delete budget');
@@ -335,9 +335,8 @@ function BudgetCard({
 
     return (
         <Card
-            className={`group hover-lift overflow-hidden transition-all duration-200 hover:shadow-md ${
-                !budget.is_active ? 'opacity-60' : ''
-            }`}
+            className={`group hover-lift overflow-hidden transition-all duration-200 hover:shadow-md ${!budget.is_active ? 'opacity-60' : ''
+                }`}
         >
             <CardContent className="p-4">
                 <div className="flex items-start justify-between">

@@ -1,9 +1,9 @@
 import { StatsCard } from '@/components/finance/stats-card';
 import { PieChartCard } from '@/components/statistics/charts/pie-chart-card';
+import type { StatisticsFilters } from '@/hooks/use-statistics-filters';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import type { BankAccount } from '@/types/finance';
-import type { StatisticsFilters } from '@/hooks/use-statistics-filters';
 import { DollarSign, Wallet } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -12,7 +12,7 @@ interface AccountsTabProps {
     apiFilters: Record<string, unknown>;
 }
 
-export function AccountsTab({ filters, apiFilters }: AccountsTabProps) {
+export function AccountsTab({ apiFilters }: AccountsTabProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [accounts, setAccounts] = useState<BankAccount[]>([]);
     const [totalBalance, setTotalBalance] = useState(0);

@@ -24,8 +24,16 @@ class MarkRecurringIncomeReceivedRequest extends FormRequest
         return [
             'amount' => ['sometimes', 'numeric', 'min:0'],
             'date' => ['sometimes', 'date'],
-            'save_deductions' => ['sometimes', 'boolean'],
-            'deductions' => ['sometimes', 'array'],
+            'additions' => ['nullable', 'array'],
+            'additions.*.name' => ['required', 'string', 'max:255'],
+            'additions.*.type' => ['nullable', 'string', 'in:fixed,percentage'],
+            'additions.*.value' => ['required', 'numeric', 'min:0'],
+            'additions.*.amount' => ['nullable', 'numeric', 'min:0'],
+            'deductions' => ['nullable', 'array'],
+            'deductions.*.name' => ['required', 'string', 'max:255'],
+            'deductions.*.type' => ['nullable', 'string', 'in:fixed,percentage'],
+            'deductions.*.value' => ['required', 'numeric', 'min:0'],
+            'deductions.*.amount' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

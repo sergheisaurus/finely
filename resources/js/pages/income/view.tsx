@@ -141,6 +141,24 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
         );
     }
 
+    const gross = Number(income.amount) || 0;
+    const computedAdditions = (income.additions || []).map((a) => {
+        const calcAmount = a.type === 'percentage' ? gross * ((Number(a.value || a.amount) || 0) / 100) : (Number(a.value || a.amount) || 0);
+        const hasOverride = a.type === 'percentage' && a.amount !== undefined && Math.abs(a.amount - calcAmount) > 0.001;
+        return { calcAmount, finalAmount: hasOverride ? a.amount : calcAmount, isOverridden: hasOverride };
+    });
+    const totalAdditions = computedAdditions.reduce((sum, val) => sum + val.finalAmount, 0);
+
+    const grossPlusAdditions = gross + totalAdditions;
+
+    const computedDeductions = (income.deductions || []).map((d) => {
+        const calcAmount = d.type === 'percentage' ? grossPlusAdditions * ((Number(d.value || d.amount) || 0) / 100) : (Number(d.value || d.amount) || 0);
+        const hasOverride = d.type === 'percentage' && d.amount !== undefined && Math.abs(d.amount - calcAmount) > 0.001;
+        return { calcAmount, finalAmount: hasOverride ? d.amount : calcAmount, isOverridden: hasOverride };
+    });
+    const totalDeductions = computedDeductions.reduce((sum, val) => sum + val.finalAmount, 0);
+    const netAmount = gross + totalAdditions - totalDeductions;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={income.name} />
@@ -245,8 +263,8 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
 
                     <Card>
                         <CardContent className="p-6">
-                            <p className="text-sm text-muted-foreground">
-                                Monthly Income
+                            <p className="text-sm text-muted-foreground flex items-center justify-between">
+                                Monthly Income <span className="text-[10px] uppercase font-bold bg-muted px-1.5 py-0.5 rounded text-foreground">Net</span>
                             </p>
                             <p className="mt-1 text-2xl font-bold text-green-600">
                                 +
@@ -260,8 +278,8 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
 
                     <Card>
                         <CardContent className="p-6">
-                            <p className="text-sm text-muted-foreground">
-                                Yearly Income
+                            <p className="text-sm text-muted-foreground flex items-center justify-between">
+                                Yearly Income <span className="text-[10px] uppercase font-bold bg-muted px-1.5 py-0.5 rounded text-foreground">Net</span>
                             </p>
                             <p className="mt-1 text-2xl font-bold text-green-600">
                                 +
@@ -368,6 +386,97 @@ export default function IncomeView({ incomeId }: { incomeId: string }) {
                                     <div className="flex items-center gap-2">
                                         <Wallet className="h-4 w-4" />
                                         <span>{income.to_account.name}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {((income.additions && income.additions.length > 0) || (income.deductions && income.deductions.length > 0)) && (
+                                <div className="border border-border/50 rounded-lg mt-6 overflow-x-auto">
+                                    <div className="min-w-[500px]">
+                                        <div className="grid grid-cols-[1fr_120px_130px_20px] gap-2 bg-muted/60 p-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b">
+                                            <div>Description</div>
+                                            <div className="text-right">Rate / Basis</div>
+                                            <div className="text-right">Amount</div>
+                                            <div></div>
+                                        </div>
+                                        <div className="p-3">
+                                            <div className="grid grid-cols-[1fr_120px_130px_20px] gap-2 items-center text-sm py-1.5">
+                                                <div className="font-medium">Salaire de base</div>
+                                                <div className="text-right text-muted-foreground">-</div>
+                                                <div className="text-right font-medium">{formatCurrency(gross, income.currency)}</div>
+                                                <div></div>
+                                            </div>
+
+                                            {income.additions && income.additions.length > 0 && (
+                                                <div className="mt-3">
+                                                    <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">Allocations / Prestations</div>
+                                                    {income.additions.map((adj, i) => {
+                                                        const { calcAmount, finalAmount, isOverridden } = computedAdditions[i];
+                                                        return (
+                                                            <div key={`add-${i}`} className="grid grid-cols-[1fr_120px_130px_20px] gap-2 items-center text-sm py-1">
+                                                                <div>{adj.name}</div>
+                                                                <div className="text-right text-muted-foreground text-xs">
+                                                                    {adj.type === 'percentage' ? `${adj.value || adj.amount}%` : '-'}
+                                                                </div>
+                                                                <div className="flex flex-col items-end pr-1 justify-center relative">
+                                                                    <div className="text-right text-green-600 font-medium">
+                                                                        +{formatCurrency(finalAmount, income.currency)}
+                                                                    </div>
+                                                                    {isOverridden && (
+                                                                        <span className="text-[10px] text-muted-foreground whitespace-nowrap -mt-1">
+                                                                            Calc: {calcAmount.toFixed(2)}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div></div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            <div className="my-3 border-y border-border py-2 grid grid-cols-[1fr_120px_130px_20px] gap-2 items-center text-sm font-bold bg-muted/30 -mx-3 px-3">
+                                                <div>Salaire Brut (Gross)</div>
+                                                <div className="text-right text-muted-foreground">-</div>
+                                                <div className="text-right text-green-600 pr-1">{formatCurrency(gross + totalAdditions, income.currency)}</div>
+                                                <div></div>
+                                            </div>
+
+                                            {income.deductions && income.deductions.length > 0 && (
+                                                <div className="mt-3">
+                                                    <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">Cotisations Sociales / Impôts</div>
+                                                    {income.deductions.map((adj, i) => {
+                                                        const { calcAmount, finalAmount, isOverridden } = computedDeductions[i];
+                                                        return (
+                                                            <div key={`ded-${i}`} className="grid grid-cols-[1fr_120px_130px_20px] gap-2 items-center text-sm py-1">
+                                                                <div>{adj.name}</div>
+                                                                <div className="text-right text-muted-foreground text-xs">
+                                                                    {adj.type === 'percentage' ? `${adj.value || adj.amount}%` : '-'}
+                                                                </div>
+                                                                <div className="flex flex-col items-end pr-1 justify-center relative">
+                                                                    <div className="text-right text-red-600 font-medium">
+                                                                        -{formatCurrency(finalAmount, income.currency)}
+                                                                    </div>
+                                                                    {isOverridden && (
+                                                                        <span className="text-[10px] text-muted-foreground whitespace-nowrap -mt-1">
+                                                                            Calc: {calcAmount.toFixed(2)}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div></div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            <div className="mt-4 border-t-[3px] border-border pt-3 grid grid-cols-[1fr_120px_130px_20px] gap-2 items-center text-base font-bold">
+                                                <div>Salaire Net Estimé</div>
+                                                <div className="text-right text-muted-foreground">-</div>
+                                                <div className="text-right pr-1">{formatCurrency(netAmount, income.currency)}</div>
+                                                <div></div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             )}

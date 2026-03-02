@@ -1,10 +1,10 @@
 import { StatsCard } from '@/components/finance/stats-card';
 import { BarChartCard } from '@/components/statistics/charts/bar-chart-card';
 import { PieChartCard } from '@/components/statistics/charts/pie-chart-card';
+import type { StatisticsFilters } from '@/hooks/use-statistics-filters';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import type { Subscription, SubscriptionStats } from '@/types/finance';
-import type { StatisticsFilters } from '@/hooks/use-statistics-filters';
 import { CalendarClock, DollarSign, Hash } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -13,7 +13,7 @@ interface SubscriptionsTabProps {
     apiFilters: Record<string, unknown>;
 }
 
-export function SubscriptionsTab({ filters, apiFilters }: SubscriptionsTabProps) {
+export function SubscriptionsTab({ apiFilters }: SubscriptionsTabProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [stats, setStats] = useState<SubscriptionStats | null>(null);

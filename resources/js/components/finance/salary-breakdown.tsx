@@ -1,6 +1,6 @@
 import { formatCurrency } from '@/lib/format';
 import type { SalaryBreakdownMetadata } from '@/types/finance';
-import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
+import { ArrowDown, ArrowUp, Minus, Plus } from 'lucide-react';
 
 interface SalaryBreakdownProps {
     breakdown: SalaryBreakdownMetadata;
@@ -21,16 +21,52 @@ export function SalaryBreakdown({ breakdown, currency }: SalaryBreakdownProps) {
                 </span>
             </div>
 
-            {/* Deductions */}
-            {breakdown.deductions.map((deduction, index) => (
+            {/* Additions */}
+            {breakdown.additions?.map((addition, index) => (
                 <div
-                    key={index}
+                    key={`add-${index}`}
+                    className="flex items-center justify-between rounded-lg border border-dashed px-3 py-2"
+                >
+                    <div className="flex items-center gap-2">
+                        <Plus className="h-3 w-3 text-emerald-500" />
+                        <span className="text-sm text-muted-foreground flex gap-1">
+                            {addition.name}
+                            {addition.type === 'percentage' && (
+                                <span className="text-xs text-muted-foreground/50">({addition.value}%)</span>
+                            )}
+                        </span>
+                    </div>
+                    <span className="text-sm font-medium text-emerald-500">
+                        +{formatCurrency(addition.amount, currency)}
+                    </span>
+                </div>
+            ))}
+
+            {/* Total Additions */}
+            {(breakdown.additions?.length ?? 0) > 0 && (
+                <div className="flex items-center justify-between border-t pt-2 border-emerald-500/10">
+                    <span className="text-sm font-medium text-muted-foreground">
+                        Total Additions
+                    </span>
+                    <span className="text-sm font-semibold text-emerald-500">
+                        +{formatCurrency(breakdown.total_additions || 0, currency)}
+                    </span>
+                </div>
+            )}
+
+            {/* Deductions */}
+            {breakdown.deductions?.map((deduction, index) => (
+                <div
+                    key={`ded-${index}`}
                     className="flex items-center justify-between rounded-lg border border-dashed px-3 py-2"
                 >
                     <div className="flex items-center gap-2">
                         <Minus className="h-3 w-3 text-red-500" />
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-sm text-muted-foreground flex gap-1">
                             {deduction.name}
+                            {deduction.type === 'percentage' && (
+                                <span className="text-xs text-muted-foreground/50">({deduction.value}%)</span>
+                            )}
                         </span>
                     </div>
                     <span className="text-sm font-medium text-red-500">
@@ -40,8 +76,8 @@ export function SalaryBreakdown({ breakdown, currency }: SalaryBreakdownProps) {
             ))}
 
             {/* Total Deductions */}
-            {breakdown.deductions.length > 0 && (
-                <div className="flex items-center justify-between border-t pt-2">
+            {(breakdown.deductions?.length ?? 0) > 0 && (
+                <div className="flex items-center justify-between border-t pt-2 border-red-500/10">
                     <span className="text-sm font-medium text-muted-foreground">
                         Total Deductions
                     </span>

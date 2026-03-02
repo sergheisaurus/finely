@@ -15,17 +15,29 @@ import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
+    SelectGroup,
     SelectItem,
+    SelectLabel,
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { Switch } from '@/components/ui/switch';
 import type { Category } from '@/types/finance';
-import { Tag } from 'lucide-react';
-import { useState } from 'react';
+import { Folder } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+
+type CategoryPayload = {
+    name: string;
+    type: 'income' | 'expense';
+    color: string;
+    icon: string;
+    is_secret: boolean;
+    parent_id: number | null;
+    cover_category_id: number | null;
+};
 
 const PRESET_COLORS = [
     '#ef4444', // red
@@ -48,91 +60,119 @@ const PRESET_COLORS = [
     '#64748b', // slate
 ];
 
-interface CreateCategoryDialogProps {
+interface CategoryFormModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     categories: Category[];
+    category?: Category | null;
     type?: 'income' | 'expense';
-    onCategoryCreated: (category: Category) => void;
+    onSuccess: () => void;
     trigger?: React.ReactNode;
 }
 
-export function CreateCategoryDialog({
+export function CategoryFormModal({
     open,
     onOpenChange,
     categories,
+    category,
     type,
-    onCategoryCreated,
+    onSuccess,
     trigger,
-}: CreateCategoryDialogProps) {
-    const [isCreating, setIsCreating] = useState(false);
+}: CategoryFormModalProps) {
+    const isEdit = !!category;
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Initialize state properly based on whether we are editing or creating
     const [newName, setNewName] = useState('');
     const [newParentId, setNewParentId] = useState<string>('none');
-    const [newColor, setNewColor] = useState(PRESET_COLORS[10]); // Default blue
-    const [newIcon, setNewIcon] = useState('Tag');
+    const [newColor, setNewColor] = useState(PRESET_COLORS[10]);
+    const [newIcon, setNewIcon] = useState('Receipt');
     const [selectedType, setSelectedType] = useState<'income' | 'expense'>(
-        type || 'expense',
+        'expense',
     );
     const [isSecret, setIsSecret] = useState(false);
     const [coverCategoryId, setCoverCategoryId] = useState<string>('none');
+
+    // Reset form when modal opens or category changes
+    useEffect(() => {
+        if (open) {
+            setNewName(category?.name || '');
+            setNewParentId(
+                category?.parent_id ? category.parent_id.toString() : 'none',
+            );
+            setNewColor(category?.color || PRESET_COLORS[10]);
+            setNewIcon(category?.icon || 'Receipt');
+            setSelectedType(category?.type || type || 'expense');
+            setIsSecret(category?.is_secret || false);
+            setCoverCategoryId(
+                category?.cover_category_id
+                    ? category.cover_category_id.toString()
+                    : 'none',
+            );
+        }
+    }, [open, category, type]);
 
     // If type is provided via props, use it. Otherwise, allow selection (or default)
     // Actually, usually we might want to let user choose type if not enforced
     // But for now, let's stick to the current logic: if type prop is passed, it filters potential parents
 
-    // Calculate potential parents based on the *current* selected type (or forced type)
+    // Calculate potential parents based on the *current* selected type (or forced type).
+    // Do not allow a category to be its own parent.
     const activeType = type || selectedType;
 
     const potentialParents = categories
         .filter((c) => c.type === activeType)
-        .filter((c) => !c.parent_id);
+        .filter((c) => !c.parent_id)
+        .filter((c) => !isEdit || c.id !== category.id);
 
     const potentialCovers = categories.filter(
-        (c) => c.type === activeType && !c.is_secret,
+        (c) =>
+            c.type === activeType &&
+            !c.is_secret &&
+            (!isEdit || c.id !== category.id),
     );
 
-    const handleCreate = async () => {
+    const topLevelCovers = potentialCovers.filter((c) => !c.parent_id);
+    const subcategoryCovers = potentialCovers.filter((c) => c.parent_id);
+
+    const handleSave = async () => {
         if (!newName) return;
 
-        setIsCreating(true);
+        setIsSaving(true);
         try {
-            const payload: any = {
+            const payload: CategoryPayload = {
                 name: newName,
                 type: activeType,
                 color: newColor,
                 icon: newIcon,
                 is_secret: isSecret,
+                parent_id:
+                    newParentId !== 'none' ? parseInt(newParentId) : null,
+                cover_category_id:
+                    isSecret && coverCategoryId !== 'none'
+                        ? parseInt(coverCategoryId)
+                        : null,
             };
 
-            if (newParentId !== 'none') {
-                payload.parent_id = parseInt(newParentId);
-            }
-            if (isSecret && coverCategoryId !== 'none') {
-                payload.cover_category_id = parseInt(coverCategoryId);
+            if (isEdit) {
+                await api.patch(`/categories/${category.id}`, payload);
+                toast.success('Category updated');
+            } else {
+                await api.post('/categories', payload);
+                toast.success('Category created');
             }
 
-            const response = await api.post('/categories', payload);
-            const newCategory = response.data.data;
-
-            toast.success('Category created');
             onOpenChange(false);
-
-            // Reset form
-            setNewName('');
-            setNewParentId('none');
-            setNewColor(PRESET_COLORS[10]);
-            setNewIcon('Tag');
-            setIsSecret(false);
-            setCoverCategoryId('none');
-
-            // If we are not enforcing type, maybe reset it? Nah.
-
-            onCategoryCreated(newCategory);
+            onSuccess();
         } catch (error) {
             console.error(error);
-            toast.error('Failed to create category');
+            toast.error(
+                isEdit
+                    ? 'Failed to update category'
+                    : 'Failed to create category',
+            );
         } finally {
-            setIsCreating(false);
+            setIsSaving(false);
         }
     };
 
@@ -141,9 +181,13 @@ export function CreateCategoryDialog({
             {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Create New Category</DialogTitle>
+                    <DialogTitle>
+                        {isEdit ? 'Edit Category' : 'Create New Category'}
+                    </DialogTitle>
                     <DialogDescription>
-                        Define a new category to organize your finances.
+                        {isEdit
+                            ? 'Update the details for this category.'
+                            : 'Define a new category to organize your finances.'}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-6 py-4">
@@ -206,7 +250,14 @@ export function CreateCategoryDialog({
                                                 key={cat.id}
                                                 value={cat.id.toString()}
                                             >
-                                                {cat.name}
+                                                <div className="flex items-center gap-2">
+                                                    <DynamicIcon
+                                                        name={cat.icon}
+                                                        fallback={Folder}
+                                                        className="h-4 w-4 text-muted-foreground"
+                                                    />
+                                                    <span>{cat.name}</span>
+                                                </div>
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
@@ -220,26 +271,30 @@ export function CreateCategoryDialog({
                                             🔒 Secret Category
                                         </Label>
                                         <p className="text-xs text-muted-foreground">
-                                            Hide this category and its transactions
+                                            Hide this category and its
+                                            transactions
                                         </p>
                                     </div>
                                     <Switch
                                         checked={isSecret}
                                         onCheckedChange={(checked) => {
                                             setIsSecret(checked);
-                                            if (!checked) setCoverCategoryId('none');
+                                            if (!checked)
+                                                setCoverCategoryId('none');
                                         }}
                                         className="data-[state=checked]:bg-fuchsia-500"
                                     />
                                 </div>
 
                                 {isSecret && (
-                                    <div className="space-y-2 pt-2 animate-in fade-in slide-in-from-top-2">
+                                    <div className="animate-in space-y-2 pt-2 fade-in slide-in-from-top-2">
                                         <Label className="text-fuchsia-500 dark:text-fuchsia-400">
                                             Cover Category (Optional)
                                         </Label>
-                                        <p className="text-xs text-muted-foreground mb-2">
-                                            When not in secret mode, this category will masquerade as the selected cover category.
+                                        <p className="mb-2 text-xs text-muted-foreground">
+                                            When not in secret mode, this
+                                            category will masquerade as the
+                                            selected cover category.
                                         </p>
                                         <Select
                                             value={coverCategoryId}
@@ -252,14 +307,71 @@ export function CreateCategoryDialog({
                                                 <SelectItem value="none">
                                                     No Cover (Hidden entirely)
                                                 </SelectItem>
-                                                {potentialCovers.map((cat) => (
-                                                    <SelectItem
-                                                        key={cat.id}
-                                                        value={cat.id.toString()}
-                                                    >
-                                                        {cat.icon} {cat.name}
-                                                    </SelectItem>
-                                                ))}
+                                                {topLevelCovers.length > 0 && (
+                                                    <SelectGroup>
+                                                        <SelectLabel>
+                                                            Main Categories
+                                                        </SelectLabel>
+                                                        {topLevelCovers.map(
+                                                            (cat) => (
+                                                                <SelectItem
+                                                                    key={cat.id}
+                                                                    value={cat.id.toString()}
+                                                                >
+                                                                    <div className="flex items-center gap-2">
+                                                                        <DynamicIcon
+                                                                            name={
+                                                                                cat.icon
+                                                                            }
+                                                                            fallback={
+                                                                                Folder
+                                                                            }
+                                                                            className="h-4 w-4 text-muted-foreground"
+                                                                        />
+                                                                        <span>
+                                                                            {
+                                                                                cat.name
+                                                                            }
+                                                                        </span>
+                                                                    </div>
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
+                                                    </SelectGroup>
+                                                )}
+                                                {subcategoryCovers.length >
+                                                    0 && (
+                                                    <SelectGroup>
+                                                        <SelectLabel>
+                                                            Subcategories
+                                                        </SelectLabel>
+                                                        {subcategoryCovers.map(
+                                                            (cat) => (
+                                                                <SelectItem
+                                                                    key={cat.id}
+                                                                    value={cat.id.toString()}
+                                                                >
+                                                                    <div className="flex items-center gap-2">
+                                                                        <DynamicIcon
+                                                                            name={
+                                                                                cat.icon
+                                                                            }
+                                                                            fallback={
+                                                                                Folder
+                                                                            }
+                                                                            className="h-4 w-4 text-muted-foreground"
+                                                                        />
+                                                                        <span>
+                                                                            {
+                                                                                cat.name
+                                                                            }
+                                                                        </span>
+                                                                    </div>
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
+                                                    </SelectGroup>
+                                                )}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -280,7 +392,7 @@ export function CreateCategoryDialog({
                                 >
                                     <DynamicIcon
                                         name={newIcon}
-                                        fallback={Tag}
+                                        fallback={Folder}
                                         className="h-3.5 w-3.5"
                                     />
                                     {newName || 'Category Preview'}
@@ -313,15 +425,19 @@ export function CreateCategoryDialog({
                     <Button
                         variant="outline"
                         onClick={() => onOpenChange(false)}
-                        disabled={isCreating}
+                        disabled={isSaving}
                     >
                         Cancel
                     </Button>
                     <Button
-                        onClick={handleCreate}
-                        disabled={isCreating || !newName}
+                        onClick={handleSave}
+                        disabled={isSaving || !newName}
                     >
-                        {isCreating ? 'Creating...' : 'Create Category'}
+                        {isSaving
+                            ? 'Saving...'
+                            : isEdit
+                              ? 'Save Changes'
+                              : 'Create Category'}
                     </Button>
                 </DialogFooter>
             </DialogContent>

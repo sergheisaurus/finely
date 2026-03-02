@@ -1,4 +1,3 @@
-import { IncomeReceivedDialog } from '@/components/finance/income-received-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DynamicIcon } from '@/components/ui/dynamic-icon';
@@ -6,11 +5,7 @@ import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import { type BreadcrumbItem } from '@/types';
-import type {
-    RecurringIncome,
-    RecurringIncomeStats,
-    SalaryDeductionRule,
-} from '@/types/finance';
+import type { RecurringIncome, RecurringIncomeStats } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -41,32 +36,28 @@ const frequencyLabels: Record<string, string> = {
     yearly: 'Yearly',
 };
 
-export default function IncomeIndex({
-    incomes: initialIncomes,
-    stats: initialStats,
-}: {
-    incomes: { data: RecurringIncome[] };
-    stats: RecurringIncomeStats;
-}) {
-    const [incomes, setIncomes] = useState<RecurringIncome[]>(
-        initialIncomes.data,
-    );
-    const [stats, setStats] = useState<RecurringIncomeStats | null>(
-        initialStats,
-    );
-    const [isLoading, setIsLoading] = useState(false);
-    const [isSubmittingReceived, setIsSubmittingReceived] = useState(false);
-    const [selectedIncome, setSelectedIncome] =
-        useState<RecurringIncome | null>(null);
-    const [receivedDialogOpen, setReceivedDialogOpen] = useState(false);
+export default function IncomeIndex() {
+    const [incomes, setIncomes] = useState<RecurringIncome[]>([]);
+    const [stats, setStats] = useState<RecurringIncomeStats | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        setIncomes(initialIncomes.data);
-        setStats(initialStats);
-    }, [initialIncomes, initialStats]);
+        fetchData();
+    }, []);
 
     const fetchData = async () => {
-        router.reload({ only: ['incomes', 'stats'] });
+        try {
+            const [incomesRes, statsRes] = await Promise.all([
+                api.get('/recurring-incomes'),
+                api.get('/recurring-incomes/stats'),
+            ]);
+            setIncomes(incomesRes?.data?.data || []);
+            setStats(statsRes?.data || null);
+        } catch (error) {
+            console.error('Failed to fetch incomes:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleToggle = async (income: RecurringIncome) => {
@@ -78,7 +69,7 @@ export default function IncomeIndex({
                     description: `${income.name} has been ${income.is_active ? 'paused' : 'resumed'}.`,
                 },
             );
-            fetchData();
+            await fetchData();
         } catch (error) {
             console.error('Failed to toggle income:', error);
             toast.error('Failed to update income');
@@ -86,71 +77,15 @@ export default function IncomeIndex({
     };
 
     const handleMarkReceived = async (income: RecurringIncome) => {
-        setSelectedIncome(income);
-        setReceivedDialogOpen(true);
-    };
-
-    const submitMarkReceived = async (payload: {
-        received_date: string;
-        amount: number;
-        gross_amount?: number;
-        deduction_rules?: SalaryDeductionRule[];
-        keep_as_default: boolean;
-    }) => {
-        if (!selectedIncome) return;
-
-        if (
-            selectedIncome.is_salary &&
-            !payload.keep_as_default &&
-            (payload.gross_amount !== undefined ||
-                (payload.deduction_rules?.length ?? 0) > 0)
-        ) {
-            const shouldKeep = window.confirm(
-                'Keep the updated salary breakdown for future income entries?',
-            );
-            payload.keep_as_default = shouldKeep;
-        }
-
         try {
-            setIsSubmittingReceived(true);
-            await api.post(
-                `/recurring-incomes/${selectedIncome.id}/mark-received`,
-                payload,
-            );
+            await api.post(`/recurring-incomes/${income.id}/mark-received`);
             toast.success('Income marked as received!', {
-                description: `${selectedIncome.name} has been recorded.`,
+                description: `${income.name} has been recorded.`,
             });
-            setReceivedDialogOpen(false);
-            setSelectedIncome(null);
-            fetchData();
+            await fetchData();
         } catch (error) {
             console.error('Failed to mark income as received:', error);
             toast.error('Failed to record income');
-        } finally {
-            setIsSubmittingReceived(false);
-        }
-    };
-
-    const handleRollbackReceived = async (income: RecurringIncome) => {
-        if (
-            !confirm(
-                `Roll back the last received payment for "${income.name}"?`,
-            )
-        ) {
-            return;
-        }
-
-        try {
-            await api.post(
-                `/recurring-incomes/${income.id}/rollback-last-received`,
-            );
-            toast.success('Last payment rolled back', {
-                description: `${income.name} has been moved back to pending.`,
-            });
-            fetchData();
-        } catch (error) {
-            console.error('Failed to roll back income:', error);
-            toast.error('Failed to roll back payment');
         }
     };
 
@@ -168,7 +103,7 @@ export default function IncomeIndex({
             toast.success('Income deleted!', {
                 description: `${income.name} has been removed.`,
             });
-            fetchData();
+            await fetchData();
         } catch (error) {
             console.error('Failed to delete income:', error);
             toast.error('Failed to delete income');
@@ -222,8 +157,8 @@ export default function IncomeIndex({
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium opacity-90">
-                                        Monthly Income
+                                    <p className="text-sm font-medium opacity-90 flex items-center gap-2">
+                                        Monthly Income <span className="text-[10px] uppercase font-bold bg-white/20 px-1.5 py-0.5 rounded">Net</span>
                                     </p>
                                     <p className="mt-2 text-2xl font-bold md:text-3xl">
                                         {formatCurrency(
@@ -241,8 +176,8 @@ export default function IncomeIndex({
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium opacity-90">
-                                        Yearly Income
+                                    <p className="text-sm font-medium opacity-90 flex items-center gap-2">
+                                        Yearly Income <span className="text-[10px] uppercase font-bold bg-white/20 px-1.5 py-0.5 rounded">Net</span>
                                     </p>
                                     <p className="mt-2 text-2xl font-bold md:text-3xl">
                                         {formatCurrency(
@@ -317,9 +252,6 @@ export default function IncomeIndex({
                                             income={income}
                                             onToggle={handleToggle}
                                             onMarkReceived={handleMarkReceived}
-                                            onRollbackReceived={
-                                                handleRollbackReceived
-                                            }
                                             onDelete={handleDelete}
                                         />
                                     ))}
@@ -339,9 +271,6 @@ export default function IncomeIndex({
                                             income={income}
                                             onToggle={handleToggle}
                                             onMarkReceived={handleMarkReceived}
-                                            onRollbackReceived={
-                                                handleRollbackReceived
-                                            }
                                             onDelete={handleDelete}
                                         />
                                     ))}
@@ -351,14 +280,6 @@ export default function IncomeIndex({
                     </>
                 )}
             </div>
-
-            <IncomeReceivedDialog
-                income={selectedIncome}
-                open={receivedDialogOpen}
-                submitting={isSubmittingReceived}
-                onOpenChange={setReceivedDialogOpen}
-                onSubmit={submitMarkReceived}
-            />
         </AppLayout>
     );
 }
@@ -367,20 +288,17 @@ function IncomeCard({
     income,
     onToggle,
     onMarkReceived,
-    onRollbackReceived,
     onDelete,
 }: {
     income: RecurringIncome;
     onToggle: (i: RecurringIncome) => void;
     onMarkReceived: (i: RecurringIncome) => void;
-    onRollbackReceived: (i: RecurringIncome) => void;
     onDelete: (i: RecurringIncome) => void;
 }) {
     return (
         <Card
-            className={`group hover-lift overflow-hidden transition-all duration-200 hover:shadow-md ${
-                !income.is_active ? 'opacity-60' : ''
-            }`}
+            className={`group hover-lift overflow-hidden transition-all duration-200 hover:shadow-md ${!income.is_active ? 'opacity-60' : ''
+                }`}
         >
             <CardContent className="p-4">
                 <div className="flex items-start justify-between">
@@ -422,26 +340,6 @@ function IncomeCard({
                 {income.source && (
                     <p className="mt-2 text-sm text-muted-foreground">
                         From: {income.source}
-                    </p>
-                )}
-
-                {income.is_salary && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                        Salary mode · Gross{' '}
-                        {income.gross_amount
-                            ? formatCurrency(
-                                  income.gross_amount,
-                                  income.currency,
-                              )
-                            : '-'}{' '}
-                        · Net {formatCurrency(income.amount, income.currency)} ·
-                        Deduction{' '}
-                        {income.deduction_percent_total?.toFixed(2) || '0.00'}%
-                        +{' '}
-                        {formatCurrency(
-                            income.deduction_fixed_total || 0,
-                            income.currency,
-                        )}
                     </p>
                 )}
 
@@ -493,16 +391,6 @@ function IncomeCard({
                             className="text-green-600"
                         >
                             <Check className="h-4 w-4" />
-                        </Button>
-                    )}
-                    {income.last_received_date && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onRollbackReceived(income)}
-                            title="Roll back last received"
-                        >
-                            <AlertCircle className="h-4 w-4 text-amber-600" />
                         </Button>
                     )}
                     <Button

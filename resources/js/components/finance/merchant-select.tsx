@@ -1,4 +1,3 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -15,27 +14,17 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import api from '@/lib/api';
 import { cn } from '@/lib/utils';
 import type { Merchant } from '@/types/finance';
-import {
-    Building2,
-    Check,
-    ChevronsUpDown,
-    Plus,
-    Search,
-    User,
-} from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Check, ChevronsUpDown, Plus, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+
+interface MerchantSelectSpecialOption {
+    value: string;
+    label: string;
+}
 
 interface MerchantSelectProps {
     value: string;
@@ -44,6 +33,10 @@ interface MerchantSelectProps {
     error?: string;
     placeholder?: string;
     onMerchantCreated?: (merchant: Merchant) => void;
+    allowCreate?: boolean;
+    specialOptions?: MerchantSelectSpecialOption[];
+    triggerClassName?: string;
+    disabled?: boolean;
 }
 
 export function MerchantSelect({
@@ -53,36 +46,56 @@ export function MerchantSelect({
     error,
     placeholder = 'Select merchant',
     onMerchantCreated,
+    allowCreate = true,
+    specialOptions,
+    triggerClassName,
+    disabled = false,
 }: MerchantSelectProps) {
     const [open, setOpen] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
+    const [name, setName] = useState('');
+    const [type, setType] = useState<'company' | 'person'>('company');
     const [searchQuery, setSearchQuery] = useState('');
+    const [locallyCreated, setLocallyCreated] = useState<Merchant[]>([]);
 
-    // New Merchant Form State
-    const [newName, setNewName] = useState('');
-    const [newType, setNewType] = useState<'company' | 'person'>('company');
+    useEffect(() => {
+        if (!open) {
+            setSearchQuery('');
+        }
+    }, [open]);
+
+    const allMerchants = useMemo(() => {
+        const byId = new Map<number, Merchant>();
+        for (const m of merchants) byId.set(m.id, m);
+        for (const m of locallyCreated) byId.set(m.id, m);
+        return Array.from(byId.values()).sort((a, b) =>
+            a.name.localeCompare(b.name),
+        );
+    }, [merchants, locallyCreated]);
+
+    const selectedSpecial = useMemo(() => {
+        return specialOptions?.find((o) => o.value === value);
+    }, [specialOptions, value]);
+
+    const selectedMerchant = useMemo(() => {
+        return allMerchants.find((m) => m.id.toString() === value) ?? null;
+    }, [allMerchants, value]);
 
     const filteredMerchants = useMemo(() => {
-        if (!searchQuery) return merchants;
-        return merchants.filter((m) =>
-            m.name.toLowerCase().includes(searchQuery.toLowerCase()),
-        );
-    }, [merchants, searchQuery]);
-
-    const selectedMerchant = useMemo(
-        () => merchants.find((m) => m.id.toString() === value),
-        [merchants, value],
-    );
+        const q = searchQuery.trim().toLowerCase();
+        if (!q) return allMerchants;
+        return allMerchants.filter((m) => m.name.toLowerCase().includes(q));
+    }, [allMerchants, searchQuery]);
 
     const handleCreate = async () => {
-        if (!newName) return;
+        if (!name) return;
 
         setIsCreating(true);
         try {
             const payload = {
-                name: newName,
-                type: newType,
+                name,
+                type,
             };
 
             const response = await api.post('/merchants', payload);
@@ -90,14 +103,19 @@ export function MerchantSelect({
 
             toast.success('Merchant created');
             setIsDialogOpen(false);
-            setNewName('');
-            setNewType('company');
+            setName('');
+            setType('company');
+
+            setLocallyCreated((prev) => {
+                const byId = new Map(prev.map((m) => [m.id, m]));
+                byId.set(newMerchant.id, newMerchant);
+                return Array.from(byId.values());
+            });
 
             if (onMerchantCreated) {
                 onMerchantCreated(newMerchant);
             }
             onValueChange(newMerchant.id.toString());
-            setOpen(false);
         } catch (error) {
             console.error(error);
             toast.error('Failed to create merchant');
@@ -112,44 +130,37 @@ export function MerchantSelect({
                 <Popover open={open} onOpenChange={setOpen}>
                     <PopoverTrigger asChild>
                         <Button
+                            type="button"
                             variant="outline"
                             role="combobox"
                             aria-expanded={open}
+                            disabled={disabled}
                             className={cn(
                                 'w-full justify-between px-3 font-normal',
                                 !value && 'text-muted-foreground',
                                 error && 'border-red-500',
+                                triggerClassName,
                             )}
+                            onPointerDown={(e) => e.stopPropagation()}
                         >
-                            {selectedMerchant ? (
-                                <div className="flex items-center gap-2 overflow-hidden">
-                                    <Avatar className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-slate-100 dark:bg-slate-800">
-                                        {selectedMerchant.image_url && (
-                                            <AvatarImage
-                                                src={selectedMerchant.image_url}
-                                                alt={selectedMerchant.name}
-                                            />
-                                        )}
-                                        <AvatarFallback className="rounded bg-slate-100 dark:bg-slate-800">
-                                            {selectedMerchant.type ===
-                                            'company' ? (
-                                                <Building2 className="h-3 w-3 text-slate-600 dark:text-slate-400" />
-                                            ) : (
-                                                <User className="h-3 w-3 text-slate-600 dark:text-slate-400" />
-                                            )}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <span className="truncate">
-                                        {selectedMerchant.name}
-                                    </span>
-                                </div>
+                            {selectedSpecial ? (
+                                <span className="truncate">
+                                    {selectedSpecial.label}
+                                </span>
+                            ) : selectedMerchant ? (
+                                <span className="truncate">
+                                    {selectedMerchant.name}
+                                </span>
                             ) : (
                                 placeholder
                             )}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full min-w-[var(--radix-popover-trigger-width)] p-0">
+                    <PopoverContent
+                        className="w-full min-w-[var(--radix-popover-trigger-width)] p-0"
+                        onPointerDown={(e) => e.stopPropagation()}
+                    >
                         <div className="flex items-center border-b px-3">
                             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                             <input
@@ -159,68 +170,98 @@ export function MerchantSelect({
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
-                        <ScrollArea className="h-[300px]">
+
+                        <div className="max-h-[300px] overflow-y-auto overscroll-contain [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent">
                             <div className="p-1">
-                                <Button
-                                    variant="ghost"
-                                    className="w-full justify-start font-medium text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-                                    onClick={() => {
-                                        setIsDialogOpen(true);
-                                    }}
-                                >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Create new merchant...
-                                </Button>
+                                {allowCreate && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        className="w-full justify-start font-medium text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400"
+                                        onClick={() => {
+                                            setIsDialogOpen(true);
+                                            setOpen(false);
+                                        }}
+                                    >
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Create new merchant...
+                                    </Button>
+                                )}
+
+                                {specialOptions &&
+                                    specialOptions.length > 0 && (
+                                        <div
+                                            className={cn(
+                                                allowCreate && 'mt-1 border-t',
+                                            )}
+                                        >
+                                            {specialOptions.map((opt) => (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    className={cn(
+                                                        'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
+                                                        value === opt.value &&
+                                                            'bg-accent text-accent-foreground',
+                                                    )}
+                                                    onClick={() => {
+                                                        onValueChange(
+                                                            opt.value,
+                                                        );
+                                                        setOpen(false);
+                                                    }}
+                                                >
+                                                    <span className="truncate">
+                                                        {opt.label}
+                                                    </span>
+                                                    {value === opt.value && (
+                                                        <Check className="ml-auto h-4 w-4 opacity-50" />
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+
                                 <div className="mt-1 space-y-1">
                                     {filteredMerchants.length === 0 && (
                                         <p className="py-6 text-center text-sm text-muted-foreground">
                                             No merchants found.
                                         </p>
                                     )}
-                                    {filteredMerchants.map((merchant) => (
+
+                                    {filteredMerchants.map((m) => (
                                         <button
-                                            key={merchant.id}
+                                            key={m.id}
+                                            type="button"
                                             className={cn(
                                                 'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground',
-                                                value ===
-                                                    merchant.id.toString() &&
+                                                value === m.id.toString() &&
                                                     'bg-accent text-accent-foreground',
                                             )}
                                             onClick={() => {
-                                                onValueChange(
-                                                    merchant.id.toString(),
-                                                );
+                                                onValueChange(m.id.toString());
                                                 setOpen(false);
                                             }}
                                         >
-                                            <Avatar className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-slate-100 dark:bg-slate-800">
-                                                {merchant.image_url && (
-                                                    <AvatarImage
-                                                        src={merchant.image_url}
-                                                        alt={merchant.name}
-                                                    />
-                                                )}
-                                                <AvatarFallback className="rounded bg-slate-100 dark:bg-slate-800">
-                                                    {merchant.type ===
-                                                    'company' ? (
-                                                        <Building2 className="h-3 w-3 text-slate-600 dark:text-slate-400" />
-                                                    ) : (
-                                                        <User className="h-3 w-3 text-slate-600 dark:text-slate-400" />
-                                                    )}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <span className="truncate">
-                                                {merchant.name}
-                                            </span>
-                                            {value ===
-                                                merchant.id.toString() && (
+                                            <div className="min-w-0 flex-1">
+                                                <div className="truncate font-medium">
+                                                    {m.name}
+                                                </div>
+                                                <div className="truncate text-xs text-muted-foreground">
+                                                    {m.type === 'person'
+                                                        ? 'Person'
+                                                        : 'Company'}
+                                                </div>
+                                            </div>
+
+                                            {value === m.id.toString() && (
                                                 <Check className="ml-auto h-4 w-4 opacity-50" />
                                             )}
                                         </button>
                                     ))}
                                 </div>
                             </div>
-                        </ScrollArea>
+                        </div>
                     </PopoverContent>
                 </Popover>
                 {error && <p className="text-sm text-red-500">{error}</p>}
@@ -231,8 +272,7 @@ export function MerchantSelect({
                     <DialogHeader>
                         <DialogTitle>Create New Merchant</DialogTitle>
                         <DialogDescription>
-                            Add a new store, company, or person to your
-                            contacts.
+                            Add a new merchant or person.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
@@ -240,54 +280,38 @@ export function MerchantSelect({
                             <Label htmlFor="merchant-name">Name</Label>
                             <Input
                                 id="merchant-name"
-                                value={newName}
-                                onChange={(e) => setNewName(e.target.value)}
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
                                 placeholder="e.g., Apple Store, John Doe"
                             />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="merchant-type">Type</Label>
-                            <Select
-                                value={newType}
-                                onValueChange={(val: 'company' | 'person') =>
-                                    setNewType(val)
-                                }
-                            >
-                                <SelectTrigger id="merchant-type">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="company">
-                                        <div className="flex items-center gap-2">
-                                            <Building2 className="h-4 w-4" />
-                                            Company / Store
-                                        </div>
-                                    </SelectItem>
-                                    <SelectItem value="person">
-                                        <div className="flex items-center gap-2">
-                                            <User className="h-4 w-4" />
-                                            Person
-                                        </div>
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="mt-4 flex flex-col items-center gap-2 rounded-lg border border-dashed p-6">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
-                                {newType === 'company' ? (
-                                    <Building2 className="h-6 w-6 text-slate-600 dark:text-slate-400" />
-                                ) : (
-                                    <User className="h-6 w-6 text-slate-600 dark:text-slate-400" />
-                                )}
-                            </div>
-                            <div className="text-center">
-                                <p className="font-semibold">
-                                    {newName || 'Merchant Name'}
-                                </p>
-                                <p className="text-xs text-muted-foreground capitalize">
-                                    {newType}
-                                </p>
+                            <div className="flex gap-2">
+                                <Button
+                                    type="button"
+                                    variant={
+                                        type === 'company'
+                                            ? 'secondary'
+                                            : 'outline'
+                                    }
+                                    className="flex-1"
+                                    onClick={() => setType('company')}
+                                >
+                                    Company
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={
+                                        type === 'person'
+                                            ? 'secondary'
+                                            : 'outline'
+                                    }
+                                    className="flex-1"
+                                    onClick={() => setType('person')}
+                                >
+                                    Person
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -301,7 +325,7 @@ export function MerchantSelect({
                         </Button>
                         <Button
                             onClick={handleCreate}
-                            disabled={isCreating || !newName}
+                            disabled={isCreating || !name}
                         >
                             {isCreating ? 'Creating...' : 'Create Merchant'}
                         </Button>

@@ -7,6 +7,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { DynamicIcon } from '@/components/ui/dynamic-icon';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -18,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import api from '@/lib/api';
 import type { Category } from '@/types/finance';
+import { Folder } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -26,6 +28,8 @@ interface QuickCreateCategoryModalProps {
     onOpenChange: (open: boolean) => void;
     /** Pre-fill the type (income/expense) from the transaction context */
     defaultType?: 'income' | 'expense';
+    /** When true, the type selector is hidden/locked */
+    lockType?: boolean;
     /** All existing categories - used to populate the parent dropdown */
     existingCategories: Category[];
     onCreated: (category: Category) => void;
@@ -35,6 +39,7 @@ export function QuickCreateCategoryModal({
     open,
     onOpenChange,
     defaultType = 'expense',
+    lockType = false,
     existingCategories,
     onCreated,
 }: QuickCreateCategoryModalProps) {
@@ -83,7 +88,9 @@ export function QuickCreateCategoryModal({
             reset();
             onOpenChange(false);
         } catch (err: unknown) {
-            const e = err as { response?: { data?: { errors?: Record<string, string> } } };
+            const e = err as {
+                response?: { data?: { errors?: Record<string, string> } };
+            };
             if (e.response?.data?.errors) {
                 setErrors(e.response.data.errors);
             } else {
@@ -119,22 +126,45 @@ export function QuickCreateCategoryModal({
                             required
                             autoFocus
                         />
-                        {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+                        {errors.name && (
+                            <p className="text-sm text-red-500">
+                                {errors.name}
+                            </p>
+                        )}
                     </div>
 
                     {/* Type */}
-                    <div className="space-y-1">
-                        <Label htmlFor="cat-type">Type *</Label>
-                        <Select value={type} onValueChange={(v: 'income' | 'expense') => { setType(v); setParentId(''); }}>
-                            <SelectTrigger id="cat-type">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="expense">Expense</SelectItem>
-                                <SelectItem value="income">Income</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    {lockType ? (
+                        <div className="space-y-1">
+                            <Label>Type</Label>
+                            <div className="flex h-9 items-center rounded-md border bg-muted px-3 text-sm">
+                                {type === 'income' ? 'Income' : 'Expense'}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-1">
+                            <Label htmlFor="cat-type">Type *</Label>
+                            <Select
+                                value={type}
+                                onValueChange={(v: 'income' | 'expense') => {
+                                    setType(v);
+                                    setParentId('');
+                                }}
+                            >
+                                <SelectTrigger id="cat-type">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="expense">
+                                        Expense
+                                    </SelectItem>
+                                    <SelectItem value="income">
+                                        Income
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
 
                     {/* Is Parent */}
                     <div className="flex items-center gap-2">
@@ -146,7 +176,10 @@ export function QuickCreateCategoryModal({
                                 if (v) setParentId('');
                             }}
                         />
-                        <Label htmlFor="cat-is-parent" className="cursor-pointer">
+                        <Label
+                            htmlFor="cat-is-parent"
+                            className="cursor-pointer"
+                        >
                             Main category (no parent)
                         </Label>
                     </div>
@@ -155,19 +188,46 @@ export function QuickCreateCategoryModal({
                     {!isParent && (
                         <div className="space-y-1">
                             <Label htmlFor="cat-parent">Parent Category</Label>
-                            <Select value={parentId} onValueChange={setParentId}>
+                            <Select
+                                value={parentId}
+                                onValueChange={setParentId}
+                            >
                                 <SelectTrigger id="cat-parent">
                                     <SelectValue placeholder="Select parent…" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {parentCategories.map((c) => (
-                                        <SelectItem key={c.id} value={c.id.toString()}>
-                                            {c.icon} {c.name}
+                                        <SelectItem
+                                            key={c.id}
+                                            value={c.id.toString()}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <div
+                                                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded"
+                                                    style={{
+                                                        backgroundColor:
+                                                            c.color,
+                                                    }}
+                                                >
+                                                    <DynamicIcon
+                                                        name={c.icon}
+                                                        fallback={Folder}
+                                                        className="h-3 w-3 text-white"
+                                                    />
+                                                </div>
+                                                <span className="truncate">
+                                                    {c.name}
+                                                </span>
+                                            </div>
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
-                            {errors.parent_id && <p className="text-sm text-red-500">{errors.parent_id}</p>}
+                            {errors.parent_id && (
+                                <p className="text-sm text-red-500">
+                                    {errors.parent_id}
+                                </p>
+                            )}
                         </div>
                     )}
 
@@ -182,7 +242,9 @@ export function QuickCreateCategoryModal({
                                 onChange={(e) => setColor(e.target.value)}
                                 className="h-9 w-14 cursor-pointer rounded border border-input bg-background"
                             />
-                            <span className="text-sm text-muted-foreground">{color}</span>
+                            <span className="text-sm text-muted-foreground">
+                                {color}
+                            </span>
                         </div>
                     </div>
 
@@ -202,12 +264,18 @@ export function QuickCreateCategoryModal({
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => { reset(); onOpenChange(false); }}
+                            onClick={() => {
+                                reset();
+                                onOpenChange(false);
+                            }}
                             disabled={isSubmitting}
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={isSubmitting || !name.trim()}>
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting || !name.trim()}
+                        >
                             {isSubmitting ? 'Creating…' : 'Create Category'}
                         </Button>
                     </DialogFooter>

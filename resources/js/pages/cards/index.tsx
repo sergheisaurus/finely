@@ -8,7 +8,7 @@ import { type BreadcrumbItem } from '@/types';
 import type { Card as CardType } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import { CreditCard, Plus, Star } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -18,23 +18,30 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function CardsIndex({
-    cards: initialCards,
-}: {
-    cards: { data: CardType[] };
-}) {
-    const [userCards, setUserCards] = useState<CardType[]>(initialCards.data);
-    const [isLoading, setIsLoading] = useState(false);
+export default function CardsIndex() {
+    const [userCards, setUserCards] = useState<CardType[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchCards = useCallback(async () => {
+        try {
+            const response = await api.get('/cards');
+            setUserCards(response?.data?.data || []);
+        } catch (error) {
+            console.error('Failed to fetch cards:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        setUserCards(initialCards.data);
-    }, [initialCards]);
+        fetchCards();
+    }, [fetchCards]);
 
     const handleSetDefault = async (cardId: number) => {
         try {
             const card = userCards.find((c) => c.id === cardId);
             await api.post(`/cards/${cardId}/set-default`);
-            router.reload({ only: ['cards'] });
+            await fetchCards();
             toast.success('Default card updated!', {
                 description: `${card?.card_holder_name} ${card?.card_number ? `ending in ${card.card_number.slice(-4)}` : ''} is now your default card.`,
             });

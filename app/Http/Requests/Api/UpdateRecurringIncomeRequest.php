@@ -39,6 +39,16 @@ class UpdateRecurringIncomeRequest extends FormRequest
             'reminder_days_before' => ['integer', 'min:0', 'max:30'],
             'color' => ['nullable', 'string', 'max:7'],
             'icon' => ['nullable', 'string', 'max:50'],
+            'additions' => ['nullable', 'array'],
+            'additions.*.name' => ['required', 'string', 'max:255'],
+            'additions.*.type' => ['nullable', 'string', 'in:fixed,percentage'],
+            'additions.*.value' => ['required', 'numeric', 'min:0'],
+            'additions.*.amount' => ['nullable', 'numeric', 'min:0'],
+            'deductions' => ['nullable', 'array'],
+            'deductions.*.name' => ['required', 'string', 'max:255'],
+            'deductions.*.type' => ['nullable', 'string', 'in:fixed,percentage'],
+            'deductions.*.value' => ['required', 'numeric', 'min:0'],
+            'deductions.*.amount' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

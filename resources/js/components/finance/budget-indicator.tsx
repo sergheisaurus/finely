@@ -149,14 +149,14 @@ export function BudgetIndicator({
             className={cn(
                 'rounded-lg border p-3 transition-colors',
                 impact?.will_be_over_budget &&
-                    'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30',
+                'border-red-500/30 bg-red-500/5',
                 !impact?.will_be_over_budget &&
-                    budget.is_over_budget &&
-                    'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30',
+                budget.is_over_budget &&
+                'border-red-500/30 bg-red-500/5',
                 !impact?.will_be_over_budget &&
-                    !budget.is_over_budget &&
-                    budget.budget_health === 'warning' &&
-                    'border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-950/30',
+                !budget.is_over_budget &&
+                budget.budget_health === 'warning' &&
+                'border-yellow-500/30 bg-yellow-500/5',
                 className,
             )}
         >
@@ -174,7 +174,7 @@ export function BudgetIndicator({
             </div>
 
             {/* Progress bar showing current + projected */}
-            <div className="mb-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+            <div className="mb-2 h-2 overflow-hidden rounded-full bg-slate-800">
                 {/* Show projected spending as lighter color if it differs */}
                 {impact &&
                     impact.projected_percentage > budget.spent_percentage && (
@@ -190,9 +190,9 @@ export function BudgetIndicator({
                     className={cn(
                         '-mt-2 h-full transition-all duration-300',
                         impact &&
-                            impact.projected_percentage >
-                                budget.spent_percentage &&
-                            '-mt-2',
+                        impact.projected_percentage >
+                        budget.spent_percentage &&
+                        '-mt-2',
                         getHealthColor(),
                     )}
                     style={{ width: `${progressWidth}%` }}
@@ -214,7 +214,7 @@ export function BudgetIndicator({
 
             {/* Warning message if transaction will push over budget */}
             {impact?.will_be_over_budget && !budget.is_over_budget && (
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400">
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-red-400">
                     <AlertCircle className="h-3.5 w-3.5" />
                     <span>
                         This will exceed budget by{' '}
@@ -225,7 +225,7 @@ export function BudgetIndicator({
 
             {/* Info if already over budget */}
             {budget.is_over_budget && (
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400">
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-red-400">
                     <AlertCircle className="h-3.5 w-3.5" />
                     <span>
                         Already over budget by{' '}

@@ -81,33 +81,70 @@ class RecurringIncomeService
             $netAmount = $grossAmount;
             
             $deductions = $data['deductions'] ?? null;
-            $deductionsMetadata = null;
+            $additions = $data['additions'] ?? null;
+            $breakdownMetadata = null;
 
-            if ($deductions && is_array($deductions)) {
+            if (($deductions && is_array($deductions)) || ($additions && is_array($additions))) {
                 $totalDeductions = 0;
+                $totalAdditions = 0;
                 $formattedDeductions = [];
+                $formattedAdditions = [];
 
-                foreach ($deductions as $deduction) {
-                    $amount = (float) ($deduction['amount'] ?? 0);
-                    $totalDeductions += $amount;
-                    $formattedDeductions[] = [
-                        'name' => $deduction['name'],
-                        'amount' => $amount,
-                    ];
+                if ($additions && is_array($additions)) {
+                    foreach ($additions as $addition) {
+                        $type = $addition['type'] ?? 'fixed';
+                        $value = (float) ($addition['value'] ?? $addition['amount'] ?? 0);
+                        
+                        $amount = $type === 'percentage'
+                            ? ($grossAmount * ($value / 100))
+                            : $value;
+                            
+                        $totalAdditions += $amount;
+                        $formattedAdditions[] = [
+                            'name' => $addition['name'],
+                            'type' => $type,
+                            'value' => $value,
+                            'amount' => $amount,
+                        ];
+                    }
                 }
 
-                $netAmount = $grossAmount - $totalDeductions;
+                $grossPlusAdditions = $grossAmount + $totalAdditions;
+
+                if ($deductions && is_array($deductions)) {
+                    foreach ($deductions as $deduction) {
+                        $type = $deduction['type'] ?? 'fixed';
+                        $value = (float) ($deduction['value'] ?? $deduction['amount'] ?? 0);
+                        
+                        $amount = $type === 'percentage' 
+                            ? ($grossPlusAdditions * ($value / 100))
+                            : $value;
+                            
+                        $totalDeductions += $amount;
+                        $formattedDeductions[] = [
+                            'name' => $deduction['name'],
+                            'type' => $type,
+                            'value' => $value,
+                            'amount' => $amount,
+                        ];
+                    }
+                }
+
+                $netAmount = $grossAmount + $totalAdditions - $totalDeductions;
                 
-                $deductionsMetadata = [
+                $breakdownMetadata = [
                     'gross_amount' => $grossAmount,
+                    'total_additions' => $totalAdditions,
                     'total_deductions' => $totalDeductions,
                     'net_amount' => $netAmount,
+                    'additions' => $formattedAdditions,
                     'deductions' => $formattedDeductions,
                 ];
 
-                // If user opted to save these deductions as default for the future
+                // If user opted to save these adjustments as default for the future
                 if (!empty($data['save_deductions'])) {
                     $income->deductions = $formattedDeductions;
+                    $income->additions = $formattedAdditions;
                     $income->amount = $grossAmount; // Update default gross amount
                 }
             }
@@ -125,7 +162,7 @@ class RecurringIncomeService
                 'category_id' => $income->category_id,
                 'transactionable_type' => $income->getMorphClass(),
                 'transactionable_id' => $income->id,
-                'metadata' => $deductionsMetadata ? ['salary_breakdown' => $deductionsMetadata] : null,
+                'metadata' => $breakdownMetadata ? ['salary_breakdown' => $breakdownMetadata] : null,
             ]);
 
             // Update account balance
@@ -166,6 +203,7 @@ class RecurringIncomeService
                 'date' => $income->next_expected_date->toDateString(),
                 'amount' => $income->amount,
                 'deductions' => $income->deductions,
+                'additions' => $income->additions,
             ]);
             if ($transaction) {
                 $processed++;

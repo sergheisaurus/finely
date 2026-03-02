@@ -39,7 +39,7 @@ export function TransactionList({
     }
 
     return (
-        <div className="space-y-3">
+        <div className="divide-y divide-slate-800/60 rounded-xl border border-slate-800 bg-slate-900/40">
             {transactions.map((transaction) => (
                 <TransactionItem
                     key={transaction.id}

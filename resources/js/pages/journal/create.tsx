@@ -62,7 +62,6 @@ export default function TransactionCreate({
     const [merchants, setMerchants] = useState<Merchant[]>(
         initialMerchants.data,
     );
-    const [isLoadingData, setIsLoadingData] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -84,19 +83,6 @@ export default function TransactionCreate({
     const [paymentMethod, setPaymentMethod] = useState<'account' | 'card'>(
         'account',
     );
-
-    // Initial default account selection - Only runs once on mount if accounts are already loaded
-    useEffect(() => {
-        // This effect is largely redundant now due to the smart reset above,
-        // but kept for initial load if type doesn't change.
-        const defaultAccount = accounts.find((acc) => acc.is_default);
-
-        if (defaultAccount) {
-            if (type === 'expense' && !fromAccountId) {
-                setFromAccountId(defaultAccount.id.toString());
-            }
-        }
-    }, []);
 
     useEffect(() => {
         setAccounts(initialAccounts.data);
@@ -214,17 +200,6 @@ export default function TransactionCreate({
             setIsSubmitting(false);
         }
     };
-
-    if (isLoadingData) {
-        return (
-            <AppLayout breadcrumbs={breadcrumbs}>
-                <Head title="Create Transaction" />
-                <div className="mx-auto max-w-3xl space-y-6 p-6">
-                    <div className="h-96 animate-pulse rounded-lg bg-muted" />
-                </div>
-            </AppLayout>
-        );
-    }
 
     // Get credit cards only for card payment
     const creditCards = cards.filter((card) => card.type === 'credit');

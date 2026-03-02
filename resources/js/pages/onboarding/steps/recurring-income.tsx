@@ -1,3 +1,4 @@
+import { CategorySelect } from '@/components/finance/category-select';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -355,7 +356,7 @@ export default function RecurringIncomeStep({
                                         {categories.length > 0 && (
                                             <div className="space-y-2">
                                                 <Label>Category</Label>
-                                                <Select
+                                                <CategorySelect
                                                     value={
                                                         income.category_id ||
                                                         '__none__'
@@ -369,26 +370,16 @@ export default function RecurringIncomeStep({
                                                                 : v,
                                                         )
                                                     }
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select category" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="__none__">
-                                                            None
-                                                        </SelectItem>
-                                                        {categories.map(
-                                                            (cat) => (
-                                                                <SelectItem
-                                                                    key={cat.id}
-                                                                    value={cat.id.toString()}
-                                                                >
-                                                                    {cat.name}
-                                                                </SelectItem>
-                                                            ),
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
+                                                    categories={categories}
+                                                    allowCreate={false}
+                                                    placeholder="Select category"
+                                                    specialOptions={[
+                                                        {
+                                                            value: '__none__',
+                                                            label: 'None',
+                                                        },
+                                                    ]}
+                                                />
                                             </div>
                                         )}
                                     </div>

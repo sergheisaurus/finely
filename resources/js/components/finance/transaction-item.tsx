@@ -32,7 +32,7 @@ export function TransactionItem({
 
     return (
         <div
-            className={`flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50 ${onClick ? 'cursor-pointer' : ''} ${isSecretModeActive && hasSecretDetails ? 'border-fuchsia-500/30 bg-fuchsia-500/5' : ''}`}
+            className={`flex items-center gap-4 p-4 transition-colors hover:bg-slate-800/50 ${onClick ? 'cursor-pointer' : ''} ${isSecretModeActive && hasSecretDetails ? 'bg-fuchsia-500/5' : ''}`}
             onClick={onClick}
         >
             {/* Date */}
@@ -145,10 +145,10 @@ export function TransactionItem({
             <div className="text-right">
                 <p
                     className={`text-lg font-bold ${isIncome
-                            ? 'text-green-600 dark:text-green-400'
-                            : isExpense
-                                ? 'text-red-600 dark:text-red-400'
-                                : ''
+                        ? 'text-green-600 dark:text-green-400'
+                        : isExpense
+                            ? 'text-red-600 dark:text-red-400'
+                            : ''
                         }`}
                 >
                     {isIncome ? '+' : isExpense ? '-' : ''}

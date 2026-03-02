@@ -6,10 +6,10 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import type { StatisticsFilters } from '@/hooks/use-statistics-filters';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import type { Budget } from '@/types/finance';
-import type { StatisticsFilters } from '@/hooks/use-statistics-filters';
 import { PiggyBank } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -18,7 +18,7 @@ interface BudgetsTabProps {
     apiFilters: Record<string, unknown>;
 }
 
-export function BudgetsTab({ filters, apiFilters }: BudgetsTabProps) {
+export function BudgetsTab({ apiFilters }: BudgetsTabProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [budgets, setBudgets] = useState<Budget[]>([]);
 
@@ -84,10 +84,10 @@ export function BudgetsTab({ filters, apiFilters }: BudgetsTabProps) {
                         percentage >= 100
                             ? 'text-red-600'
                             : percentage >= 80
-                                ? 'text-orange-600'
-                                : percentage >= 60
-                                    ? 'text-yellow-600'
-                                    : 'text-green-600';
+                              ? 'text-orange-600'
+                              : percentage >= 60
+                                ? 'text-yellow-600'
+                                : 'text-green-600';
 
                     return (
                         <Card key={budget.id}>
