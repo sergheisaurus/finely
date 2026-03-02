@@ -24,6 +24,9 @@ RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoload
 # Copy the rest of the application
 COPY . /var/www/html
 
+# Remove host-generated Laravel caches that can reference dev-only providers.
+RUN rm -f /var/www/html/bootstrap/cache/*.php
+
 # Set APP_URL for build time (needed for route generation)
 ARG APP_URL=https://finely.sergheisaurus.com
 ENV APP_URL=${APP_URL}
