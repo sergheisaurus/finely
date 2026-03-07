@@ -1,8 +1,9 @@
 # NAS Deployment Protocol (Strict) 🤖
 
-**ATTENTION AI AGENT:**
-You are **NOT** allowed to guess a port. You are **NOT** allowed to use a hardcoded default.
-You **MUST** follow this procedure strictly before deploying.
+This project defaults to the port currently published on the NAS.
+
+- If `finely` is already running, the deploy script auto-detects the existing host port and reuses it.
+- If it is not running, the deploy script falls back to `3015` (overrideable).
 
 ## 🛑 CRITICAL: BUILD LOCALLY, DEPLOY GLOBALLY
 The NAS is slow. **DO NOT** try to build the Docker image on the NAS.
@@ -43,16 +44,20 @@ Before running any scripts, you must SSH into the NAS and check the state of the
 
 ## Phase 2: Execution
 
-Once you have the `TARGET_PORT` (determined in Phase 1), run the deployment script and pass the port as an argument.
+You can pass a port explicitly, or omit it to auto-detect/reuse the current port.
 
 ```bash
-# Usage: ./scripts/deploy-nas.sh <PORT>
-./scripts/deploy-nas.sh <TARGET_PORT>
+# Usage:
+./scripts/deploy-nas.sh            # reuse existing port, else 3015
+./scripts/deploy-nas.sh <PORT>     # force a specific port
 ```
 
 **Example:**
-If Phase 1 determined that the app is already running on `3015`:
+If the app is already running on `3015`:
 ```bash
+./scripts/deploy-nas.sh
+
+# Or explicitly
 ./scripts/deploy-nas.sh 3015
 ```
 

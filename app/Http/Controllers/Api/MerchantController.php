@@ -9,6 +9,7 @@ use App\Http\Resources\MerchantResource;
 use App\Http\Resources\TransactionResource;
 use App\Models\Merchant;
 use App\Services\MerchantService;
+use App\Support\SecretMode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -21,7 +22,9 @@ class MerchantController extends Controller
 
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = $request->user()->merchants();
+        $query = $request->user()->merchants()
+            ->visibleForSecretMode(SecretMode::isActive($request))
+            ->with('coverMerchant');
 
         if ($request->has('type')) {
             $query->where('type', $request->type);
@@ -52,7 +55,7 @@ class MerchantController extends Controller
     {
         $this->authorize('view', $merchant);
 
-        $merchant->loadCount('transactions');
+        $merchant->load(['coverMerchant'])->loadCount('transactions');
 
         return new MerchantResource($merchant);
     }
@@ -78,9 +81,17 @@ class MerchantController extends Controller
     public function transactions(Request $request, Merchant $merchant): AnonymousResourceCollection
     {
         $this->authorize('view', $merchant);
+        $isSecretMode = SecretMode::isActive($request);
 
         $transactions = $merchant->transactions()
-            ->with(['category', 'merchant', 'fromAccount', 'toAccount', 'fromCard', 'toCard'])
+            ->where(function ($query) use ($merchant, $isSecretMode) {
+                $query->where('merchant_id', $merchant->id);
+
+                if ($isSecretMode) {
+                    $query->orWhere('secret_merchant_id', $merchant->id);
+                }
+            })
+            ->with(['category', 'merchant', 'secretCategory', 'secretMerchant', 'fromAccount', 'toAccount', 'fromCard', 'toCard'])
             ->orderBy('transaction_date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate($request->get('per_page', 20));

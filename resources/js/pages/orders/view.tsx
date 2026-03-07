@@ -157,11 +157,18 @@ export default function OrderView({ orderId }: { orderId: string }) {
             setSelectedTxId('');
             setTxSearch('');
             await fetchData();
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to link transaction:', error);
-            toast.error(
-                error?.response?.data?.message || 'Failed to link transaction',
-            );
+            const message =
+                typeof error === 'object' &&
+                error !== null &&
+                'response' in error
+                    ? ((error as { response?: { data?: { message?: string } } })
+                          .response?.data?.message ??
+                      'Failed to link transaction')
+                    : 'Failed to link transaction';
+
+            toast.error(message);
         } finally {
             setIsLinking(false);
         }
@@ -189,7 +196,7 @@ export default function OrderView({ orderId }: { orderId: string }) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Order" />
 
-            <div className="space-y-6 p-4 md:p-6">
+            <div className="space-y-6 py-6 sm:space-y-8 sm:py-8">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
                         <Button

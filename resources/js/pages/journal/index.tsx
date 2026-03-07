@@ -159,6 +159,7 @@ export default function JournalIndex() {
         fetchCards,
         fetchCategories,
         fetchMerchants,
+        isSecretModeActive,
     ]);
 
     const handleEdit = (transaction: Transaction) => {
@@ -217,7 +218,7 @@ export default function JournalIndex() {
                         <h1 className="text-2xl font-bold text-white md:text-3xl">
                             {isSecretModeActive ? (
                                 <span className="text-fuchsia-400">
-                                    Cum Diary 🔒
+                                    Private Journal
                                 </span>
                             ) : (
                                 'Transaction Journal'
@@ -225,7 +226,7 @@ export default function JournalIndex() {
                         </h1>
                         <p className="text-muted-foreground">
                             {isSecretModeActive
-                                ? 'Every depraved little thing you’ve bought'
+                                ? 'Showing hidden merchants, categories, and transaction details'
                                 : 'Track and manage all your transactions'}
                         </p>
                     </div>

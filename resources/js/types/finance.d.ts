@@ -181,6 +181,13 @@ export interface Subscription {
     updated_at: string;
 }
 
+export interface SalaryDeductionRule {
+    name: string;
+    type?: 'percent' | 'fixed';
+    percent?: number;
+    fixed_amount?: number;
+}
+
 export interface RecurringIncome {
     id: number;
     category_id?: number;
@@ -203,6 +210,9 @@ export interface RecurringIncome {
     reminder_days_before: number;
     color?: string;
     icon?: string;
+    is_salary?: boolean;
+    gross_amount?: number | null;
+    deduction_rules?: SalaryDeductionRule[] | null;
     deductions?: SalaryAdjustment[] | null;
     additions?: SalaryAdjustment[] | null;
 
@@ -468,4 +478,71 @@ export interface SalaryBreakdownMetadata {
 
 export interface TransactionMetadata {
     salary_breakdown?: SalaryBreakdownMetadata;
+}
+
+export type OrderStatus =
+    | 'placed'
+    | 'shipped'
+    | 'delivered'
+    | 'cancelled'
+    | 'returned'
+    | 'partial';
+
+export type OrderItemStatus =
+    | 'ordered'
+    | 'shipped'
+    | 'delivered'
+    | 'returned'
+    | 'cancelled';
+
+export interface OrderItem {
+    id: number;
+    order_id: number;
+    name: string;
+    quantity: number;
+    unit_price: number | null;
+    amount: number | null;
+    product_url: string | null;
+    external_item_id: string | null;
+    ordered_at: string | null;
+    delivered_at: string | null;
+    returned_at: string | null;
+    status: OrderItemStatus;
+    sort_order: number;
+    image_url?: string | null;
+    image_thumbnail_url?: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface Order {
+    id: number;
+    merchant_id: number | null;
+    category_id: number | null;
+    provider: string | null;
+    order_site: string | null;
+    order_number: string | null;
+    order_url: string | null;
+    ordered_at: string;
+    delivered_at: string | null;
+    status: OrderStatus;
+    amount: number;
+    currency: string;
+    source_currency: string | null;
+    fx_rate: number | null;
+    fx_fee_amount: number | null;
+    notes: string | null;
+    merchant?: Merchant;
+    category?: Category;
+    items?: OrderItem[];
+    items_count?: number;
+    transactions_count?: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface OrderStats {
+    total_count: number;
+    delivered_count: number;
+    total_amount: number;
 }

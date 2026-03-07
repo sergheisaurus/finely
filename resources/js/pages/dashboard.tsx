@@ -1,5 +1,6 @@
 import { TransactionFormModal } from '@/components/finance/transaction-form-modal';
 import { TransactionList } from '@/components/finance/transaction-list';
+import { Button } from '@/components/ui/button';
 import { DynamicIcon } from '@/components/ui/dynamic-icon';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
@@ -14,25 +15,21 @@ import type {
     Subscription,
     Transaction,
 } from '@/types/finance';
-import { Menu } from '@base-ui/react/menu';
-import { Progress } from '@base-ui/react/progress';
 import { Tabs } from '@base-ui/react/tabs';
-import { Tooltip } from '@base-ui/react/tooltip';
 import { Head, router } from '@inertiajs/react';
-import type { LucideIcon } from 'lucide-react';
 import {
     ArrowDownLeft,
     ArrowRight,
     ArrowUpRight,
     CalendarClock,
     CreditCard,
-    Info,
     PiggyBank,
     Plus,
+    Shield,
     TrendingUp,
     Wallet,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -41,73 +38,90 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// --- Custom Base UI Elements ---
-
-type GlassCardProps = {
-    children: React.ReactNode;
+function SurfaceCard({
+    children,
+    className = '',
+}: {
+    children: ReactNode;
     className?: string;
-};
+}) {
+    return (
+        <section
+            className={`overflow-hidden rounded-[1.75rem] border border-border/70 bg-card/90 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.35)] backdrop-blur ${className}`}
+        >
+            {children}
+        </section>
+    );
+}
 
-const GlassCard = ({ children, className = '' }: GlassCardProps) => (
-    <div
-        className={`overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-sm ${className}`}
-    >
-        {children}
-    </div>
-);
-
-type StatsCardBaseProps = {
+function SectionHeader({
+    title,
+    description,
+    action,
+}: {
     title: string;
-    value: string;
     description: string;
-    icon: LucideIcon;
-    colorClass: string;
-    tooltipContent: string;
-};
+    action?: ReactNode;
+}) {
+    return (
+        <div className="flex flex-col gap-3 border-b border-border/60 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div>
+                <h2 className="text-lg font-semibold text-foreground">
+                    {title}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                    {description}
+                </p>
+            </div>
+            {action}
+        </div>
+    );
+}
 
-const StatsCardBase = ({
+function MetricCard({
     title,
     value,
     description,
-    icon: Icon,
-    colorClass,
-    tooltipContent,
-}: StatsCardBaseProps) => (
-    <Tooltip.Root>
-        <Tooltip.Trigger className="group relative w-full cursor-default overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 p-5 text-left shadow-sm transition-colors duration-200 outline-none hover:bg-slate-800/80">
-            <div className="relative z-10 flex items-start justify-between">
+    icon,
+    tone,
+}: {
+    title: string;
+    value: string;
+    description: string;
+    icon: ReactNode;
+    tone: string;
+}) {
+    return (
+        <div className="rounded-[1.5rem] border border-border/70 bg-card/95 p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
                 <div>
-                    <p className="text-sm font-medium text-slate-400 transition-colors group-hover:text-slate-300">
+                    <p className="text-sm font-medium text-muted-foreground">
                         {title}
                     </p>
-                    <p className="mt-2 text-2xl font-bold tracking-tight text-white md:text-3xl">
+                    <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
                         {value}
                     </p>
-                    <p className="mt-1 text-xs font-medium text-slate-500">
+                    <p className="mt-2 text-sm text-muted-foreground">
                         {description}
                     </p>
                 </div>
-                <div
-                    className={`rounded-xl border border-slate-700/50 bg-slate-800/50 p-3 ${colorClass}`}
-                >
-                    <Icon className="h-5 w-5" />
-                </div>
+                <div className={`rounded-2xl p-3 ${tone}`}>{icon}</div>
             </div>
-        </Tooltip.Trigger>
-        <Tooltip.Portal>
-            <Tooltip.Positioner
-                side="top"
-                sideOffset={8}
-                className="z-50 animate-in duration-200 outline-none zoom-in-95 fade-in"
-            >
-                <Tooltip.Popup className="max-w-xs rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-center text-sm text-slate-200 shadow-xl backdrop-blur-md">
-                    {tooltipContent}
-                    <Tooltip.Arrow className="fill-slate-700" />
-                </Tooltip.Popup>
-            </Tooltip.Positioner>
-        </Tooltip.Portal>
-    </Tooltip.Root>
-);
+        </div>
+    );
+}
+
+const formatDate = (value: string | null | undefined) => {
+    if (!value) {
+        return 'Not scheduled';
+    }
+
+    return new Date(value).toLocaleDateString(undefined, {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    });
+};
 
 export default function Dashboard() {
     const [accounts, setAccounts] = useState<BankAccount[]>([]);
@@ -125,569 +139,531 @@ export default function Dashboard() {
     );
 
     const fetchAccounts = useCallback(async () => {
-        try {
-            const response = await api.get('/accounts');
-            setAccounts(response.data.data);
-        } catch (error) {
-            console.error('Failed to fetch accounts:', error);
-        }
+        const response = await api.get('/accounts');
+        setAccounts(response.data.data);
     }, []);
 
     const fetchRecentTransactions = useCallback(async () => {
-        try {
-            const response = await api.get(
-                '/transactions?per_page=5&sort_by=transaction_date&sort_dir=desc',
-            );
-            setTransactions(response.data.data);
-        } catch (error) {
-            console.error('Failed to fetch transactions:', error);
-        }
+        const response = await api.get(
+            '/transactions?per_page=5&sort_by=transaction_date&sort_dir=desc',
+        );
+        setTransactions(response.data.data);
     }, []);
 
     const fetchUpcomingSubscriptions = useCallback(async () => {
-        try {
-            const response = await api.get('/subscriptions/upcoming?days=14');
-            setUpcomingSubscriptions(response.data.data);
-        } catch (error) {
-            console.error('Failed to fetch subscriptions:', error);
-        }
+        const response = await api.get('/subscriptions/upcoming?days=14');
+        setUpcomingSubscriptions(response.data.data);
     }, []);
 
     const fetchUpcomingIncome = useCallback(async () => {
-        try {
-            const response = await api.get(
-                '/recurring-incomes/upcoming?days=14',
-            );
-            setUpcomingIncome(response.data.data);
-        } catch (error) {
-            console.error('Failed to fetch income:', error);
-        }
+        const response = await api.get('/recurring-incomes/upcoming?days=14');
+        setUpcomingIncome(response.data.data);
     }, []);
 
     const fetchBudgets = useCallback(async () => {
-        try {
-            const response = await api.get('/budgets?is_active=1&per_page=5');
-            setBudgets(response.data.data || []);
-        } catch (error) {
-            console.error('Failed to fetch budgets:', error);
-        }
+        const response = await api.get('/budgets?is_active=1&per_page=5');
+        setBudgets(response.data.data || []);
     }, []);
 
     useEffect(() => {
+        let active = true;
+
         const loadData = async () => {
-            await Promise.all([
+            setIsLoading(true);
+
+            const results = await Promise.allSettled([
                 fetchAccounts(),
                 fetchRecentTransactions(),
                 fetchUpcomingSubscriptions(),
                 fetchUpcomingIncome(),
                 fetchBudgets(),
             ]);
-            setIsLoading(false);
+
+            results.forEach((result, index) => {
+                if (result.status === 'rejected') {
+                    console.error(
+                        `Dashboard request ${index + 1} failed`,
+                        result.reason,
+                    );
+                }
+            });
+
+            if (active) {
+                setIsLoading(false);
+            }
         };
+
         loadData();
+
+        return () => {
+            active = false;
+        };
     }, [
         fetchAccounts,
-        fetchRecentTransactions,
-        fetchUpcomingSubscriptions,
-        fetchUpcomingIncome,
         fetchBudgets,
+        fetchRecentTransactions,
+        fetchUpcomingIncome,
+        fetchUpcomingSubscriptions,
+        isSecretModeActive,
     ]);
 
     const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
     const currency = accounts[0]?.currency || 'CHF';
-
     const income = transactions
-        .filter((t) => t.type === 'income')
-        .reduce((sum, t) => sum + t.amount, 0);
+        .filter((transaction) => transaction.type === 'income')
+        .reduce((sum, transaction) => sum + transaction.amount, 0);
     const expenses = transactions
-        .filter((t) => t.type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0);
+        .filter((transaction) => transaction.type === 'expense')
+        .reduce((sum, transaction) => sum + transaction.amount, 0);
     const netFlow = income - expenses;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
-            <div className="relative min-h-screen bg-[#07090e] font-sans text-slate-200">
-                <div className="animate-fade-in-up relative z-10 space-y-8 px-4 pt-8">
-                    {/* Header */}
-                    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+
+            <div className="space-y-6 py-6 sm:space-y-8 sm:py-8">
+                <SurfaceCard className="relative overflow-hidden bg-gradient-to-br from-white via-white to-emerald-50/70 dark:from-card dark:via-card dark:to-emerald-950/20">
+                    <div className="absolute inset-y-0 right-0 hidden w-1/2 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.16),transparent_55%)] lg:block" />
+                    <div className="relative grid gap-6 px-5 py-6 sm:px-6 sm:py-7 lg:grid-cols-[1.35fr_0.9fr] lg:items-center">
                         <div>
-                            <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                                {isSecretModeActive ? (
-                                    <span className="text-fuchsia-400">
-                                        Welcome back, slut 💕
-                                    </span>
-                                ) : (
-                                    'Overview'
-                                )}
-                            </h1>
-                            <p className="mt-1 text-sm font-medium text-slate-400 sm:text-base">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200/80 bg-white/85 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-emerald-700 uppercase shadow-sm dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">
+                                <Shield className="h-3.5 w-3.5" />
+                                Finely overview
+                            </div>
+                            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
                                 {isSecretModeActive
-                                    ? 'Here’s your filthy spending overview 🔒'
-                                    : 'Your financial life at a glance, beautifully organized.'}
+                                    ? 'Privacy mode is on.'
+                                    : 'Your money, clearer at a glance.'}
+                            </h1>
+                            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+                                The dashboard now surfaces what matters first:
+                                balances, recent movement, upcoming commitments,
+                                and budget pressure without the heavy dark UI.
                             </p>
+                            <div className="mt-6 flex flex-wrap gap-3">
+                                <Button
+                                    onClick={() => setShowCreateModal(true)}
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    Add transaction
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() =>
+                                        router.visit('/accounts/create')
+                                    }
+                                >
+                                    <Wallet className="h-4 w-4" />
+                                    New account
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => router.visit('/budgets')}
+                                >
+                                    <PiggyBank className="h-4 w-4" />
+                                    Review budgets
+                                </Button>
+                            </div>
                         </div>
 
-                        {/* Top Right Actions using Base UI Menu */}
-                        <Menu.Root>
-                            <Menu.Trigger className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors outline-none hover:bg-slate-800">
-                                <Plus className="h-4 w-4" />
-                                Add New
-                            </Menu.Trigger>
-                            <Menu.Portal>
-                                <Menu.Positioner
-                                    align="end"
-                                    sideOffset={8}
-                                    className="z-50 animate-in duration-200 outline-none slide-in-from-top-2"
-                                >
-                                    <Menu.Popup className="min-w-[220px] space-y-1 rounded-2xl border border-slate-700 bg-slate-900/90 p-2 shadow-2xl backdrop-blur-2xl outline-none">
-                                        <Menu.Item
-                                            className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-300 transition-colors outline-none hover:bg-white/10 hover:text-white"
-                                            onClick={() =>
-                                                setShowCreateModal(true)
-                                            }
-                                        >
-                                            <div className="rounded-md bg-emerald-500/20 p-1.5 text-emerald-400">
-                                                <TrendingUp className="h-4 w-4" />
-                                            </div>
-                                            Transaction
-                                        </Menu.Item>
-                                        <Menu.Item
-                                            className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-300 transition-colors outline-none hover:bg-white/10 hover:text-white"
-                                            onClick={() =>
-                                                router.visit('/accounts/create')
-                                            }
-                                        >
-                                            <div className="rounded-md bg-blue-500/20 p-1.5 text-blue-400">
-                                                <Wallet className="h-4 w-4" />
-                                            </div>
-                                            Bank Account
-                                        </Menu.Item>
-                                        <Menu.Item
-                                            className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-300 transition-colors outline-none hover:bg-white/10 hover:text-white"
-                                            onClick={() =>
-                                                router.visit('/budgets')
-                                            }
-                                        >
-                                            <div className="rounded-md bg-fuchsia-500/20 p-1.5 text-fuchsia-400">
-                                                <PiggyBank className="h-4 w-4" />
-                                            </div>
-                                            Budget Target
-                                        </Menu.Item>
-                                    </Menu.Popup>
-                                </Menu.Positioner>
-                            </Menu.Portal>
-                        </Menu.Root>
+                        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                            <div className="rounded-[1.5rem] border border-border/70 bg-white/90 p-4 shadow-sm dark:bg-card/90">
+                                <p className="text-sm text-muted-foreground">
+                                    Accounts tracked
+                                </p>
+                                <p className="mt-2 text-2xl font-semibold text-foreground">
+                                    {accounts.length}
+                                </p>
+                            </div>
+                            <div className="rounded-[1.5rem] border border-border/70 bg-white/90 p-4 shadow-sm dark:bg-card/90">
+                                <p className="text-sm text-muted-foreground">
+                                    Upcoming bills
+                                </p>
+                                <p className="mt-2 text-2xl font-semibold text-foreground">
+                                    {upcomingSubscriptions.length}
+                                </p>
+                            </div>
+                            <div className="rounded-[1.5rem] border border-border/70 bg-white/90 p-4 shadow-sm dark:bg-card/90">
+                                <p className="text-sm text-muted-foreground">
+                                    Active budgets
+                                </p>
+                                <p className="mt-2 text-2xl font-semibold text-foreground">
+                                    {budgets.length}
+                                </p>
+                            </div>
+                        </div>
                     </div>
+                </SurfaceCard>
 
-                    {/* Stats Grid */}
-                    <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
-                        <StatsCardBase
-                            title="Total Balance"
-                            value={
-                                isLoading
-                                    ? '...'
-                                    : formatCurrency(totalBalance, currency)
-                            }
-                            description="Across all accounts"
-                            icon={Wallet}
-                            colorClass="text-blue-400"
-                            tooltipContent="The sum of all your positive and negative balances."
-                        />
-                        <StatsCardBase
-                            title="Recent Income"
-                            value={
-                                isLoading
-                                    ? '...'
-                                    : formatCurrency(income, currency)
-                            }
-                            description="Last 5 transactions"
-                            icon={ArrowDownLeft}
-                            colorClass="text-emerald-400"
-                            tooltipContent="Cash flowing into your accounts recently."
-                        />
-                        <StatsCardBase
-                            title="Recent Expenses"
-                            value={
-                                isLoading
-                                    ? '...'
-                                    : formatCurrency(expenses, currency)
-                            }
-                            description="Last 5 transactions"
-                            icon={ArrowUpRight}
-                            colorClass="text-fuchsia-400"
-                            tooltipContent="Cash leaving your accounts recently."
-                        />
-                        <StatsCardBase
-                            title="Recent Net Flow"
-                            value={
-                                isLoading
-                                    ? '...'
-                                    : `${netFlow > 0 ? '+' : ''}${formatCurrency(netFlow, currency)}`
-                            }
-                            description="Income vs Expenses"
-                            icon={TrendingUp}
-                            colorClass={
-                                netFlow >= 0 ? 'text-teal-400' : 'text-rose-400'
-                            }
-                            tooltipContent="Your net gain or deficit over the recent period."
-                        />
-                    </div>
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <MetricCard
+                        title="Total balance"
+                        value={
+                            isLoading
+                                ? 'Loading...'
+                                : formatCurrency(totalBalance, currency)
+                        }
+                        description="Across all connected accounts"
+                        icon={
+                            <Wallet className="h-5 w-5 text-emerald-700 dark:text-emerald-300" />
+                        }
+                        tone="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50"
+                    />
+                    <MetricCard
+                        title="Recent income"
+                        value={
+                            isLoading
+                                ? 'Loading...'
+                                : formatCurrency(income, currency)
+                        }
+                        description="Based on your 5 latest transactions"
+                        icon={
+                            <ArrowDownLeft className="h-5 w-5 text-sky-700 dark:text-sky-300" />
+                        }
+                        tone="bg-sky-100 text-sky-700 dark:bg-sky-950/50"
+                    />
+                    <MetricCard
+                        title="Recent expenses"
+                        value={
+                            isLoading
+                                ? 'Loading...'
+                                : formatCurrency(expenses, currency)
+                        }
+                        description="Outgoing activity in the same window"
+                        icon={
+                            <ArrowUpRight className="h-5 w-5 text-rose-700 dark:text-rose-300" />
+                        }
+                        tone="bg-rose-100 text-rose-700 dark:bg-rose-950/50"
+                    />
+                    <MetricCard
+                        title="Net flow"
+                        value={
+                            isLoading
+                                ? 'Loading...'
+                                : `${netFlow >= 0 ? '+' : ''}${formatCurrency(netFlow, currency)}`
+                        }
+                        description="Quick pulse on short-term momentum"
+                        icon={
+                            <TrendingUp className="h-5 w-5 text-amber-700 dark:text-amber-300" />
+                        }
+                        tone="bg-amber-100 text-amber-700 dark:bg-amber-950/50"
+                    />
+                </div>
 
-                    {/* Main Content Tabs */}
-                    <Tabs.Root defaultValue="overview" className="mt-8">
-                        <Tabs.List className="mx-auto flex w-fit gap-2 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900 p-1 shadow-sm sm:mx-0">
+                <Tabs.Root defaultValue="overview">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <Tabs.List className="inline-flex w-fit rounded-full border border-border/70 bg-card/80 p-1 shadow-sm">
                             <Tabs.Tab
                                 value="overview"
-                                className="rounded-lg px-4 py-1.5 text-sm font-semibold text-slate-400 transition-all outline-none hover:text-slate-300 data-[active]:bg-slate-800 data-[active]:text-white"
+                                className="rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition data-[active]:bg-primary data-[active]:text-primary-foreground"
                             >
-                                General Flow
+                                Daily overview
                             </Tabs.Tab>
                             <Tabs.Tab
                                 value="planning"
-                                className="rounded-lg px-4 py-1.5 text-sm font-semibold text-slate-400 transition-all outline-none hover:text-slate-300 data-[active]:bg-slate-800 data-[active]:text-white"
+                                className="rounded-full px-4 py-2 text-sm font-medium text-muted-foreground transition data-[active]:bg-primary data-[active]:text-primary-foreground"
                             >
-                                Planning & Budgets
+                                Planning
                             </Tabs.Tab>
                         </Tabs.List>
-
-                        {/* GENERAL FLOW TAB */}
-                        <Tabs.Panel
-                            value="overview"
-                            className="mt-6 grid animate-in grid-cols-1 gap-6 duration-500 slide-in-from-bottom-4 lg:grid-cols-3"
+                        <Button
+                            variant="ghost"
+                            onClick={() => router.visit('/journal')}
                         >
-                            {/* Left Column (Transactions) */}
-                            <div className="space-y-6 lg:col-span-2">
-                                <GlassCard>
-                                    <div className="flex items-center justify-between border-b border-white/10 p-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="rounded-lg bg-emerald-500/10 p-2">
-                                                <TrendingUp className="h-5 w-5 text-emerald-400" />
-                                            </div>
-                                            <h2 className="text-lg font-bold text-white">
-                                                Recent Transactions
-                                            </h2>
-                                        </div>
-                                        <button
-                                            onClick={() =>
-                                                router.visit('/journal')
-                                            }
-                                            className="flex items-center gap-1 text-sm font-medium text-indigo-400 transition-colors hover:text-indigo-300"
-                                        >
-                                            View Journal{' '}
-                                            <ArrowRight className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                    <div className="p-2 sm:p-5">
-                                        <TransactionList
-                                            transactions={transactions}
-                                            isLoading={isLoading}
-                                            onTransactionClick={(transaction) =>
-                                                setEditTransaction(transaction)
-                                            }
-                                        />
-                                    </div>
-                                </GlassCard>
-                            </div>
+                            Open full journal
+                            <ArrowRight className="h-4 w-4" />
+                        </Button>
+                    </div>
 
-                            {/* Right Column (Accounts) */}
-                            <div className="space-y-6">
-                                <GlassCard>
-                                    <div className="flex items-center justify-between border-b border-white/10 p-5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="rounded-lg bg-blue-500/10 p-2">
-                                                <Wallet className="h-5 w-5 text-blue-400" />
-                                            </div>
-                                            <h2 className="text-lg font-bold text-white">
-                                                Your Wallets
-                                            </h2>
-                                        </div>
-                                        <button
+                    <Tabs.Panel
+                        value="overview"
+                        className="mt-5 grid gap-6 xl:grid-cols-[1.4fr_0.95fr]"
+                    >
+                        <SurfaceCard>
+                            <SectionHeader
+                                title="Recent transactions"
+                                description="The latest activity across your accounts."
+                            />
+                            <div className="p-4 sm:p-6">
+                                <TransactionList
+                                    transactions={transactions}
+                                    isLoading={isLoading}
+                                    onTransactionClick={(transaction) =>
+                                        setEditTransaction(transaction)
+                                    }
+                                />
+                            </div>
+                        </SurfaceCard>
+
+                        <div className="space-y-6">
+                            <SurfaceCard>
+                                <SectionHeader
+                                    title="Accounts"
+                                    description="Where your money currently sits."
+                                    action={
+                                        <Button
+                                            variant="ghost"
                                             onClick={() =>
                                                 router.visit('/accounts')
                                             }
-                                            className="text-sm font-medium text-slate-400 transition-colors hover:text-white"
                                         >
-                                            All
-                                        </button>
-                                    </div>
-                                    <div className="space-y-3 p-3 sm:p-5">
-                                        {accounts.length === 0 && !isLoading ? (
-                                            <div className="py-8 text-center text-slate-500">
-                                                <Wallet className="mx-auto mb-2 h-8 w-8 opacity-50" />
-                                                <p className="text-sm">
-                                                    No accounts configured.
-                                                </p>
-                                            </div>
-                                        ) : (
-                                            accounts.slice(0, 5).map((acc) => (
-                                                <div
-                                                    key={acc.id}
-                                                    onClick={() =>
-                                                        router.visit(
-                                                            `/accounts/${acc.id}`,
-                                                        )
-                                                    }
-                                                    className="group flex cursor-pointer items-center justify-between rounded-xl border border-transparent bg-white/5 p-3 transition-all hover:border-white/10 hover:bg-white/10"
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <div
-                                                            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 shadow-inner"
-                                                            style={{
-                                                                backgroundColor: `${acc.color}40`,
-                                                            }}
-                                                        >
-                                                            <Wallet
-                                                                className="h-4 w-4"
-                                                                style={{
-                                                                    color: acc.color,
-                                                                }}
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-sm font-semibold text-slate-200 transition-colors group-hover:text-white">
-                                                                {acc.name}
-                                                            </p>
-                                                            <p className="text-xs text-slate-500">
-                                                                {acc.type}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-sm font-bold tracking-tight">
-                                                            {formatCurrency(
-                                                                acc.balance,
-                                                                acc.currency,
-                                                            )}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                </GlassCard>
-                            </div>
-                        </Tabs.Panel>
-
-                        {/* PLANNING & BUDGETS TAB */}
-                        <Tabs.Panel
-                            value="planning"
-                            className="mt-6 grid animate-in grid-cols-1 gap-6 duration-500 slide-in-from-bottom-4 lg:grid-cols-2"
-                        >
-                            <GlassCard className="col-span-1 lg:col-span-2">
-                                <div className="flex items-center gap-3 border-b border-white/10 p-5">
-                                    <div className="rounded-lg bg-fuchsia-500/10 p-2">
-                                        <PiggyBank className="h-5 w-5 text-fuchsia-400" />
-                                    </div>
-                                    <h2 className="text-lg font-bold text-white">
-                                        Active Budget Targets
-                                    </h2>
-                                    <Tooltip.Root>
-                                        <Tooltip.Trigger className="ml-2 outline-none">
-                                            <Info className="h-4 w-4 text-slate-500 transition-colors hover:text-slate-300" />
-                                        </Tooltip.Trigger>
-                                        <Tooltip.Portal>
-                                            <Tooltip.Positioner
-                                                side="top"
-                                                sideOffset={8}
-                                                className="z-50"
-                                            >
-                                                <Tooltip.Popup className="rounded-lg bg-slate-800 px-3 py-2 text-sm text-white">
-                                                    Track your spending limits
-                                                    securely mapped from your
-                                                    historical data.
-                                                </Tooltip.Popup>
-                                            </Tooltip.Positioner>
-                                        </Tooltip.Portal>
-                                    </Tooltip.Root>
-                                </div>
-                                <div className="grid grid-cols-1 gap-6 p-5 sm:grid-cols-2 lg:grid-cols-3">
-                                    {budgets.length === 0 ? (
-                                        <p className="text-sm text-slate-500">
-                                            No active budgets.
-                                        </p>
+                                            View all
+                                        </Button>
+                                    }
+                                />
+                                <div className="space-y-3 p-4 sm:p-6">
+                                    {!isLoading && accounts.length === 0 ? (
+                                        <div className="rounded-[1.25rem] border border-dashed border-border px-4 py-10 text-center text-muted-foreground">
+                                            No accounts configured yet.
+                                        </div>
                                     ) : (
-                                        budgets.map((budget) => {
-                                            const percent = Math.min(
-                                                (budget.current_period_spent /
-                                                    budget.amount) *
-                                                    100,
-                                                100,
-                                            );
-                                            const isAtRisk = percent > 80;
-                                            return (
-                                                <div
-                                                    key={budget.id}
-                                                    onClick={() =>
-                                                        router.visit(
-                                                            `/budgets/${budget.id}`,
-                                                        )
-                                                    }
-                                                    className="group cursor-pointer rounded-2xl border border-white/5 bg-slate-900/50 p-4 transition-all hover:bg-slate-800/80"
-                                                >
-                                                    <div className="mb-3 flex justify-between">
-                                                        <p className="text-sm font-semibold text-slate-300 group-hover:text-white">
-                                                            {budget.name}
-                                                        </p>
-                                                        <p className="rounded-md bg-white/10 px-2 py-1 font-mono text-xs">
-                                                            {formatCurrency(
-                                                                budget.current_period_spent,
-                                                                budget.currency,
-                                                            )}{' '}
-                                                            /{' '}
-                                                            {formatCurrency(
-                                                                budget.amount,
-                                                                budget.currency,
-                                                            )}
-                                                        </p>
-                                                    </div>
-                                                    <Progress.Root
-                                                        value={percent}
-                                                        className="h-2.5 w-full overflow-hidden rounded-full bg-slate-800"
+                                        accounts.slice(0, 5).map((account) => (
+                                            <button
+                                                key={account.id}
+                                                type="button"
+                                                onClick={() =>
+                                                    router.visit(
+                                                        `/accounts/${account.id}`,
+                                                    )
+                                                }
+                                                className="flex w-full items-center justify-between rounded-[1.25rem] border border-border/70 bg-background/70 px-4 py-3 text-left transition hover:border-primary/25 hover:bg-accent/35"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div
+                                                        className="flex h-11 w-11 items-center justify-center rounded-2xl border border-border/60"
+                                                        style={{
+                                                            backgroundColor: `${account.color}20`,
+                                                        }}
                                                     >
-                                                        <Progress.Indicator
-                                                            className={`h-full rounded-full transition-all duration-1000 ease-out ${isAtRisk ? 'bg-rose-500' : 'bg-emerald-500'}`}
+                                                        <Wallet
+                                                            className="h-4 w-4"
                                                             style={{
-                                                                transform: `translateX(-${100 - percent}%)`,
+                                                                color: account.color,
                                                             }}
                                                         />
-                                                    </Progress.Root>
-                                                    <div className="mt-2 flex justify-between text-[10px] font-bold tracking-wider text-slate-500 uppercase">
-                                                        <span>
-                                                            Spent:{' '}
-                                                            {percent.toFixed(0)}
-                                                            %
-                                                        </span>
-                                                        <span>
-                                                            {budget.period}
-                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium text-foreground">
+                                                            {account.name}
+                                                        </p>
+                                                        <p className="text-sm text-muted-foreground capitalize">
+                                                            {account.type}
+                                                        </p>
                                                     </div>
                                                 </div>
-                                            );
-                                        })
+                                                <p className="text-sm font-semibold text-foreground">
+                                                    {formatCurrency(
+                                                        account.balance,
+                                                        account.currency,
+                                                    )}
+                                                </p>
+                                            </button>
+                                        ))
                                     )}
                                 </div>
-                            </GlassCard>
+                            </SurfaceCard>
+                        </div>
+                    </Tabs.Panel>
 
-                            <GlassCard>
-                                <div className="flex items-center justify-between border-b border-white/10 p-5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="rounded-lg bg-rose-500/10 p-2">
-                                            <CalendarClock className="h-5 w-5 text-rose-400" />
-                                        </div>
-                                        <h2 className="text-lg font-bold text-white">
-                                            Upcoming Subscriptions
-                                        </h2>
+                    <Tabs.Panel
+                        value="planning"
+                        className="mt-5 grid gap-6 lg:grid-cols-2"
+                    >
+                        <SurfaceCard className="lg:col-span-2">
+                            <SectionHeader
+                                title="Budget health"
+                                description="See which spending plans need attention first."
+                                action={
+                                    <Button
+                                        variant="ghost"
+                                        onClick={() => router.visit('/budgets')}
+                                    >
+                                        Open budgets
+                                    </Button>
+                                }
+                            />
+                            <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-6 xl:grid-cols-3">
+                                {!isLoading && budgets.length === 0 ? (
+                                    <div className="rounded-[1.25rem] border border-dashed border-border px-4 py-10 text-center text-muted-foreground sm:col-span-2 xl:col-span-3">
+                                        No active budgets yet.
                                     </div>
-                                </div>
-                                <div className="space-y-4 p-5">
-                                    {upcomingSubscriptions.length === 0 ? (
-                                        <p className="py-4 text-center text-sm text-slate-500">
-                                            Nothing due soon.
-                                        </p>
-                                    ) : (
-                                        upcomingSubscriptions.map((sub) => (
-                                            <div
-                                                key={sub.id}
-                                                className="flex justify-between rounded-xl border border-white/5 bg-white/5 p-3"
+                                ) : (
+                                    budgets.map((budget) => {
+                                        const percent = Math.min(
+                                            (budget.current_period_spent /
+                                                budget.amount) *
+                                                100,
+                                            100,
+                                        );
+
+                                        return (
+                                            <button
+                                                key={budget.id}
+                                                type="button"
+                                                onClick={() =>
+                                                    router.visit(
+                                                        `/budgets/${budget.id}`,
+                                                    )
+                                                }
+                                                className="rounded-[1.4rem] border border-border/70 bg-background/70 p-4 text-left transition hover:border-primary/25 hover:bg-accent/35"
                                             >
-                                                <div className="flex gap-3">
-                                                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <p className="font-medium text-foreground">
+                                                            {budget.name}
+                                                        </p>
+                                                        <p className="mt-1 text-sm text-muted-foreground">
+                                                            {budget.period}
+                                                        </p>
+                                                    </div>
+                                                    <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold text-secondary-foreground">
+                                                        {percent.toFixed(0)}%
+                                                    </span>
+                                                </div>
+                                                <div className="mt-4 h-2 overflow-hidden rounded-full bg-secondary">
+                                                    <div
+                                                        className={`h-full rounded-full ${percent > 80 ? 'bg-rose-500' : 'bg-emerald-500'}`}
+                                                        style={{
+                                                            width: `${percent}%`,
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="mt-3 flex items-center justify-between text-sm">
+                                                    <span className="text-muted-foreground">
+                                                        Spent
+                                                    </span>
+                                                    <span className="font-medium text-foreground">
+                                                        {formatCurrency(
+                                                            budget.current_period_spent,
+                                                            budget.currency,
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <div className="mt-1 flex items-center justify-between text-sm">
+                                                    <span className="text-muted-foreground">
+                                                        Budget
+                                                    </span>
+                                                    <span className="font-medium text-foreground">
+                                                        {formatCurrency(
+                                                            budget.amount,
+                                                            budget.currency,
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        </SurfaceCard>
+
+                        <SurfaceCard>
+                            <SectionHeader
+                                title="Upcoming subscriptions"
+                                description="Bills due in the next two weeks."
+                            />
+                            <div className="space-y-3 p-4 sm:p-6">
+                                {!isLoading &&
+                                upcomingSubscriptions.length === 0 ? (
+                                    <div className="rounded-[1.25rem] border border-dashed border-border px-4 py-10 text-center text-muted-foreground">
+                                        Nothing due soon.
+                                    </div>
+                                ) : (
+                                    upcomingSubscriptions.map(
+                                        (subscription) => (
+                                            <div
+                                                key={subscription.id}
+                                                className="flex items-center justify-between rounded-[1.25rem] border border-border/70 bg-background/70 px-4 py-3"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
                                                         <DynamicIcon
-                                                            name={sub.icon}
+                                                            name={
+                                                                subscription.icon
+                                                            }
                                                             fallback={
                                                                 CreditCard
                                                             }
-                                                            className="h-4 w-4 text-rose-300"
+                                                            className="h-4 w-4"
                                                         />
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-semibold">
-                                                            {sub.name}
+                                                        <p className="font-medium text-foreground">
+                                                            {subscription.name}
                                                         </p>
-                                                        <p className="text-xs text-slate-400">
-                                                            Due:{' '}
-                                                            {sub.next_billing_date
-                                                                ? new Date(
-                                                                      sub.next_billing_date,
-                                                                  ).toLocaleDateString()
-                                                                : 'N/A'}
+                                                        <p className="text-sm text-muted-foreground">
+                                                            Due{' '}
+                                                            {formatDate(
+                                                                subscription.next_billing_date,
+                                                            )}
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <span className="text-sm font-bold text-rose-400">
+                                                <p className="text-sm font-semibold text-rose-600 dark:text-rose-300">
                                                     -
                                                     {formatCurrency(
-                                                        sub.amount,
-                                                        sub.currency,
+                                                        subscription.amount,
+                                                        subscription.currency,
                                                     )}
-                                                </span>
+                                                </p>
                                             </div>
-                                        ))
-                                    )}
-                                </div>
-                            </GlassCard>
+                                        ),
+                                    )
+                                )}
+                            </div>
+                        </SurfaceCard>
 
-                            <GlassCard>
-                                <div className="flex items-center justify-between border-b border-white/10 p-5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="rounded-lg bg-teal-500/10 p-2">
-                                            <TrendingUp className="h-5 w-5 text-teal-400" />
-                                        </div>
-                                        <h2 className="text-lg font-bold text-white">
-                                            Expected Income
-                                        </h2>
+                        <SurfaceCard>
+                            <SectionHeader
+                                title="Expected income"
+                                description="Incoming money scheduled in the next two weeks."
+                            />
+                            <div className="space-y-3 p-4 sm:p-6">
+                                {!isLoading && upcomingIncome.length === 0 ? (
+                                    <div className="rounded-[1.25rem] border border-dashed border-border px-4 py-10 text-center text-muted-foreground">
+                                        No income arriving soon.
                                     </div>
-                                </div>
-                                <div className="space-y-4 p-5">
-                                    {upcomingIncome.length === 0 ? (
-                                        <p className="py-4 text-center text-sm text-slate-500">
-                                            No income arriving soon.
-                                        </p>
-                                    ) : (
-                                        upcomingIncome.map((inc) => (
-                                            <div
-                                                key={inc.id}
-                                                className="flex justify-between rounded-xl border border-white/5 bg-white/5 p-3"
-                                            >
-                                                <div className="flex gap-3">
-                                                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
-                                                        <DynamicIcon
-                                                            name={inc.icon}
-                                                            fallback={Wallet}
-                                                            className="h-4 w-4 text-teal-300"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-semibold">
-                                                            {inc.name}
-                                                        </p>
-                                                        <p className="text-xs text-slate-400">
-                                                            Expected:{' '}
-                                                            {inc.next_expected_date
-                                                                ? new Date(
-                                                                      inc.next_expected_date,
-                                                                  ).toLocaleDateString()
-                                                                : 'N/A'}
-                                                        </p>
-                                                    </div>
+                                ) : (
+                                    upcomingIncome.map((incomeItem) => (
+                                        <div
+                                            key={incomeItem.id}
+                                            className="flex items-center justify-between rounded-[1.25rem] border border-border/70 bg-background/70 px-4 py-3"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                                                    <DynamicIcon
+                                                        name={incomeItem.icon}
+                                                        fallback={CalendarClock}
+                                                        className="h-4 w-4"
+                                                    />
                                                 </div>
-                                                <span className="text-sm font-bold text-teal-400">
-                                                    +
-                                                    {formatCurrency(
-                                                        inc.net_amount ??
-                                                            inc.amount,
-                                                        inc.currency,
-                                                    )}
-                                                </span>
+                                                <div>
+                                                    <p className="font-medium text-foreground">
+                                                        {incomeItem.name}
+                                                    </p>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        Expected{' '}
+                                                        {formatDate(
+                                                            incomeItem.next_expected_date,
+                                                        )}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        ))
-                                    )}
-                                </div>
-                            </GlassCard>
-                        </Tabs.Panel>
-                    </Tabs.Root>
-                </div>
+                                            <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-300">
+                                                +
+                                                {formatCurrency(
+                                                    incomeItem.net_amount ??
+                                                        incomeItem.amount,
+                                                    incomeItem.currency,
+                                                )}
+                                            </p>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </SurfaceCard>
+                    </Tabs.Panel>
+                </Tabs.Root>
             </div>
 
             <TransactionFormModal
@@ -698,8 +674,10 @@ export default function Dashboard() {
 
             <TransactionFormModal
                 open={!!editTransaction}
-                onOpenChange={(v) => {
-                    if (!v) setEditTransaction(null);
+                onOpenChange={(value) => {
+                    if (!value) {
+                        setEditTransaction(null);
+                    }
                 }}
                 transaction={editTransaction}
                 onSuccess={fetchRecentTransactions}

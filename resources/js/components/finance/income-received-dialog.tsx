@@ -25,6 +25,20 @@ import {
 import type { RecurringIncome, SalaryDeductionRule } from '@/types/finance';
 import { useEffect, useMemo, useState } from 'react';
 
+function getInitialIncomeReceivedState(income: RecurringIncome | null) {
+    return {
+        receivedDate: new Date().toISOString().slice(0, 10),
+        amount: income ? income.amount.toFixed(2) : '',
+        grossAmount: income?.gross_amount
+            ? Number(income.gross_amount).toFixed(2)
+            : '',
+        deductionRules: normalizeSalaryDeductionRules(
+            income?.deduction_rules || [],
+        ),
+        keepAsDefault: false,
+    };
+}
+
 type Props = {
     income: RecurringIncome | null;
     open: boolean;
@@ -55,17 +69,21 @@ export function IncomeReceivedDialog({
     const [keepAsDefault, setKeepAsDefault] = useState(false);
 
     useEffect(() => {
-        if (!income || !open) return;
+        if (!income || !open) {
+            return;
+        }
 
-        setReceivedDate(new Date().toISOString().slice(0, 10));
-        setAmount(income.amount.toFixed(2));
-        setGrossAmount(
-            income.gross_amount ? Number(income.gross_amount).toFixed(2) : '',
-        );
-        setDeductionRules(
-            normalizeSalaryDeductionRules(income.deduction_rules || []),
-        );
-        setKeepAsDefault(false);
+        const timeout = window.setTimeout(() => {
+            const initialState = getInitialIncomeReceivedState(income);
+
+            setReceivedDate(initialState.receivedDate);
+            setAmount(initialState.amount);
+            setGrossAmount(initialState.grossAmount);
+            setDeductionRules(initialState.deductionRules);
+            setKeepAsDefault(initialState.keepAsDefault);
+        }, 0);
+
+        return () => window.clearTimeout(timeout);
     }, [income, open]);
 
     const expectedNet = useMemo(() => {

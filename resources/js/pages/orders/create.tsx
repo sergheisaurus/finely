@@ -28,9 +28,11 @@ import type {
     Category,
     Merchant,
     OrderItem,
+    OrderItemStatus,
+    OrderStatus,
 } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
-import { Minus, Plus, Save } from 'lucide-react';
+import { Minus, Plus, Save, Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -70,8 +72,7 @@ export default function OrderCreate() {
         new Date().toISOString().split('T')[0],
     );
     const [deliveredAt, setDeliveredAt] = useState('');
-    const [status, setStatus] =
-        useState<(typeof orderStatuses)[number]['value']>('placed');
+    const [status, setStatus] = useState<OrderStatus>('placed');
     const [merchantId, setMerchantId] = useState('');
     const [categoryId, setCategoryId] = useState('');
     const [currency, setCurrency] = useState('CHF');
@@ -257,10 +258,25 @@ export default function OrderCreate() {
             const res = await api.post('/orders', payload);
             toast.success('Order created');
             router.visit(`/orders/${res.data.data.id}`);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to create order:', error);
-            if (error?.response?.status === 422) {
-                setErrors(error.response.data.errors || {});
+            if (
+                typeof error === 'object' &&
+                error !== null &&
+                'response' in error
+            ) {
+                const response = (
+                    error as {
+                        response?: {
+                            status?: number;
+                            data?: { errors?: Record<string, string> };
+                        };
+                    }
+                ).response;
+
+                if (response?.status === 422) {
+                    setErrors(response.data?.errors || {});
+                }
             }
             toast.error('Failed to create order');
         } finally {
@@ -272,16 +288,24 @@ export default function OrderCreate() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Create Order" />
 
-            <div className="space-y-6 p-4 md:p-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold">Create Order</h1>
-                        <p className="text-muted-foreground">
-                            Add an order and optionally create the matching
-                            transaction
-                        </p>
+            <div className="space-y-6 py-6 sm:space-y-8 sm:py-8">
+                <section className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-gradient-to-br from-white via-white to-sky-50/70 px-5 py-6 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.35)] sm:px-6 sm:py-7 dark:from-card dark:via-card dark:to-sky-950/20">
+                    <div className="space-y-3">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-sky-200/80 bg-white/85 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-sky-700 uppercase shadow-sm dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-200">
+                            <Sparkles className="h-3.5 w-3.5" />
+                            New order
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                                Create order
+                            </h1>
+                            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+                                Add marketplace details, line items, and an
+                                optional matching expense in one pass.
+                            </p>
+                        </div>
                     </div>
-                </div>
+                </section>
 
                 <div className="grid gap-6 lg:grid-cols-3">
                     <div className="space-y-6 lg:col-span-2">
@@ -363,7 +387,7 @@ export default function OrderCreate() {
                                         <Select
                                             value={status}
                                             onValueChange={(v) =>
-                                                setStatus(v as any)
+                                                setStatus(v as OrderStatus)
                                             }
                                         >
                                             <SelectTrigger>
@@ -638,7 +662,7 @@ export default function OrderCreate() {
                                                     value={item.status}
                                                     onValueChange={(v) =>
                                                         updateItem(idx, {
-                                                            status: v as any,
+                                                            status: v as OrderItemStatus,
                                                         })
                                                     }
                                                 >

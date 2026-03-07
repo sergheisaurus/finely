@@ -166,7 +166,6 @@ export function TransactionFormModal({
                     : 'account',
             );
         }
-         
     }, [open, transaction]);
 
     // Reset when modal closes
@@ -282,10 +281,20 @@ export function TransactionFormModal({
             handleOpenChange(false);
         } catch (err: unknown) {
             const e = err as {
-                response?: { data?: { errors?: Record<string, string> } };
+                response?: {
+                    data?: { errors?: Record<string, string | string[]> };
+                };
             };
             if (e.response?.data?.errors) {
-                setErrors(e.response.data.errors);
+                const normalizedErrors = Object.fromEntries(
+                    Object.entries(e.response.data.errors).map(
+                        ([key, value]) => [
+                            key,
+                            Array.isArray(value) ? value[0] : value,
+                        ],
+                    ),
+                );
+                setErrors(normalizedErrors);
             } else {
                 toast.error('Something went wrong. Please try again.');
             }
@@ -312,10 +321,10 @@ export function TransactionFormModal({
 
     const modalTitle = isEditMode
         ? isSecretModeActive
-            ? 'Edit Your Dirty Little Secret 🔒'
+            ? 'Edit Private Transaction'
             : 'Edit Transaction'
         : isSecretModeActive
-          ? 'New Slutty Expense 🔒'
+          ? 'New Private Transaction'
           : 'New Transaction';
 
     // Helper: Category select field with "+ Create new" button

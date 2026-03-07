@@ -28,9 +28,9 @@ import {
     Wallet,
 } from 'lucide-react';
 import AppLogo from './app-logo';
+import AppearanceToggleDropdown from './appearance-dropdown';
 
 const mainNavItems: NavItem[] = [
-    // Overview
     {
         title: 'Dashboard',
         href: dashboard(),
@@ -46,13 +46,14 @@ const mainNavItems: NavItem[] = [
         href: { url: '/chat', method: 'get' },
         icon: MessageSquare,
     },
-    // Transactions
+];
+
+const moneyNavItems: NavItem[] = [
     {
         title: 'Journal',
         href: journal(),
         icon: BookText,
     },
-    // Money sources
     {
         title: 'Accounts',
         href: { url: '/accounts', method: 'get' },
@@ -63,17 +64,18 @@ const mainNavItems: NavItem[] = [
         href: { url: '/cards', method: 'get' },
         icon: CreditCard,
     },
-    // Planning
-    {
-        title: 'Budgets',
-        href: { url: '/budgets', method: 'get' },
-        icon: PiggyBank,
-    },
-    // Recurring
     {
         title: 'Income',
         href: { url: '/income', method: 'get' },
         icon: TrendingUp,
+    },
+];
+
+const planningNavItems: NavItem[] = [
+    {
+        title: 'Budgets',
+        href: { url: '/budgets', method: 'get' },
+        icon: PiggyBank,
     },
     {
         title: 'Subscriptions',
@@ -95,7 +97,9 @@ const mainNavItems: NavItem[] = [
         href: { url: '/inventory', method: 'get' },
         icon: Package,
     },
-    // Organization
+];
+
+const organizationNavItems: NavItem[] = [
     {
         title: 'Categories',
         href: { url: '/categories', method: 'get' },
@@ -110,8 +114,12 @@ const mainNavItems: NavItem[] = [
 
 export function AppSidebar() {
     return (
-        <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
+        <Sidebar
+            collapsible="icon"
+            variant="inset"
+            className="border-r border-sidebar-border/70"
+        >
+            <SidebarHeader className="gap-4 border-b border-sidebar-border/70 p-4">
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
@@ -121,13 +129,45 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
+                <div className="flex items-center justify-between rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/45 px-3 py-3 text-sidebar-foreground group-data-[collapsible=icon]:hidden">
+                    <div>
+                        <p className="text-sm font-semibold">Calm control</p>
+                        <p className="text-xs text-sidebar-foreground/70">
+                            Clear money tracking, less visual noise.
+                        </p>
+                    </div>
+                    <AppearanceToggleDropdown />
+                </div>
             </SidebarHeader>
 
-            <SidebarContent>
+            <SidebarContent className="gap-4 px-2 py-4">
+                <div className="px-2 group-data-[collapsible=icon]:hidden">
+                    <p className="px-2 text-[11px] font-semibold tracking-[0.2em] text-sidebar-foreground/45 uppercase">
+                        Overview
+                    </p>
+                </div>
                 <NavMain items={mainNavItems} />
+                <div className="px-2 group-data-[collapsible=icon]:hidden">
+                    <p className="px-2 text-[11px] font-semibold tracking-[0.2em] text-sidebar-foreground/45 uppercase">
+                        Money
+                    </p>
+                </div>
+                <NavMain items={moneyNavItems} />
+                <div className="px-2 group-data-[collapsible=icon]:hidden">
+                    <p className="px-2 text-[11px] font-semibold tracking-[0.2em] text-sidebar-foreground/45 uppercase">
+                        Planning
+                    </p>
+                </div>
+                <NavMain items={planningNavItems} />
+                <div className="px-2 group-data-[collapsible=icon]:hidden">
+                    <p className="px-2 text-[11px] font-semibold tracking-[0.2em] text-sidebar-foreground/45 uppercase">
+                        Setup
+                    </p>
+                </div>
+                <NavMain items={organizationNavItems} />
             </SidebarContent>
 
-            <SidebarFooter>
+            <SidebarFooter className="border-t border-sidebar-border/70 p-3">
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

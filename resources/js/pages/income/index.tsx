@@ -157,8 +157,11 @@ export default function IncomeIndex() {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium opacity-90 flex items-center gap-2">
-                                        Monthly Income <span className="text-[10px] uppercase font-bold bg-white/20 px-1.5 py-0.5 rounded">Net</span>
+                                    <p className="flex items-center gap-2 text-sm font-medium opacity-90">
+                                        Monthly Income{' '}
+                                        <span className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-bold uppercase">
+                                            Net
+                                        </span>
                                     </p>
                                     <p className="mt-2 text-2xl font-bold md:text-3xl">
                                         {formatCurrency(
@@ -176,8 +179,11 @@ export default function IncomeIndex() {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium opacity-90 flex items-center gap-2">
-                                        Yearly Income <span className="text-[10px] uppercase font-bold bg-white/20 px-1.5 py-0.5 rounded">Net</span>
+                                    <p className="flex items-center gap-2 text-sm font-medium opacity-90">
+                                        Yearly Income{' '}
+                                        <span className="rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-bold uppercase">
+                                            Net
+                                        </span>
                                     </p>
                                     <p className="mt-2 text-2xl font-bold md:text-3xl">
                                         {formatCurrency(
@@ -297,8 +303,9 @@ function IncomeCard({
 }) {
     return (
         <Card
-            className={`group hover-lift overflow-hidden transition-all duration-200 hover:shadow-md ${!income.is_active ? 'opacity-60' : ''
-                }`}
+            className={`group hover-lift overflow-hidden transition-all duration-200 hover:shadow-md ${
+                !income.is_active ? 'opacity-60' : ''
+            }`}
         >
             <CardContent className="p-4">
                 <div className="flex items-start justify-between">

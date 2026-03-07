@@ -335,8 +335,9 @@ function BudgetCard({
 
     return (
         <Card
-            className={`group hover-lift overflow-hidden transition-all duration-200 hover:shadow-md ${!budget.is_active ? 'opacity-60' : ''
-                }`}
+            className={`group hover-lift overflow-hidden transition-all duration-200 hover:shadow-md ${
+                !budget.is_active ? 'opacity-60' : ''
+            }`}
         >
             <CardContent className="p-4">
                 <div className="flex items-start justify-between">

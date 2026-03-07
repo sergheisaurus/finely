@@ -1,9 +1,9 @@
 import { useSecretStore } from '@/stores/useSecretStore';
 
 /**
- * Returns `kinky` when Secret Mode is active, otherwise `normal`.
+ * Returns `secret` when Secret Mode is active, otherwise `normal`.
  */
-export function useSecretText(normal: string, kinky: string): string {
+export function useSecretText(normal: string, secret: string): string {
     const { isSecretModeActive } = useSecretStore();
-    return isSecretModeActive ? kinky : normal;
+    return isSecretModeActive ? secret : normal;
 }

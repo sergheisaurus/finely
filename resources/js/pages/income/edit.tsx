@@ -29,8 +29,8 @@ import type {
     RecurringIncome,
     SalaryAdjustment,
 } from '@/types/finance';
-import { Plus, Trash2 } from 'lucide-react';
 import { Head, router } from '@inertiajs/react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -171,9 +171,18 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
             let tempTotalAdditions = 0;
 
             const loadedAdditions = (inc.additions || []).map((a) => {
-                const val = a.value !== undefined && a.value !== null ? a.value : a.amount;
-                const calcAmount = a.type === 'percentage' ? baseGross * ((Number(val) || 0) / 100) : (Number(val) || 0);
-                const isOverridden = a.type === 'percentage' && a.amount !== undefined && Math.abs(a.amount - calcAmount) > 0.001;
+                const val =
+                    a.value !== undefined && a.value !== null
+                        ? a.value
+                        : a.amount;
+                const calcAmount =
+                    a.type === 'percentage'
+                        ? baseGross * ((Number(val) || 0) / 100)
+                        : Number(val) || 0;
+                const isOverridden =
+                    a.type === 'percentage' &&
+                    a.amount !== undefined &&
+                    Math.abs(a.amount - calcAmount) > 0.001;
                 tempTotalAdditions += isOverridden ? a.amount : calcAmount;
                 return { ...a, is_overridden: isOverridden };
             });
@@ -182,9 +191,18 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
             const grossPlusAdditions = baseGross + tempTotalAdditions;
 
             const loadedDeductions = (inc.deductions || []).map((d) => {
-                const val = d.value !== undefined && d.value !== null ? d.value : d.amount;
-                const calcAmount = d.type === 'percentage' ? grossPlusAdditions * ((Number(val) || 0) / 100) : (Number(val) || 0);
-                const isOverridden = d.type === 'percentage' && d.amount !== undefined && Math.abs(d.amount - calcAmount) > 0.001;
+                const val =
+                    d.value !== undefined && d.value !== null
+                        ? d.value
+                        : d.amount;
+                const calcAmount =
+                    d.type === 'percentage'
+                        ? grossPlusAdditions * ((Number(val) || 0) / 100)
+                        : Number(val) || 0;
+                const isOverridden =
+                    d.type === 'percentage' &&
+                    d.amount !== undefined &&
+                    Math.abs(d.amount - calcAmount) > 0.001;
                 return { ...d, is_overridden: isOverridden };
             });
             setDeductions(loadedDeductions);
@@ -222,8 +240,8 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
                 is_active: isActive,
                 auto_create_transaction: autoCreateTransaction,
                 color,
-                additions: additions.filter(a => a.name),
-                deductions: deductions.filter(d => d.name),
+                additions: additions.filter((a) => a.name),
+                deductions: deductions.filter((d) => d.name),
             };
 
             if (description) payload.description = description;
@@ -260,18 +278,27 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
 
     const gross = Number(amount) || 0;
     const computedAdditions = additions.map((a) => {
-        const calcAmount = a.type === 'percentage' ? gross * ((Number(a.value) || 0) / 100) : (Number(a.value) || 0);
-        return a.is_overridden ? (a.amount || 0) : calcAmount;
+        const calcAmount =
+            a.type === 'percentage'
+                ? gross * ((Number(a.value) || 0) / 100)
+                : Number(a.value) || 0;
+        return a.is_overridden ? a.amount || 0 : calcAmount;
     });
     const totalAdditions = computedAdditions.reduce((sum, val) => sum + val, 0);
 
     const grossPlusAdditions = gross + totalAdditions;
 
     const computedDeductions = deductions.map((d) => {
-        const calcAmount = d.type === 'percentage' ? grossPlusAdditions * ((Number(d.value) || 0) / 100) : (Number(d.value) || 0);
-        return d.is_overridden ? (d.amount || 0) : calcAmount;
+        const calcAmount =
+            d.type === 'percentage'
+                ? grossPlusAdditions * ((Number(d.value) || 0) / 100)
+                : Number(d.value) || 0;
+        return d.is_overridden ? d.amount || 0 : calcAmount;
     });
-    const totalDeductions = computedDeductions.reduce((sum, val) => sum + val, 0);
+    const totalDeductions = computedDeductions.reduce(
+        (sum, val) => sum + val,
+        0,
+    );
     const netAmount = gross + totalAdditions - totalDeductions;
 
     if (isLoading) {
@@ -336,7 +363,9 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="amount">Base Amount *</Label>
+                                    <Label htmlFor="amount">
+                                        Base Amount *
+                                    </Label>
                                     <Input
                                         id="amount"
                                         type="number"
@@ -463,173 +492,406 @@ export default function IncomeEdit({ incomeId }: { incomeId: string }) {
                     </CardUI>
 
                     {/* Fiche de Salaire Layout */}
-                    <CardUI className="animate-fade-in-up stagger-2 opacity-0 overflow-hidden">
-                        <div className="grid grid-cols-[1fr_120px_120px_40px] gap-2 bg-muted/50 p-4 text-[13px] font-semibold text-muted-foreground uppercase tracking-wider border-b">
+                    <CardUI className="animate-fade-in-up stagger-2 overflow-hidden opacity-0">
+                        <div className="grid grid-cols-[1fr_120px_120px_40px] gap-2 border-b bg-muted/50 p-4 text-[13px] font-semibold tracking-wider text-muted-foreground uppercase">
                             <div>Description</div>
                             <div className="text-right">Rate / Basis</div>
                             <div className="text-right">Amount</div>
                             <div></div>
                         </div>
 
-                        <div className="p-4 space-y-4">
-                            <div className="grid grid-cols-[1fr_120px_120px_40px] gap-2 items-center text-sm">
-                                <div className="font-medium">Salaire de base</div>
-                                <div className="text-right text-muted-foreground">-</div>
-                                <div className="text-right font-medium">{formatCurrency(gross, currency)}</div>
+                        <div className="space-y-4 p-4">
+                            <div className="grid grid-cols-[1fr_120px_120px_40px] items-center gap-2 text-sm">
+                                <div className="font-medium">
+                                    Salaire de base
+                                </div>
+                                <div className="text-right text-muted-foreground">
+                                    -
+                                </div>
+                                <div className="text-right font-medium">
+                                    {formatCurrency(gross, currency)}
+                                </div>
                                 <div></div>
                             </div>
 
                             {/* Additions Section */}
                             <div className="pt-2">
-                                <div className="flex items-center justify-between mb-3">
-                                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Allocations / Prestations</Label>
-                                    <Button type="button" variant="ghost" size="sm" onClick={() => addAdjustment(true)} className="h-7 px-2 text-xs">
+                                <div className="mb-3 flex items-center justify-between">
+                                    <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                        Allocations / Prestations
+                                    </Label>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => addAdjustment(true)}
+                                        className="h-7 px-2 text-xs"
+                                    >
                                         <Plus className="mr-1 h-3 w-3" /> Add
                                     </Button>
                                 </div>
                                 <div className="space-y-2">
                                     {additions.length === 0 && (
-                                        <div className="text-xs text-muted-foreground italic pl-1">No allocations configured</div>
+                                        <div className="pl-1 text-xs text-muted-foreground italic">
+                                            No allocations configured
+                                        </div>
                                     )}
                                     {additions.map((addition, index) => {
-                                        const calcAmount = addition.type === 'percentage' ? gross * ((Number(addition.value) || 0) / 100) : (Number(addition.value) || 0);
+                                        const calcAmount =
+                                            addition.type === 'percentage'
+                                                ? gross *
+                                                  ((Number(addition.value) ||
+                                                      0) /
+                                                      100)
+                                                : Number(addition.value) || 0;
                                         return (
-                                            <div key={`add-${index}`} className="grid grid-cols-[1fr_120px_120px_40px] gap-2 items-center">
+                                            <div
+                                                key={`add-${index}`}
+                                                className="grid grid-cols-[1fr_120px_120px_40px] items-center gap-2"
+                                            >
                                                 <Input
                                                     placeholder="e.g. Bonus, Allocation enfant"
                                                     className="h-9 text-sm focus-visible:ring-1"
                                                     value={addition.name}
-                                                    onChange={(e) => updateAdjustment(index, 'name', e.target.value, true)}
+                                                    onChange={(e) =>
+                                                        updateAdjustment(
+                                                            index,
+                                                            'name',
+                                                            e.target.value,
+                                                            true,
+                                                        )
+                                                    }
                                                 />
                                                 <div className="flex items-center gap-1">
                                                     <Input
-                                                        type="number" step="0.001" min="0"
-                                                        className="h-9 text-sm text-right px-2 focus-visible:ring-1"
-                                                        value={addition.value || ''}
-                                                        onChange={(e) => updateAdjustment(index, 'value', e.target.value, true)}
+                                                        type="number"
+                                                        step="0.001"
+                                                        min="0"
+                                                        className="h-9 px-2 text-right text-sm focus-visible:ring-1"
+                                                        value={
+                                                            addition.value || ''
+                                                        }
+                                                        onChange={(e) =>
+                                                            updateAdjustment(
+                                                                index,
+                                                                'value',
+                                                                e.target.value,
+                                                                true,
+                                                            )
+                                                        }
                                                     />
-                                                    <Select value={addition.type || 'fixed'} onValueChange={(val) => updateAdjustment(index, 'type', val, true)}>
-                                                        <SelectTrigger className="h-9 w-[50px] px-1.5 text-xs"><SelectValue /></SelectTrigger>
+                                                    <Select
+                                                        value={
+                                                            addition.type ||
+                                                            'fixed'
+                                                        }
+                                                        onValueChange={(val) =>
+                                                            updateAdjustment(
+                                                                index,
+                                                                'type',
+                                                                val,
+                                                                true,
+                                                            )
+                                                        }
+                                                    >
+                                                        <SelectTrigger className="h-9 w-[50px] px-1.5 text-xs">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value="fixed">$</SelectItem>
-                                                            <SelectItem value="percentage">%</SelectItem>
+                                                            <SelectItem value="fixed">
+                                                                $
+                                                            </SelectItem>
+                                                            <SelectItem value="percentage">
+                                                                %
+                                                            </SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                 </div>
-                                                <div className="flex flex-col items-end pr-1 justify-center relative min-w-[70px]">
-                                                    <div className="flex items-center gap-1 group">
-                                                        <span className="text-green-600 font-medium">+</span>
+                                                <div className="relative flex min-w-[70px] flex-col items-end justify-center pr-1">
+                                                    <div className="group flex items-center gap-1">
+                                                        <span className="font-medium text-green-600">
+                                                            +
+                                                        </span>
                                                         <Input
-                                                            type="number" step="0.01"
-                                                            className="h-9 w-[80px] text-right text-sm text-green-600 font-medium bg-transparent border-transparent hover:border-input focus-visible:ring-1 focus-visible:border-input focus-visible:bg-background px-1 transition-all"
-                                                            value={addition.is_overridden ? addition.amount : calcAmount.toFixed(2)}
-                                                            onChange={(e) => updateAdjustment(index, 'amount', e.target.value, true)}
+                                                            type="number"
+                                                            step="0.01"
+                                                            className="h-9 w-[80px] border-transparent bg-transparent px-1 text-right text-sm font-medium text-green-600 transition-all hover:border-input focus-visible:border-input focus-visible:bg-background focus-visible:ring-1"
+                                                            value={
+                                                                addition.is_overridden
+                                                                    ? addition.amount
+                                                                    : calcAmount.toFixed(
+                                                                          2,
+                                                                      )
+                                                            }
+                                                            onChange={(e) =>
+                                                                updateAdjustment(
+                                                                    index,
+                                                                    'amount',
+                                                                    e.target
+                                                                        .value,
+                                                                    true,
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                     {addition.is_overridden && (
-                                                        <span className="text-[10px] text-muted-foreground absolute -bottom-3 right-2 whitespace-nowrap">
-                                                            Calc: {calcAmount.toFixed(2)} (Diff: {((addition.amount || 0) - calcAmount).toFixed(2)})
+                                                        <span className="absolute right-2 -bottom-3 text-[10px] whitespace-nowrap text-muted-foreground">
+                                                            Calc:{' '}
+                                                            {calcAmount.toFixed(
+                                                                2,
+                                                            )}{' '}
+                                                            (Diff:{' '}
+                                                            {(
+                                                                (addition.amount ||
+                                                                    0) -
+                                                                calcAmount
+                                                            ).toFixed(2)}
+                                                            )
                                                         </span>
                                                     )}
                                                 </div>
-                                                <Button type="button" variant="ghost" size="icon" onClick={() => removeAdjustment(index, true)} className="h-9 w-9 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() =>
+                                                        removeAdjustment(
+                                                            index,
+                                                            true,
+                                                        )
+                                                    }
+                                                    className="h-9 w-9 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50"
+                                                >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </div>
-                                        )
+                                        );
                                     })}
                                 </div>
                             </div>
 
                             {/* Subtotal: Gross Salary */}
-                            <div className="my-4 border-y border-border py-3 grid grid-cols-[1fr_120px_120px_40px] gap-2 items-center text-sm font-bold bg-muted/20 -mx-4 px-4">
+                            <div className="-mx-4 my-4 grid grid-cols-[1fr_120px_120px_40px] items-center gap-2 border-y border-border bg-muted/20 px-4 py-3 text-sm font-bold">
                                 <div>Salaire Brut (Gross)</div>
-                                <div className="text-right text-muted-foreground">-</div>
-                                <div className="text-right text-green-600">{formatCurrency(gross + totalAdditions, currency)}</div>
+                                <div className="text-right text-muted-foreground">
+                                    -
+                                </div>
+                                <div className="text-right text-green-600">
+                                    {formatCurrency(
+                                        gross + totalAdditions,
+                                        currency,
+                                    )}
+                                </div>
                                 <div></div>
                             </div>
 
                             {/* Deductions Section */}
                             <div className="pt-2">
-                                <div className="flex items-center justify-between mb-3">
-                                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Cotisations Sociales / Impôts</Label>
-                                    <Button type="button" variant="ghost" size="sm" onClick={() => addAdjustment(false)} className="h-7 px-2 text-xs">
+                                <div className="mb-3 flex items-center justify-between">
+                                    <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                        Cotisations Sociales / Impôts
+                                    </Label>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => addAdjustment(false)}
+                                        className="h-7 px-2 text-xs"
+                                    >
                                         <Plus className="mr-1 h-3 w-3" /> Add
                                     </Button>
                                 </div>
                                 <div className="space-y-2">
                                     {deductions.length === 0 && (
-                                        <div className="text-xs text-muted-foreground italic pl-1">No deductions configured</div>
+                                        <div className="pl-1 text-xs text-muted-foreground italic">
+                                            No deductions configured
+                                        </div>
                                     )}
                                     {deductions.map((deduction, index) => {
-                                        const calcAmount = deduction.type === 'percentage' ? gross * ((Number(deduction.value) || 0) / 100) : (Number(deduction.value) || 0);
+                                        const calcAmount =
+                                            deduction.type === 'percentage'
+                                                ? gross *
+                                                  ((Number(deduction.value) ||
+                                                      0) /
+                                                      100)
+                                                : Number(deduction.value) || 0;
                                         return (
-                                            <div key={`ded-${index}`} className="grid grid-cols-[1fr_120px_120px_40px] gap-2 items-center">
-                                                <div className="flex bg-background border rounded-md focus-within:ring-1 focus-within:ring-ring">
-                                                    <Select onValueChange={(val) => val !== 'custom' && updateAdjustment(index, 'name', val, false)}>
-                                                        <SelectTrigger className="h-9 w-[30px] px-1.5 bg-transparent border-0 focus:ring-0 shadow-none"><Plus className="h-3.5 w-3.5 mx-auto" /></SelectTrigger>
+                                            <div
+                                                key={`ded-${index}`}
+                                                className="grid grid-cols-[1fr_120px_120px_40px] items-center gap-2"
+                                            >
+                                                <div className="flex rounded-md border bg-background focus-within:ring-1 focus-within:ring-ring">
+                                                    <Select
+                                                        onValueChange={(val) =>
+                                                            val !== 'custom' &&
+                                                            updateAdjustment(
+                                                                index,
+                                                                'name',
+                                                                val,
+                                                                false,
+                                                            )
+                                                        }
+                                                    >
+                                                        <SelectTrigger className="h-9 w-[30px] border-0 bg-transparent px-1.5 shadow-none focus:ring-0">
+                                                            <Plus className="mx-auto h-3.5 w-3.5" />
+                                                        </SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value="AVS/AI/APG">AVS/AI/APG</SelectItem>
-                                                            <SelectItem value="AC (Chômage)">AC (Chômage)</SelectItem>
-                                                            <SelectItem value="LPP (Prévoyance)">LPP (Prévoyance)</SelectItem>
-                                                            <SelectItem value="LAA (Accident non prof.)">LAA (Accident)</SelectItem>
-                                                            <SelectItem value="IJM (Maladie)">IJM (Maladie)</SelectItem>
-                                                            <SelectItem value="Impôt à la source">Impôt à la source</SelectItem>
-                                                            <SelectItem value="custom">Custom...</SelectItem>
+                                                            <SelectItem value="AVS/AI/APG">
+                                                                AVS/AI/APG
+                                                            </SelectItem>
+                                                            <SelectItem value="AC (Chômage)">
+                                                                AC (Chômage)
+                                                            </SelectItem>
+                                                            <SelectItem value="LPP (Prévoyance)">
+                                                                LPP (Prévoyance)
+                                                            </SelectItem>
+                                                            <SelectItem value="LAA (Accident non prof.)">
+                                                                LAA (Accident)
+                                                            </SelectItem>
+                                                            <SelectItem value="IJM (Maladie)">
+                                                                IJM (Maladie)
+                                                            </SelectItem>
+                                                            <SelectItem value="Impôt à la source">
+                                                                Impôt à la
+                                                                source
+                                                            </SelectItem>
+                                                            <SelectItem value="custom">
+                                                                Custom...
+                                                            </SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <Input
                                                         placeholder="e.g. AVS, LPP"
-                                                        className="h-9 text-sm flex-1 border-0 focus-visible:ring-0 rounded-none shadow-none px-2"
+                                                        className="h-9 flex-1 rounded-none border-0 px-2 text-sm shadow-none focus-visible:ring-0"
                                                         value={deduction.name}
-                                                        onChange={(e) => updateAdjustment(index, 'name', e.target.value, false)}
+                                                        onChange={(e) =>
+                                                            updateAdjustment(
+                                                                index,
+                                                                'name',
+                                                                e.target.value,
+                                                                false,
+                                                            )
+                                                        }
                                                     />
                                                 </div>
                                                 <div className="flex items-center gap-1">
                                                     <Input
-                                                        type="number" step="0.001" min="0"
-                                                        className="h-9 text-sm text-right px-2 focus-visible:ring-1"
-                                                        value={deduction.value || ''}
-                                                        onChange={(e) => updateAdjustment(index, 'value', e.target.value, false)}
+                                                        type="number"
+                                                        step="0.001"
+                                                        min="0"
+                                                        className="h-9 px-2 text-right text-sm focus-visible:ring-1"
+                                                        value={
+                                                            deduction.value ||
+                                                            ''
+                                                        }
+                                                        onChange={(e) =>
+                                                            updateAdjustment(
+                                                                index,
+                                                                'value',
+                                                                e.target.value,
+                                                                false,
+                                                            )
+                                                        }
                                                     />
-                                                    <Select value={deduction.type || 'fixed'} onValueChange={(val) => updateAdjustment(index, 'type', val, false)}>
-                                                        <SelectTrigger className="h-9 w-[50px] px-1.5 text-xs"><SelectValue /></SelectTrigger>
+                                                    <Select
+                                                        value={
+                                                            deduction.type ||
+                                                            'fixed'
+                                                        }
+                                                        onValueChange={(val) =>
+                                                            updateAdjustment(
+                                                                index,
+                                                                'type',
+                                                                val,
+                                                                false,
+                                                            )
+                                                        }
+                                                    >
+                                                        <SelectTrigger className="h-9 w-[50px] px-1.5 text-xs">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
                                                         <SelectContent>
-                                                            <SelectItem value="fixed">$</SelectItem>
-                                                            <SelectItem value="percentage">%</SelectItem>
+                                                            <SelectItem value="fixed">
+                                                                $
+                                                            </SelectItem>
+                                                            <SelectItem value="percentage">
+                                                                %
+                                                            </SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                 </div>
-                                                <div className="flex flex-col items-end pr-1 justify-center relative min-w-[70px]">
-                                                    <div className="flex items-center gap-1 group">
-                                                        <span className="text-red-600 font-medium">-</span>
+                                                <div className="relative flex min-w-[70px] flex-col items-end justify-center pr-1">
+                                                    <div className="group flex items-center gap-1">
+                                                        <span className="font-medium text-red-600">
+                                                            -
+                                                        </span>
                                                         <Input
-                                                            type="number" step="0.01"
-                                                            className="h-9 w-[80px] text-right text-sm text-red-600 font-medium bg-transparent border-transparent hover:border-input focus-visible:ring-1 focus-visible:border-input focus-visible:bg-background px-1 transition-all"
-                                                            value={deduction.is_overridden ? deduction.amount : calcAmount.toFixed(2)}
-                                                            onChange={(e) => updateAdjustment(index, 'amount', e.target.value, false)}
+                                                            type="number"
+                                                            step="0.01"
+                                                            className="h-9 w-[80px] border-transparent bg-transparent px-1 text-right text-sm font-medium text-red-600 transition-all hover:border-input focus-visible:border-input focus-visible:bg-background focus-visible:ring-1"
+                                                            value={
+                                                                deduction.is_overridden
+                                                                    ? deduction.amount
+                                                                    : calcAmount.toFixed(
+                                                                          2,
+                                                                      )
+                                                            }
+                                                            onChange={(e) =>
+                                                                updateAdjustment(
+                                                                    index,
+                                                                    'amount',
+                                                                    e.target
+                                                                        .value,
+                                                                    false,
+                                                                )
+                                                            }
                                                         />
                                                     </div>
                                                     {deduction.is_overridden && (
-                                                        <span className="text-[10px] text-muted-foreground absolute -bottom-3 right-2 whitespace-nowrap">
-                                                            Calc: {calcAmount.toFixed(2)} (Diff: {((deduction.amount || 0) - calcAmount).toFixed(2)})
+                                                        <span className="absolute right-2 -bottom-3 text-[10px] whitespace-nowrap text-muted-foreground">
+                                                            Calc:{' '}
+                                                            {calcAmount.toFixed(
+                                                                2,
+                                                            )}{' '}
+                                                            (Diff:{' '}
+                                                            {(
+                                                                (deduction.amount ||
+                                                                    0) -
+                                                                calcAmount
+                                                            ).toFixed(2)}
+                                                            )
                                                         </span>
                                                     )}
                                                 </div>
-                                                <Button type="button" variant="ghost" size="icon" onClick={() => removeAdjustment(index, false)} className="h-9 w-9 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() =>
+                                                        removeAdjustment(
+                                                            index,
+                                                            false,
+                                                        )
+                                                    }
+                                                    className="h-9 w-9 text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50"
+                                                >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </div>
-                                        )
+                                        );
                                     })}
                                 </div>
                             </div>
 
                             {/* Final Net Salary */}
-                            <div className="mt-5 border-t-[3px] border-border pt-4 grid grid-cols-[1fr_120px_120px_40px] gap-2 items-center text-lg font-bold">
+                            <div className="mt-5 grid grid-cols-[1fr_120px_120px_40px] items-center gap-2 border-t-[3px] border-border pt-4 text-lg font-bold">
                                 <div>Salaire Net Estimé</div>
-                                <div className="text-right text-muted-foreground">-</div>
-                                <div className="text-right">{formatCurrency(netAmount, currency)}</div>
+                                <div className="text-right text-muted-foreground">
+                                    -
+                                </div>
+                                <div className="text-right">
+                                    {formatCurrency(netAmount, currency)}
+                                </div>
                                 <div></div>
                             </div>
                         </div>

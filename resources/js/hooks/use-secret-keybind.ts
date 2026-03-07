@@ -1,34 +1,17 @@
-import { useEffect, useRef } from 'react';
 import { useSecretStore } from '@/stores/useSecretStore';
+import { useEffect, useRef } from 'react';
 
-const SECRET_WORDS = [
-    'drooling',
-    'dildogag',
-    'ballgag',
-    'rope',
-    'handcuffs',
-    'deepthroat',
-    'tights',
-    'cumslut',
-    'whipped',
-    'collar',
-    'leash',
-    'bondage',
-    'spanking',
-    'blindfold',
-    'submission',
-    'dominated',
-    'gagged',
-    'hogtied',
-    'buttplug',
-    'mmmmmm', // muffled gagged moan 🤤
-];
+const SECRET_WORDS = ['secret', 'privacy', 'private', 'hidden', 'incognito'];
 
 const KONAMI = [
-    'arrowup', 'arrowup',
-    'arrowdown', 'arrowdown',
-    'arrowleft', 'arrowright',
-    'arrowleft', 'arrowright',
+    'arrowup',
+    'arrowup',
+    'arrowdown',
+    'arrowdown',
+    'arrowleft',
+    'arrowright',
+    'arrowleft',
+    'arrowright',
 ];
 
 export function useSecretKeybind() {
@@ -38,24 +21,31 @@ export function useSecretKeybind() {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.shiftKey && e.key === '.') {
+                e.preventDefault();
+                toggleSecretMode();
+                return;
+            }
+
             const target = e.target as HTMLElement;
             const inInput =
                 target.tagName === 'INPUT' ||
                 target.tagName === 'TEXTAREA' ||
                 target.isContentEditable;
 
-            // --- Konami code: always listen, even in inputs ---
             const keyLower = e.key.toLowerCase();
             if (keyLower.startsWith('arrow')) {
-                konamiBufferRef.current = [...konamiBufferRef.current, keyLower].slice(-KONAMI.length);
+                konamiBufferRef.current = [
+                    ...konamiBufferRef.current,
+                    keyLower,
+                ].slice(-KONAMI.length);
                 if (konamiBufferRef.current.join(',') === KONAMI.join(',')) {
                     toggleSecretMode();
                     konamiBufferRef.current = [];
                 }
-                return; // don't process arrow keys as chars
+                return;
             }
 
-            // --- Word matching: only when not in an input ---
             if (inInput) return;
 
             charBufferRef.current += keyLower;

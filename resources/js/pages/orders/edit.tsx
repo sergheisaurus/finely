@@ -25,10 +25,12 @@ import type {
     Merchant,
     Order,
     OrderItem,
+    OrderItemStatus,
+    OrderStatus,
     Transaction,
 } from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
-import { Minus, Plus, Save } from 'lucide-react';
+import { Minus, Plus, Save, Sparkles } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -61,8 +63,7 @@ export default function OrderEdit({ orderId }: { orderId: string }) {
     const [orderUrl, setOrderUrl] = useState('');
     const [orderedAt, setOrderedAt] = useState('');
     const [deliveredAt, setDeliveredAt] = useState('');
-    const [status, setStatus] =
-        useState<(typeof orderStatuses)[number]['value']>('placed');
+    const [status, setStatus] = useState<OrderStatus>('placed');
     const [merchantId, setMerchantId] = useState('');
     const [categoryId, setCategoryId] = useState('');
     const [currency, setCurrency] = useState('CHF');
@@ -120,7 +121,7 @@ export default function OrderEdit({ orderId }: { orderId: string }) {
             );
             setNotes(o.notes || '');
             setItems(
-                (o.items || []).map((it, idx) => ({
+                (o.items || []).map((it: OrderItem, idx: number) => ({
                     name: it.name,
                     quantity: it.quantity,
                     unit_price: it.unit_price ?? null,
@@ -282,13 +283,21 @@ export default function OrderEdit({ orderId }: { orderId: string }) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Edit Order" />
 
-            <div className="space-y-6 p-4 md:p-6">
+            <div className="space-y-6 py-6 sm:space-y-8 sm:py-8">
                 <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold">Edit Order</h1>
-                        <p className="text-muted-foreground">
-                            Update details and items
-                        </p>
+                    <div className="space-y-3">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-sky-200/80 bg-white/85 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-sky-700 uppercase shadow-sm dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-200">
+                            <Sparkles className="h-3.5 w-3.5" />
+                            Order editor
+                        </div>
+                        <div>
+                            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+                                Edit order
+                            </h1>
+                            <p className="text-muted-foreground">
+                                Update order details, items, and linked records.
+                            </p>
+                        </div>
                     </div>
                     <div className="flex gap-2">
                         <Button
@@ -381,7 +390,7 @@ export default function OrderEdit({ orderId }: { orderId: string }) {
                                         <Select
                                             value={status}
                                             onValueChange={(v) =>
-                                                setStatus(v as any)
+                                                setStatus(v as OrderStatus)
                                             }
                                         >
                                             <SelectTrigger>
@@ -651,7 +660,7 @@ export default function OrderEdit({ orderId }: { orderId: string }) {
                                                     value={item.status}
                                                     onValueChange={(v) =>
                                                         updateItem(idx, {
-                                                            status: v as any,
+                                                            status: v as OrderItemStatus,
                                                         })
                                                     }
                                                 >

@@ -62,4 +62,13 @@ class Merchant extends Model
     {
         return $query->where('type', 'person');
     }
+
+    public function scopeVisibleForSecretMode($query, bool $isSecretMode)
+    {
+        if ($isSecretMode) {
+            return $query;
+        }
+
+        return $query->where('is_secret', false);
+    }
 }

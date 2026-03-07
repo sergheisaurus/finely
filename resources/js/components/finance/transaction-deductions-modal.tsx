@@ -1,10 +1,10 @@
+import { SalaryBreakdown } from '@/components/finance/salary-breakdown';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { SalaryBreakdown } from '@/components/finance/salary-breakdown';
 import { formatCurrency, formatDate } from '@/lib/format';
 import type { Transaction } from '@/types/finance';
 

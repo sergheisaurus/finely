@@ -611,8 +611,9 @@ function InvoiceCard({
 
     return (
         <Card
-            className={`group hover-lift overflow-hidden transition-all duration-200 hover:shadow-md ${invoice.status === 'paid' ? 'opacity-70' : ''
-                }`}
+            className={`group hover-lift overflow-hidden transition-all duration-200 hover:shadow-md ${
+                invoice.status === 'paid' ? 'opacity-70' : ''
+            }`}
         >
             <CardContent className="p-4">
                 <div className="flex items-start justify-between">

@@ -1,6 +1,5 @@
 import {
     SidebarGroup,
-    SidebarGroupLabel,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
@@ -11,9 +10,9 @@ import { Link, usePage } from '@inertiajs/react';
 
 export function NavMain({ items = [] }: { items: NavItem[] }) {
     const page = usePage();
+
     return (
         <SidebarGroup className="px-2 py-0">
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => (
                     <SidebarMenuItem key={item.title}>
@@ -23,6 +22,7 @@ export function NavMain({ items = [] }: { items: NavItem[] }) {
                                 resolveUrl(item.href),
                             )}
                             tooltip={{ children: item.title }}
+                            className="h-10 rounded-xl px-3 text-[0.95rem] data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground data-[active=true]:shadow-sm"
                         >
                             <Link href={item.href} prefetch>
                                 {item.icon && <item.icon />}

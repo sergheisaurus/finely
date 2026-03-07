@@ -14,7 +14,6 @@ import { useSecretStore } from '@/stores/useSecretStore';
 
 // Add CSRF token and Secret Mode to all requests
 api.interceptors.request.use((config) => {
-
     // Attach secret mode state to header
     const isSecretMode = useSecretStore.getState().isSecretModeActive;
     if (isSecretMode) {

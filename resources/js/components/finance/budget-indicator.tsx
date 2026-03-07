@@ -148,15 +148,14 @@ export function BudgetIndicator({
         <div
             className={cn(
                 'rounded-lg border p-3 transition-colors',
-                impact?.will_be_over_budget &&
-                'border-red-500/30 bg-red-500/5',
+                impact?.will_be_over_budget && 'border-red-500/30 bg-red-500/5',
                 !impact?.will_be_over_budget &&
-                budget.is_over_budget &&
-                'border-red-500/30 bg-red-500/5',
+                    budget.is_over_budget &&
+                    'border-red-500/30 bg-red-500/5',
                 !impact?.will_be_over_budget &&
-                !budget.is_over_budget &&
-                budget.budget_health === 'warning' &&
-                'border-yellow-500/30 bg-yellow-500/5',
+                    !budget.is_over_budget &&
+                    budget.budget_health === 'warning' &&
+                    'border-yellow-500/30 bg-yellow-500/5',
                 className,
             )}
         >
@@ -190,9 +189,9 @@ export function BudgetIndicator({
                     className={cn(
                         '-mt-2 h-full transition-all duration-300',
                         impact &&
-                        impact.projected_percentage >
-                        budget.spent_percentage &&
-                        '-mt-2',
+                            impact.projected_percentage >
+                                budget.spent_percentage &&
+                            '-mt-2',
                         getHealthColor(),
                     )}
                     style={{ width: `${progressWidth}%` }}

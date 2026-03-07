@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [ "${ALLOW_REMOTE_BUILD:-}" != "1" ]; then
+  echo "ERROR: Remote builds on NAS are disabled by default." >&2
+  echo "If you really want this fallback, re-run with: ALLOW_REMOTE_BUILD=1" >&2
+  exit 1
+fi
+
 # --- CONFIGURATION ---
 NAS_USER="skode-admin"
 NAS_IP="10.10.10.3"
@@ -9,14 +15,26 @@ REMOTE_BUILD_DIR="/volume1/docker/${PROJECT_NAME}_build"
 NAS_DIR="/volume1/docker/${PROJECT_NAME}"
 # ---------------------
 
-# Check for Port Argument
-if [ -z "${1-}" ]; then
-  echo "❌ Error: Port argument required."
-  echo "Usage: $0 <PORT>"
-  exit 1
-fi
+DEFAULT_PORT=${DEFAULT_PORT:-3015}
 
-NAS_PORT="$1"
+detect_existing_port() {
+  local ports
+  ports=$(ssh -o StrictHostKeyChecking=no "${NAS_USER}@${NAS_IP}" "/usr/local/bin/docker ps --filter name=${PROJECT_NAME} --format '{{.Ports}}'" || true)
+  if [[ "$ports" =~ :([0-9]+)-\>8080/tcp ]]; then
+    printf '%s' "${BASH_REMATCH[1]}"
+    return 0
+  fi
+  return 1
+}
+
+NAS_PORT="${1:-}"
+if [ -z "$NAS_PORT" ]; then
+  if NAS_PORT="$(detect_existing_port)"; then
+    :
+  else
+    NAS_PORT="$DEFAULT_PORT"
+  fi
+fi
 
 echo "🚀 Starting REMOTE deployment (Fallback) for ${PROJECT_NAME} on Port ${NAS_PORT}..."
 
@@ -33,7 +51,7 @@ if [ -f "docker-compose.nas.yml" ]; then
     }
     trap cleanup EXIT
 
-    sed -i -E "s/\"[0-9]+:80\"/\"${NAS_PORT}:80\"/g" docker-compose.nas.yml
+    sed -i -E "s/\"[0-9]+:8080\"/\"${NAS_PORT}:8080\"/g" docker-compose.nas.yml
 else
     echo "❌ Error: docker-compose.nas.yml not found."
     exit 1

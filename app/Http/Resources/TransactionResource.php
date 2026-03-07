@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\SecretMode;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -9,7 +10,8 @@ class TransactionResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $isSecretMode = $request->header('X-Secret-Mode') === 'true';
+        $isSecretMode = SecretMode::isActive($request);
+        $hasSecretDetails = $this->resource->hasSecretDetails();
 
         $title = $this->title;
         $categoryId = $this->category_id;
@@ -17,29 +19,17 @@ class TransactionResource extends JsonResource
         $category = new CategoryResource($this->whenLoaded('category'));
         $merchant = new MerchantResource($this->whenLoaded('merchant'));
 
-        // If not in secret mode, check if we need to mask this transaction
-        if (!$isSecretMode) {
-            if ($this->secret_title) {
-                // Mask the title (e.g. "Sex Toy" -> "Amazon Purchase")
-                $title = $this->title; // the real title is actually the clean one, secret_title is the dirty one
+        if ($isSecretMode) {
+            if ($hasSecretDetails && $this->secret_title) {
+                $title = $this->secret_title;
             }
-            if ($this->secret_category_id) {
-                // The transaction is logged under a clean category, but secretly belongs to another
-                $categoryId = $this->category_id;
-            }
-            if ($this->secret_merchant_id) {
-                $merchantId = $this->merchant_id;
-            }
-        } else {
-            // We ARE in secret mode. Show the secret details!
-            if ($this->secret_title) {
-                $title = $this->secret_title; // Reveal dirty title
-            }
-            if ($this->secret_category_id) {
+
+            if ($hasSecretDetails && $this->secret_category_id) {
                 $categoryId = $this->secret_category_id;
                 $category = new CategoryResource($this->whenLoaded('secretCategory'));
             }
-            if ($this->secret_merchant_id) {
+
+            if ($hasSecretDetails && $this->secret_merchant_id) {
                 $merchantId = $this->secret_merchant_id;
                 $merchant = new MerchantResource($this->whenLoaded('secretMerchant'));
             }
@@ -69,14 +59,14 @@ class TransactionResource extends JsonResource
             
             'category' => $category,
             'merchant' => $merchant,
+            'is_secret' => $hasSecretDetails,
             
-            // Raw database fields for the edit form when in secret mode
             'real_title' => $this->title,
-            'secret_title' => $this->secret_title,
+            'secret_title' => $isSecretMode ? $this->secret_title : null,
             'real_category_id' => $this->category_id,
-            'secret_category_id' => $this->secret_category_id,
+            'secret_category_id' => $isSecretMode ? $this->secret_category_id : null,
             'real_merchant_id' => $this->merchant_id,
-            'secret_merchant_id' => $this->secret_merchant_id,
+            'secret_merchant_id' => $isSecretMode ? $this->secret_merchant_id : null,
 
             'attachments' => TransactionAttachmentResource::collection($this->whenLoaded('attachments')),
             'attachments_count' => $this->whenCounted('attachments'),

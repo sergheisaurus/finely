@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\SecretMode;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -9,9 +10,9 @@ class MerchantResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $isSecretMode = $request->header('X-Secret-Mode') === 'true';
+        $isSecretMode = SecretMode::isActive($request);
 
-        if ($this->is_secret && !$isSecretMode) {
+        if ($this->is_secret && ! $isSecretMode) {
             if ($this->cover_merchant_id) {
                 return [
                     'id' => $this->id,

@@ -32,7 +32,7 @@ class TransactionController extends Controller
 
         $transaction = $this->transactionService->createTransaction($data);
 
-        $transaction->load(['category', 'merchant', 'fromAccount', 'toAccount', 'fromCard', 'toCard']);
+        $transaction->load(['category', 'merchant', 'secretCategory', 'secretMerchant', 'fromAccount', 'toAccount', 'fromCard', 'toCard']);
 
         return new TransactionResource($transaction);
     }
@@ -44,6 +44,8 @@ class TransactionController extends Controller
         $transaction->load([
             'category.parent',
             'merchant',
+            'secretCategory.parent',
+            'secretMerchant',
             'fromAccount',
             'toAccount',
             'fromCard',
@@ -60,7 +62,7 @@ class TransactionController extends Controller
 
         $transaction = $this->transactionService->updateTransaction($transaction, $request->validated());
 
-        $transaction->load(['category', 'merchant', 'fromAccount', 'toAccount', 'fromCard', 'toCard']);
+        $transaction->load(['category', 'merchant', 'secretCategory', 'secretMerchant', 'fromAccount', 'toAccount', 'fromCard', 'toCard']);
 
         return new TransactionResource($transaction);
     }

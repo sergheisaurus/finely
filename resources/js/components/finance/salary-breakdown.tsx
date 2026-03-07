@@ -29,10 +29,12 @@ export function SalaryBreakdown({ breakdown, currency }: SalaryBreakdownProps) {
                 >
                     <div className="flex items-center gap-2">
                         <Plus className="h-3 w-3 text-emerald-500" />
-                        <span className="text-sm text-muted-foreground flex gap-1">
+                        <span className="flex gap-1 text-sm text-muted-foreground">
                             {addition.name}
                             {addition.type === 'percentage' && (
-                                <span className="text-xs text-muted-foreground/50">({addition.value}%)</span>
+                                <span className="text-xs text-muted-foreground/50">
+                                    ({addition.value}%)
+                                </span>
                             )}
                         </span>
                     </div>
@@ -44,12 +46,16 @@ export function SalaryBreakdown({ breakdown, currency }: SalaryBreakdownProps) {
 
             {/* Total Additions */}
             {(breakdown.additions?.length ?? 0) > 0 && (
-                <div className="flex items-center justify-between border-t pt-2 border-emerald-500/10">
+                <div className="flex items-center justify-between border-t border-emerald-500/10 pt-2">
                     <span className="text-sm font-medium text-muted-foreground">
                         Total Additions
                     </span>
                     <span className="text-sm font-semibold text-emerald-500">
-                        +{formatCurrency(breakdown.total_additions || 0, currency)}
+                        +
+                        {formatCurrency(
+                            breakdown.total_additions || 0,
+                            currency,
+                        )}
                     </span>
                 </div>
             )}
@@ -62,10 +68,12 @@ export function SalaryBreakdown({ breakdown, currency }: SalaryBreakdownProps) {
                 >
                     <div className="flex items-center gap-2">
                         <Minus className="h-3 w-3 text-red-500" />
-                        <span className="text-sm text-muted-foreground flex gap-1">
+                        <span className="flex gap-1 text-sm text-muted-foreground">
                             {deduction.name}
                             {deduction.type === 'percentage' && (
-                                <span className="text-xs text-muted-foreground/50">({deduction.value}%)</span>
+                                <span className="text-xs text-muted-foreground/50">
+                                    ({deduction.value}%)
+                                </span>
                             )}
                         </span>
                     </div>
@@ -77,7 +85,7 @@ export function SalaryBreakdown({ breakdown, currency }: SalaryBreakdownProps) {
 
             {/* Total Deductions */}
             {(breakdown.deductions?.length ?? 0) > 0 && (
-                <div className="flex items-center justify-between border-t pt-2 border-red-500/10">
+                <div className="flex items-center justify-between border-t border-red-500/10 pt-2">
                     <span className="text-sm font-medium text-muted-foreground">
                         Total Deductions
                     </span>

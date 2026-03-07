@@ -234,7 +234,7 @@ export default function AccountsIndex() {
                                                     {account.cards_count !==
                                                         undefined &&
                                                         account.cards_count >
-                                                        0 && (
+                                                            0 && (
                                                             <span className="rounded-full bg-muted px-2 py-1 text-xs">
                                                                 {
                                                                     account.cards_count

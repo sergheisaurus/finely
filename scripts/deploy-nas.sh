@@ -1,22 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# --- CONFIGURATION ---
-NAS_USER="skode-admin"
-NAS_IP="10.10.10.3"
-PROJECT_NAME="finely"
-# ---------------------
+NAS_HOST=${NAS_HOST:-10.10.10.3}
+NAS_USER=${NAS_USER:-skode-admin}
+NAS_DOCKER_BIN=${NAS_DOCKER_BIN:-/usr/local/bin/docker}
 
-# Check for Port Argument
-if [ -z "${1-}" ]; then
-  echo "❌ Error: Port argument required."
-  echo "Usage: $0 <PORT>"
-  echo "Example: $0 5175"
-  exit 1
-fi
+PROJECT_NAME=${PROJECT_NAME:-finely}
+CONTAINER_NAME=${CONTAINER_NAME:-finely}
+NAS_DIR=${NAS_DIR:-/volume1/docker/${PROJECT_NAME}}
 
-NAS_PORT="$1"
-NAS_DIR="/volume1/docker/${PROJECT_NAME}"
+# The currently published port on the NAS (used when we can't auto-detect).
+DEFAULT_PORT=${DEFAULT_PORT:-3015}
 
 # Detect Docker
 if command -v docker.exe &> /dev/null; then
@@ -28,17 +22,38 @@ else
     exit 1
 fi
 
-echo "🚀 Starting deployment for ${PROJECT_NAME} on Port ${NAS_PORT}..."
+detect_existing_port() {
+  local ports
+  ports=$(ssh -o StrictHostKeyChecking=no "${NAS_USER}@${NAS_HOST}" "${NAS_DOCKER_BIN} ps --filter name=${CONTAINER_NAME} --format '{{.Ports}}'" || true)
+  if [[ "$ports" =~ :([0-9]+)-\>8080/tcp ]]; then
+    printf '%s' "${BASH_REMATCH[1]}"
+    return 0
+  fi
+  return 1
+}
 
-# 0. Update docker-compose.nas.yml with the chosen port
-if [ -f "docker-compose.nas.yml" ]; then
-    echo "⚙️  Updating docker-compose.nas.yml port to ${NAS_PORT}..."
-    # Replace the port mapping "xxxx:8080" or 'xxxx:8080'
-    sed -i -E "s/['\"][0-9]+:8080['\"]/\"${NAS_PORT}:8080\"/g" docker-compose.nas.yml
-else
-    echo "❌ Error: docker-compose.nas.yml not found."
-    exit 1
+NAS_PORT="${1:-}"
+if [ -z "$NAS_PORT" ]; then
+  if NAS_PORT="$(detect_existing_port)"; then
+    :
+  else
+    NAS_PORT="$DEFAULT_PORT"
+  fi
 fi
+
+echo "Deploying ${PROJECT_NAME} to ${NAS_USER}@${NAS_HOST}"
+echo "Using port: ${NAS_PORT}"
+echo "NAS dir: ${NAS_DIR}"
+
+compose_template="docker-compose.nas.yml"
+if [ ! -f "$compose_template" ]; then
+  echo "ERROR: docker-compose.nas.yml not found." >&2
+  exit 1
+fi
+
+compose_tmp="$(mktemp)"
+trap 'rm -f "$compose_tmp"' EXIT
+sed -E "s/\"[0-9]+:8080\"/\"${NAS_PORT}:8080\"/g" "$compose_template" >"$compose_tmp"
 
 # 1. Build the Frontend (Skipped - doing in Docker)
 echo "📦 Building Frontend (In Docker)..."
@@ -48,41 +63,40 @@ echo "📦 Building Frontend (In Docker)..."
 # 2. Build the Docker Image Locally
 echo "🐳 Building Docker Image (Local)..."
 IMAGE_TAG="${PROJECT_NAME}:latest"
-# We need to make sure we are building for linux/amd64 since the NAS is likely x86_64
-# If your machine is arm64 (Mac), use --platform linux/amd64
-$DOCKER_CMD build -t "${IMAGE_TAG}" .
+# If you are on arm64 (Mac), you may need: --platform linux/amd64
+"$DOCKER_CMD" build -t "${IMAGE_TAG}" .
 
 # 3. Save Image and Stream to NAS
 echo "Tx Streaming Docker image to NAS..."
-$DOCKER_CMD save "${IMAGE_TAG}" | ssh "${NAS_USER}@${NAS_IP}" "/usr/local/bin/docker load"
+"$DOCKER_CMD" save "${IMAGE_TAG}" | ssh -o StrictHostKeyChecking=no "${NAS_USER}@${NAS_HOST}" "${NAS_DOCKER_BIN} load"
 
 # 4. Prepare Remote Directory
 echo "📂 Preparing NAS directory: ${NAS_DIR}"
-ssh "${NAS_USER}@${NAS_IP}" "mkdir -p '${NAS_DIR}/storage' '${NAS_DIR}/database'"
+ssh -o StrictHostKeyChecking=no "${NAS_USER}@${NAS_HOST}" "mkdir -p '${NAS_DIR}/storage' '${NAS_DIR}/database'"
 
 # 5. Upload Configuration
 echo "Tx Uploading docker-compose.nas.yml..."
-cat docker-compose.nas.yml | ssh "${NAS_USER}@${NAS_IP}" "cat > '${NAS_DIR}/docker-compose.yml'"
+cat "$compose_tmp" | ssh -o StrictHostKeyChecking=no "${NAS_USER}@${NAS_HOST}" "cat > '${NAS_DIR}/docker-compose.yml'"
 
 # 6. Remote Execution (Restart)
 echo "🔥 Executing remote deployment..."
-ssh "${NAS_USER}@${NAS_IP}" "
+ssh -o StrictHostKeyChecking=no "${NAS_USER}@${NAS_HOST}" "
   cd '${NAS_DIR}' && \
-  /usr/local/bin/docker compose up -d --force-recreate
+  '${NAS_DOCKER_BIN}' compose up -d --force-recreate --remove-orphans
 "
 
 # 7. Post-Deployment: Run Migrations & Permissions
 echo "📦 Running Database Migrations & Optimization..."
 # Ensure storage permissions are correct (serversideup image uses user 999:999 usually, or www-data)
-ssh "${NAS_USER}@${NAS_IP}" "/usr/local/bin/docker exec ${PROJECT_NAME} php artisan migrate --force"
-ssh "${NAS_USER}@${NAS_IP}" "/usr/local/bin/docker exec ${PROJECT_NAME} php artisan optimize"
-ssh "${NAS_USER}@${NAS_IP}" "/usr/local/bin/docker exec ${PROJECT_NAME} php artisan budgets:update-spending"
+ssh -o StrictHostKeyChecking=no "${NAS_USER}@${NAS_HOST}" "${NAS_DOCKER_BIN} exec ${CONTAINER_NAME} php artisan migrate --force"
+ssh -o StrictHostKeyChecking=no "${NAS_USER}@${NAS_HOST}" "${NAS_DOCKER_BIN} exec ${CONTAINER_NAME} php artisan optimize"
+ssh -o StrictHostKeyChecking=no "${NAS_USER}@${NAS_HOST}" "${NAS_DOCKER_BIN} exec ${CONTAINER_NAME} php artisan budgets:update-spending"
 
 
 # 8. Verification
-echo "mag Verify deployment at http://${NAS_IP}:${NAS_PORT}"
+echo "Verify: http://${NAS_HOST}:${NAS_PORT}"
 for i in $(seq 1 30); do
-  if curl -fsS "http://${NAS_IP}:${NAS_PORT}" >/dev/null 2>&1; then
+  if curl -fsS "http://${NAS_HOST}:${NAS_PORT}" >/dev/null 2>&1; then
     echo "✅ Deployment Successful!"
     exit 0
   fi

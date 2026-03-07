@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\SecretMode;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -9,13 +10,11 @@ class CategoryResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $isSecretMode = $request->header('X-Secret-Mode') === 'true';
+        $isSecretMode = SecretMode::isActive($request);
 
         // If it's a secret category and we aren't in secret mode, return the cover instead (if requested directly)
-        if ($this->is_secret && !$isSecretMode) {
+        if ($this->is_secret && ! $isSecretMode) {
             if ($this->cover_category_id) {
-                // Ideally this shouldn't happen during a collection if they are filtered out, 
-                // but for direct lookups, mimic the cover.
                 return [
                     'id' => $this->id,
                     'parent_id' => $this->coverCategory->parent_id ?? null,
@@ -24,7 +23,7 @@ class CategoryResource extends JsonResource
                     'color' => $this->coverCategory->color ?? '#9ca3af',
                     'type' => $this->type,
                     'is_parent' => true,
-                    'is_secret' => true, // Still let UI know it's a secret entity underneath though masked
+                    'is_secret' => true,
                     'parent' => null,
                     'children' => [],
                 ];

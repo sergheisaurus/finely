@@ -51,12 +51,6 @@ function addMonths(date: Date, months: number): Date {
     return d;
 }
 
-function clampDateToRange(value: string, min: string, max: string): string {
-    if (value < min) return min;
-    if (value > max) return max;
-    return value;
-}
-
 function findPointAtOrBefore(
     points: ForecastPoint[],
     date: string,
@@ -279,8 +273,8 @@ export function ForecastTab() {
 
     const currency = scenarioData?.currency ?? baselineData?.currency ?? 'CHF';
 
-    const bPoints = baselineData?.points ?? [];
-    const sPoints = scenarioData?.points ?? [];
+    const bPoints = useMemo(() => baselineData?.points ?? [], [baselineData]);
+    const sPoints = useMemo(() => scenarioData?.points ?? [], [scenarioData]);
 
     const targetPoint = useMemo(
         () => findPointAtOrBefore(sPoints, targetDate),
@@ -291,9 +285,6 @@ export function ForecastTab() {
         () => findPointAtOrBefore(bPoints, targetDate),
         [bPoints, targetDate],
     );
-
-    const targetDelta =
-        (targetPoint?.balance ?? 0) - (targetPointBaseline?.balance ?? 0);
 
     const bStarting = baselineData?.starting_balance ?? 0;
     const sStarting = scenarioData?.starting_balance ?? bStarting;
@@ -562,7 +553,7 @@ export function ForecastTab() {
                                                         p.id === item.id
                                                             ? {
                                                                   ...p,
-                                                                  kind: v as any,
+                                                                  kind: v as ScenarioItem['kind'],
                                                               }
                                                             : p,
                                                     ),
@@ -616,7 +607,7 @@ export function ForecastTab() {
                                                             ? {
                                                                   ...p,
                                                                   frequency:
-                                                                      v as any,
+                                                                      v as ScenarioItem['frequency'],
                                                               }
                                                             : p,
                                                     ),
@@ -692,7 +683,11 @@ export function ForecastTab() {
                         title="End Balance"
                         value={formatCurrency(sProjected, currency)}
                         icon={TrendingUp}
-                        description={`in ${horizonMonths} months`}
+                        description={
+                            scenarioItems.length > 0
+                                ? `${deltaProjected >= 0 ? '+' : ''}${formatCurrency(deltaProjected, currency)} vs baseline`
+                                : `in ${horizonMonths} months`
+                        }
                         isLoading={isLoading}
                     />
                     <StatsCard
@@ -737,6 +732,22 @@ export function ForecastTab() {
                                             currency,
                                         )}{' '}
                                         (base)
+                                        {targetPoint && (
+                                            <>
+                                                {' '}
+                                                •{' '}
+                                                {targetPoint.balance -
+                                                    targetPointBaseline.balance >
+                                                0
+                                                    ? '+'
+                                                    : ''}
+                                                {formatCurrency(
+                                                    targetPoint.balance -
+                                                        targetPointBaseline.balance,
+                                                    currency,
+                                                )}
+                                            </>
+                                        )}
                                     </p>
                                 )}
                         </CardContent>
@@ -747,11 +758,7 @@ export function ForecastTab() {
                 <LineChartCard
                     title="Projected Balance"
                     description="Daily balance simulation over time"
-                    data={
-                        scenarioItems.length > 0
-                            ? (mergedDaily as any)
-                            : (sPoints as any)
-                    }
+                    data={scenarioItems.length > 0 ? mergedDaily : sPoints}
                     dataKeys={
                         scenarioItems.length > 0
                             ? [
@@ -781,6 +788,7 @@ export function ForecastTab() {
                     valueFormatter={(val) =>
                         formatCurrency(Number(val || 0), currency)
                     }
+                    xAxisInterval={xInterval}
                     height={400}
                     isLoading={isLoading}
                 />

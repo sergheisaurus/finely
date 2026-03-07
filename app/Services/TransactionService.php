@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\RecurringIncome;
 use App\Models\Transaction;
+use App\Support\SecretMode;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -16,19 +17,42 @@ class TransactionService
 
     public function getFilteredTransactions(Request $request, int $userId): LengthAwarePaginator
     {
+        $isSecretMode = SecretMode::isActive($request);
+
         $query = Transaction::where('user_id', $userId)
-            ->with(['category', 'merchant', 'fromAccount', 'toAccount', 'fromCard', 'toCard']);
+            ->with([
+                'category',
+                'merchant',
+                'secretCategory',
+                'secretMerchant',
+                'fromAccount',
+                'toAccount',
+                'fromCard',
+                'toCard',
+            ]);
 
         if ($request->has('type')) {
             $query->where('type', $request->type);
         }
 
         if ($request->has('category_id')) {
-            $query->where('category_id', $request->category_id);
+            $query->where(function ($subQuery) use ($request, $isSecretMode) {
+                $subQuery->where('category_id', $request->category_id);
+
+                if ($isSecretMode) {
+                    $subQuery->orWhere('secret_category_id', $request->category_id);
+                }
+            });
         }
 
         if ($request->has('merchant_id')) {
-            $query->where('merchant_id', $request->merchant_id);
+            $query->where(function ($subQuery) use ($request, $isSecretMode) {
+                $subQuery->where('merchant_id', $request->merchant_id);
+
+                if ($isSecretMode) {
+                    $subQuery->orWhere('secret_merchant_id', $request->merchant_id);
+                }
+            });
         }
 
         if ($request->has('account_id')) {
@@ -61,10 +85,14 @@ class TransactionService
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search, $isSecretMode) {
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
                     ->orWhere('amount', 'like', "%{$search}%");
+
+                if ($isSecretMode) {
+                    $q->orWhere('secret_title', 'like', "%{$search}%");
+                }
             });
         }
 

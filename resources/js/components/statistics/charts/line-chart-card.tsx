@@ -38,7 +38,7 @@ interface LineChartCardProps {
         color?: string;
     }[];
     xAxisKey: string;
-    xAxisTickFormatter?: (value: any) => string;
+    xAxisTickFormatter?: (value: string | number) => string;
     xAxisInterval?: number | 'preserveStartEnd';
     isLoading?: boolean;
     className?: string;

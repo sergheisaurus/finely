@@ -119,6 +119,13 @@ class Transaction extends Model
         return $this->type === 'card_payment';
     }
 
+    public function hasSecretDetails(): bool
+    {
+        return filled($this->secret_title)
+            || $this->secret_category_id !== null
+            || $this->secret_merchant_id !== null;
+    }
+
     public function scopeIncome($query)
     {
         return $query->where('type', 'income');

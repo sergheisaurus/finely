@@ -61,7 +61,9 @@ export function QuickCreateMerchantModal({
             reset();
             onOpenChange(false);
         } catch (err: unknown) {
-            const e = err as { response?: { data?: { errors?: Record<string, string> } } };
+            const e = err as {
+                response?: { data?: { errors?: Record<string, string> } };
+            };
             if (e.response?.data?.errors) {
                 setErrors(e.response.data.errors);
             } else {
@@ -97,7 +99,11 @@ export function QuickCreateMerchantModal({
                             required
                             autoFocus
                         />
-                        {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+                        {errors.name && (
+                            <p className="text-sm text-red-500">
+                                {errors.name}
+                            </p>
+                        )}
                     </div>
 
                     {/* Type */}
@@ -105,7 +111,9 @@ export function QuickCreateMerchantModal({
                         <Label htmlFor="merchant-type">Type</Label>
                         <Select
                             value={type}
-                            onValueChange={(v: 'company' | 'person') => setType(v)}
+                            onValueChange={(v: 'company' | 'person') =>
+                                setType(v)
+                            }
                         >
                             <SelectTrigger id="merchant-type">
                                 <SelectValue />
@@ -124,7 +132,10 @@ export function QuickCreateMerchantModal({
                             checked={isSecret}
                             onCheckedChange={(v) => setIsSecret(!!v)}
                         />
-                        <Label htmlFor="merchant-secret" className="cursor-pointer">
+                        <Label
+                            htmlFor="merchant-secret"
+                            className="cursor-pointer"
+                        >
                             🔒 Secret merchant
                         </Label>
                     </div>
@@ -133,12 +144,18 @@ export function QuickCreateMerchantModal({
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => { reset(); onOpenChange(false); }}
+                            onClick={() => {
+                                reset();
+                                onOpenChange(false);
+                            }}
                             disabled={isSubmitting}
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={isSubmitting || !name.trim()}>
+                        <Button
+                            type="submit"
+                            disabled={isSubmitting || !name.trim()}
+                        >
                             {isSubmitting ? 'Creating…' : 'Create Merchant'}
                         </Button>
                     </DialogFooter>

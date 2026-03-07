@@ -16,9 +16,10 @@ import {
     Package,
     Plus,
     Search,
+    Sparkles,
     Trash2,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -56,15 +57,10 @@ export default function OrdersIndex({
     orders: { data: Order[] };
     stats: OrderStats;
 }) {
-    const [orders, setOrders] = useState<Order[]>(initialOrders.data);
-    const [stats, setStats] = useState<OrderStats>(initialStats);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState<'all' | Order['status']>('all');
-
-    useEffect(() => {
-        setOrders(initialOrders.data);
-        setStats(initialStats);
-    }, [initialOrders, initialStats]);
+    const orders = initialOrders.data;
+    const stats = initialStats;
 
     const filteredOrders = useMemo(() => {
         return orders.filter((o) => {
@@ -110,28 +106,37 @@ export default function OrdersIndex({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Orders" />
 
-            <div className="space-y-6 p-4 md:p-6">
-                <div className="animate-fade-in-up flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-2xl font-bold text-transparent md:text-3xl dark:from-white dark:to-slate-400">
-                            Orders
-                        </h1>
-                        <p className="text-muted-foreground">
-                            Track purchases, delivery, and items
-                        </p>
-                    </div>
+            <div className="space-y-6 py-6 sm:space-y-8 sm:py-8">
+                <section className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-gradient-to-br from-white via-white to-sky-50/70 px-5 py-6 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.35)] sm:px-6 sm:py-7 dark:from-card dark:via-card dark:to-sky-950/20">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="space-y-3">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-sky-200/80 bg-white/85 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-sky-700 uppercase shadow-sm dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-200">
+                                <Sparkles className="h-3.5 w-3.5" />
+                                Purchase tracking
+                            </div>
+                            <div>
+                                <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                                    Orders
+                                </h1>
+                                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+                                    Keep orders, delivery status, totals, and
+                                    linked transactions in one calmer flow.
+                                </p>
+                            </div>
+                        </div>
 
-                    <Button
-                        className="bg-gradient-to-r from-slate-900 to-slate-700 shadow-lg shadow-slate-900/15 transition-all hover:from-slate-950 hover:to-slate-800"
-                        onClick={() => router.visit('/orders/create')}
-                    >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Order
-                    </Button>
-                </div>
+                        <Button
+                            className="rounded-full px-5"
+                            onClick={() => router.visit('/orders/create')}
+                        >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Order
+                        </Button>
+                    </div>
+                </section>
 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <Card className="animate-fade-in-up stagger-1 hover-lift border-l-4 border-l-slate-600">
+                    <Card className="border-border/70 bg-card/90">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -149,7 +154,7 @@ export default function OrdersIndex({
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-2 hover-lift border-l-4 border-l-green-600">
+                    <Card className="border-border/70 bg-card/90">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -167,7 +172,7 @@ export default function OrdersIndex({
                         </CardContent>
                     </Card>
 
-                    <Card className="animate-fade-in-up stagger-3 hover-lift border-l-4 border-l-blue-600 sm:col-span-2 lg:col-span-1">
+                    <Card className="border-border/70 bg-card/90 sm:col-span-2 lg:col-span-1">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
@@ -189,7 +194,7 @@ export default function OrdersIndex({
                     </Card>
                 </div>
 
-                <Card className="animate-fade-in-up stagger-4">
+                <Card className="border-border/70 bg-card/90">
                     <CardContent className="p-6">
                         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                             <Tabs
@@ -243,7 +248,7 @@ export default function OrdersIndex({
                                 filteredOrders.map((order) => (
                                     <div
                                         key={order.id}
-                                        className="group flex items-center justify-between rounded-lg border bg-card p-3 transition-all hover:bg-accent/5"
+                                        className="group flex items-center justify-between rounded-[1.25rem] border border-border/70 bg-background/70 p-3 transition-all hover:border-primary/25 hover:bg-accent/35"
                                     >
                                         <button
                                             type="button"

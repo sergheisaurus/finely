@@ -1,16 +1,19 @@
 import {
+    DropdownMenuCheckboxItem,
     DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
+    DropdownMenuShortcut,
 } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
+import { useSecretStore } from '@/stores/useSecretStore';
 import { type User } from '@/types';
 import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { EyeOff, LogOut, Settings } from 'lucide-react';
 
 interface UserMenuContentProps {
     user: User;
@@ -18,6 +21,7 @@ interface UserMenuContentProps {
 
 export function UserMenuContent({ user }: UserMenuContentProps) {
     const cleanup = useMobileNavigation();
+    const { isSecretModeActive, setSecretMode } = useSecretStore();
 
     const handleLogout = () => {
         cleanup();
@@ -33,6 +37,16 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+                <DropdownMenuCheckboxItem
+                    checked={isSecretModeActive}
+                    onCheckedChange={(checked) =>
+                        setSecretMode(Boolean(checked))
+                    }
+                >
+                    <EyeOff className="mr-2 h-4 w-4" />
+                    Privacy mode
+                    <DropdownMenuShortcut>Ctrl+Shift+.</DropdownMenuShortcut>
+                </DropdownMenuCheckboxItem>
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full"

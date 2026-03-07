@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
+use App\Support\SecretMode;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -12,8 +13,9 @@ class CategoryController extends Controller
 {
     public function index(Request $request): Response
     {
-        // Categories seem to be global based on the API controller logic
-        $categories = Category::with(['parent'])
+        $categories = $request->user()->categories()
+            ->visibleForSecretMode(SecretMode::isActive($request))
+            ->with(['parent', 'coverCategory'])
             ->withCount('transactions')
             ->orderBy('name')
             ->get();

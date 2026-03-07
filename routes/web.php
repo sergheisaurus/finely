@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\SubscriptionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -104,16 +105,15 @@ Route::middleware(['auth', 'verified', 'onboarding'])->name('pages.')->group(fun
     })->name('merchants.edit');
 
     // Subscriptions
-    Route::get('subscriptions', function () {
-        return Inertia::render('subscriptions/index');
-    })->name('subscriptions.index');
+    Route::get('subscriptions', [SubscriptionController::class, 'index'])
+        ->name('subscriptions.index');
 
     Route::get('subscriptions/create', function () {
         return Inertia::render('subscriptions/create');
     })->name('subscriptions.create');
 
     Route::get('subscriptions/{id}', function ($id) {
-        return Inertia::render('subscriptions/view', ['subscriptionId' => $id]);
+        return Inertia::render('subscriptions/show', ['subscriptionId' => $id]);
     })->name('subscriptions.view');
 
     Route::get('subscriptions/{id}/edit', function ($id) {

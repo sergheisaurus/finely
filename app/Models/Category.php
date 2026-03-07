@@ -84,4 +84,13 @@ class Category extends Model
     {
         return $query->where('type', 'expense');
     }
+
+    public function scopeVisibleForSecretMode($query, bool $isSecretMode)
+    {
+        if ($isSecretMode) {
+            return $query;
+        }
+
+        return $query->where('is_secret', false);
+    }
 }

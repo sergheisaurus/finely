@@ -1,6 +1,6 @@
 import AppLogoIcon from '@/components/app-logo-icon';
-import { dashboard } from '@/routes/pages';
 import { login, register } from '@/routes';
+import { dashboard } from '@/routes/pages';
 import { type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import {

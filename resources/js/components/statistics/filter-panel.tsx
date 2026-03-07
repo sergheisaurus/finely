@@ -412,7 +412,7 @@ export function FilterPanel({
                                                 )}
                                             </div>
                                             <ToggleGroup
-                                                type="multiple"
+                                                multiple
                                                 value={filters.type}
                                                 onValueChange={(value) =>
                                                     onFilterChange(
