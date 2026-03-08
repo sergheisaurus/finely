@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\RecurringIncome;
 use App\Models\Transaction;
 use App\Support\SecretMode;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -31,6 +32,8 @@ class TransactionService
                 'toAccount',
                 'fromCard',
                 'toCard',
+                'fromCard.bankAccount',
+                'toCard.bankAccount',
             ]);
 
         if ($request->has('type')) {
@@ -125,7 +128,9 @@ class TransactionService
             $query->orderBy('id', $sortDir);
         }
 
-        return $query->paginate($request->get('per_page', 20));
+        $paginator = $query->paginate($request->get('per_page', 20));
+
+        return $this->attachBalanceSnapshots($paginator);
     }
 
     public function createTransaction(array $data): Transaction
@@ -496,5 +501,231 @@ class TransactionService
         ];
 
         return $baseMetadata;
+    }
+
+    private function attachBalanceSnapshots(LengthAwarePaginator $paginator): LengthAwarePaginator
+    {
+        $paginator->setCollection(
+            $paginator->getCollection()->map(function (Transaction $transaction) {
+                $transaction->setAttribute(
+                    'balance_snapshots',
+                    $this->buildBalanceSnapshots($transaction),
+                );
+
+                return $transaction;
+            }),
+        );
+
+        return $paginator;
+    }
+
+    private function buildBalanceSnapshots(Transaction $transaction): array
+    {
+        $snapshots = [];
+
+        if ($transaction->from_account_id && $transaction->fromAccount) {
+            $snapshots[] = $this->makeAccountBalanceSnapshot(
+                $transaction,
+                $transaction->fromAccount,
+                $transaction->type === 'transfer'
+                    ? 'From account after'
+                    : 'Account after',
+            );
+        }
+
+        if ($transaction->to_account_id && $transaction->toAccount) {
+            $snapshots[] = $this->makeAccountBalanceSnapshot(
+                $transaction,
+                $transaction->toAccount,
+                $transaction->type === 'transfer'
+                    ? 'To account after'
+                    : 'Account after',
+            );
+        }
+
+        if (
+            $transaction->fromCard
+            && $transaction->fromCard->isDebit()
+            && $transaction->fromCard->bankAccount
+        ) {
+            $snapshots[] = $this->makeAccountBalanceSnapshot(
+                $transaction,
+                $transaction->fromCard->bankAccount,
+                'Account after',
+            );
+        }
+
+        if (
+            $transaction->toCard
+            && $transaction->toCard->isDebit()
+            && $transaction->toCard->bankAccount
+        ) {
+            $snapshots[] = $this->makeAccountBalanceSnapshot(
+                $transaction,
+                $transaction->toCard->bankAccount,
+                'Account after',
+            );
+        }
+
+        if ($transaction->fromCard && $transaction->fromCard->isCredit()) {
+            $snapshots[] = $this->makeCardBalanceSnapshot(
+                $transaction,
+                $transaction->fromCard,
+                'Card balance after',
+            );
+        }
+
+        if ($transaction->toCard && $transaction->toCard->isCredit()) {
+            $snapshots[] = $this->makeCardBalanceSnapshot(
+                $transaction,
+                $transaction->toCard,
+                'Card balance after',
+            );
+        }
+
+        return array_values(array_reduce($snapshots, function (array $carry, array $snapshot) {
+            $carry[$snapshot['kind'].':'.$snapshot['id'].':'.$snapshot['label']] = $snapshot;
+
+            return $carry;
+        }, []));
+    }
+
+    private function makeAccountBalanceSnapshot(
+        Transaction $transaction,
+        \App\Models\BankAccount $account,
+        string $label,
+    ): array {
+        $laterImpact = $this->calculateLaterAccountImpact($transaction, $account->id);
+
+        return [
+            'kind' => 'account',
+            'id' => $account->id,
+            'name' => $account->name,
+            'label' => $label,
+            'currency' => $account->currency,
+            'balance' => round((float) $account->balance - $laterImpact, 2),
+        ];
+    }
+
+    private function makeCardBalanceSnapshot(
+        Transaction $transaction,
+        \App\Models\Card $card,
+        string $label,
+    ): array {
+        $laterImpact = $this->calculateLaterCreditCardImpact($transaction, $card->id);
+
+        return [
+            'kind' => 'card',
+            'id' => $card->id,
+            'name' => $card->card_holder_name,
+            'label' => $label,
+            'currency' => $card->currency,
+            'balance' => round((float) $card->current_balance - $laterImpact, 2),
+        ];
+    }
+
+    private function calculateLaterAccountImpact(Transaction $transaction, int $accountId): float
+    {
+        return round(
+            Transaction::query()
+                ->where('user_id', $transaction->user_id)
+                ->where(function ($query) use ($accountId) {
+                    $query->where('from_account_id', $accountId)
+                        ->orWhere('to_account_id', $accountId)
+                        ->orWhereHas('fromCard', function ($cardQuery) use ($accountId) {
+                            $cardQuery->where('type', 'debit')
+                                ->where('bank_account_id', $accountId);
+                        })
+                        ->orWhereHas('toCard', function ($cardQuery) use ($accountId) {
+                            $cardQuery->where('type', 'debit')
+                                ->where('bank_account_id', $accountId);
+                        });
+                })
+                ->where(fn ($query) => $this->applyLaterThanConstraint($query, $transaction))
+                ->with(['fromCard', 'toCard'])
+                ->get()
+                ->sum(fn (Transaction $item) => $this->getBankAccountImpact($item, $accountId)),
+            2,
+        );
+    }
+
+    private function calculateLaterCreditCardImpact(Transaction $transaction, int $cardId): float
+    {
+        return round(
+            Transaction::query()
+                ->where('user_id', $transaction->user_id)
+                ->where(function ($query) use ($cardId) {
+                    $query->where('from_card_id', $cardId)
+                        ->orWhere('to_card_id', $cardId);
+                })
+                ->where(fn ($query) => $this->applyLaterThanConstraint($query, $transaction))
+                ->get()
+                ->sum(fn (Transaction $item) => $this->getCreditCardImpact($item, $cardId)),
+            2,
+        );
+    }
+
+    private function applyLaterThanConstraint($query, Transaction $transaction): void
+    {
+        /** @var CarbonInterface $createdAt */
+        $createdAt = $transaction->created_at;
+
+        $query->whereDate('transaction_date', '>', $transaction->transaction_date)
+            ->orWhere(function ($sameDateQuery) use ($transaction, $createdAt) {
+                $sameDateQuery->whereDate('transaction_date', $transaction->transaction_date)
+                    ->where(function ($sameMomentQuery) use ($transaction, $createdAt) {
+                        $sameMomentQuery->where('created_at', '>', $createdAt)
+                            ->orWhere(function ($idQuery) use ($transaction, $createdAt) {
+                                $idQuery->where('created_at', $createdAt)
+                                    ->where('id', '>', $transaction->id);
+                            });
+                    });
+            });
+    }
+
+    private function getBankAccountImpact(Transaction $transaction, int $accountId): float
+    {
+        $amount = (float) $transaction->amount;
+
+        return match ($transaction->type) {
+            'expense' => $this->matchesExpenseAccount($transaction, $accountId) ? -$amount : 0.0,
+            'income' => $this->matchesIncomeAccount($transaction, $accountId) ? $amount : 0.0,
+            'transfer' => ($transaction->from_account_id === $accountId ? -$amount : 0.0)
+                + ($transaction->to_account_id === $accountId ? $amount : 0.0),
+            'card_payment' => $transaction->from_account_id === $accountId ? -$amount : 0.0,
+            default => 0.0,
+        };
+    }
+
+    private function getCreditCardImpact(Transaction $transaction, int $cardId): float
+    {
+        $amount = (float) $transaction->amount;
+
+        return match ($transaction->type) {
+            'expense' => $transaction->from_card_id === $cardId ? $amount : 0.0,
+            'income' => $transaction->to_card_id === $cardId ? -$amount : 0.0,
+            'card_payment' => $transaction->to_card_id === $cardId ? -$amount : 0.0,
+            default => 0.0,
+        };
+    }
+
+    private function matchesExpenseAccount(Transaction $transaction, int $accountId): bool
+    {
+        if ($transaction->from_account_id === $accountId) {
+            return true;
+        }
+
+        return $transaction->fromCard?->isDebit()
+            && $transaction->fromCard->bank_account_id === $accountId;
+    }
+
+    private function matchesIncomeAccount(Transaction $transaction, int $accountId): bool
+    {
+        if ($transaction->to_account_id === $accountId) {
+            return true;
+        }
+
+        return $transaction->toCard?->isDebit()
+            && $transaction->toCard->bank_account_id === $accountId;
     }
 }

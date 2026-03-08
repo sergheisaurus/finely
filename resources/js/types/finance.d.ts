@@ -98,10 +98,20 @@ export interface Transaction {
     attachments_count?: number;
     is_secret?: boolean;
     metadata?: TransactionMetadata | null;
+    balance_snapshots?: TransactionBalanceSnapshot[];
     transactionable_type?: string;
     transactionable_id?: number;
     created_at: string;
     updated_at: string;
+}
+
+export interface TransactionBalanceSnapshot {
+    kind: 'account' | 'card';
+    id: number;
+    name: string;
+    label: string;
+    currency: string;
+    balance: number;
 }
 
 export interface TransactionAttachment {

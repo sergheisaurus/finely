@@ -73,6 +73,11 @@ class TransactionResource extends JsonResource
             'transactionable_type' => $this->transactionable_type,
             'transactionable_id' => $this->transactionable_id,
             'metadata' => $this->metadata,
+            'balance_snapshots' => $this->when(
+                isset($this->balance_snapshots),
+                $this->balance_snapshots,
+                [],
+            ),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

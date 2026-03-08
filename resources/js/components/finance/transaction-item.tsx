@@ -2,6 +2,7 @@ import { AccountBadge } from '@/components/finance/account-badge';
 import { CardBadge } from '@/components/finance/card-badge';
 import { CategoryBadge } from '@/components/finance/category-badge';
 import { MerchantBadge } from '@/components/finance/merchant-badge';
+import { TransactionBalanceSnapshots } from '@/components/finance/transaction-balance-snapshots';
 import { TransactionTypeBadge } from '@/components/finance/transaction-type-badge';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate } from '@/lib/format';
@@ -142,6 +143,10 @@ export function TransactionItem({
                             </span>
                         )}
                 </div>
+
+                <TransactionBalanceSnapshots
+                    snapshots={transaction.balance_snapshots}
+                />
             </div>
 
             {/* Amount */}

@@ -2,6 +2,7 @@ import { AccountBadge } from '@/components/finance/account-badge';
 import { CardBadge } from '@/components/finance/card-badge';
 import { CategoryBadge } from '@/components/finance/category-badge';
 import { MerchantBadge } from '@/components/finance/merchant-badge';
+import { TransactionBalanceSnapshots } from '@/components/finance/transaction-balance-snapshots';
 import { Button } from '@/components/ui/button';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -24,6 +25,8 @@ export function TransactionSplitGroupItem({
             (a.metadata?.split?.index ?? 1) - (b.metadata?.split?.index ?? 1),
     );
     const primaryTransaction = orderedTransactions[0];
+    const finalTransaction =
+        orderedTransactions[orderedTransactions.length - 1];
     const totalAmount =
         primaryTransaction.metadata?.split?.total_amount ??
         orderedTransactions.reduce((sum, item) => sum + item.amount, 0);
@@ -117,6 +120,10 @@ export function TransactionSplitGroupItem({
                             </div>
                         ))}
                     </div>
+
+                    <TransactionBalanceSnapshots
+                        snapshots={finalTransaction.balance_snapshots}
+                    />
                 </div>
 
                 <div className="text-right">
