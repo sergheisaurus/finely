@@ -138,6 +138,96 @@ class Subscription extends Model
         };
     }
 
+    public function calculateInitialBillingDate(?Carbon $fromDate = null): Carbon
+    {
+        $fromDate = ($fromDate ?? $this->start_date)->copy();
+
+        return match ($this->billing_cycle) {
+            'daily' => $fromDate,
+            'weekly' => $this->calculateInitialWeeklyDate($fromDate),
+            'monthly' => $this->calculateInitialMonthlyDate($fromDate),
+            'quarterly' => $this->calculateInitialQuarterlyDate($fromDate),
+            'yearly' => $this->calculateInitialYearlyDate($fromDate),
+            default => $fromDate,
+        };
+    }
+
+    protected function calculateInitialWeeklyDate(Carbon $fromDate): Carbon
+    {
+        if ($this->billing_day === null) {
+            return $fromDate;
+        }
+
+        $candidate = $fromDate->copy()->startOfWeek()->addDays($this->billing_day);
+
+        if ($candidate->lt($fromDate)) {
+            $candidate->addWeek();
+        }
+
+        return $candidate;
+    }
+
+    protected function calculateInitialMonthlyDate(Carbon $fromDate): Carbon
+    {
+        if ($this->billing_day === null) {
+            return $fromDate;
+        }
+
+        $candidate = $fromDate->copy();
+        $candidate->day(min($this->billing_day, $candidate->daysInMonth));
+
+        if ($candidate->lt($fromDate)) {
+            $candidate->addMonth();
+            $candidate->day(min($this->billing_day, $candidate->daysInMonth));
+        }
+
+        return $candidate;
+    }
+
+    protected function calculateInitialQuarterlyDate(Carbon $fromDate): Carbon
+    {
+        if ($this->billing_day === null) {
+            return $fromDate;
+        }
+
+        $candidate = $fromDate->copy();
+        $candidate->day(min($this->billing_day, $candidate->daysInMonth));
+
+        if ($candidate->lt($fromDate)) {
+            $candidate->addMonths(3);
+            $candidate->day(min($this->billing_day, $candidate->daysInMonth));
+        }
+
+        return $candidate;
+    }
+
+    protected function calculateInitialYearlyDate(Carbon $fromDate): Carbon
+    {
+        $candidate = $fromDate->copy();
+
+        if ($this->billing_month !== null) {
+            $candidate->month($this->billing_month);
+        }
+
+        if ($this->billing_day !== null) {
+            $candidate->day(min($this->billing_day, $candidate->daysInMonth));
+        }
+
+        if ($candidate->lt($fromDate)) {
+            $candidate->addYear();
+
+            if ($this->billing_month !== null) {
+                $candidate->month($this->billing_month);
+            }
+
+            if ($this->billing_day !== null) {
+                $candidate->day(min($this->billing_day, $candidate->daysInMonth));
+            }
+        }
+
+        return $candidate;
+    }
+
     protected function calculateNextWeeklyDate(Carbon $fromDate): Carbon
     {
         $next = $fromDate->copy()->addWeek();

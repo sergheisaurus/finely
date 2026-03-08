@@ -1,6 +1,16 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { DynamicIcon } from '@/components/ui/dynamic-icon';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
@@ -30,6 +40,14 @@ const billingCycleLabels: Record<string, string> = {
     yearly: 'Yearly',
 };
 
+const formatDateForInput = (value?: string | null) => {
+    if (!value) {
+        return new Date().toISOString().split('T')[0];
+    }
+
+    return value.slice(0, 10);
+};
+
 export default function SubscriptionShow({
     subscriptionId,
 }: {
@@ -38,6 +56,11 @@ export default function SubscriptionShow({
     const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isPayDialogOpen, setIsPayDialogOpen] = useState(false);
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+    const [paymentDate, setPaymentDate] = useState(
+        new Date().toISOString().split('T')[0],
+    );
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -70,6 +93,14 @@ export default function SubscriptionShow({
         fetchData();
     }, [fetchData]);
 
+    useEffect(() => {
+        if (!subscription) {
+            return;
+        }
+
+        setPaymentDate(formatDateForInput(subscription.next_billing_date));
+    }, [subscription]);
+
     const handleToggle = async () => {
         if (!subscription) return;
         try {
@@ -89,13 +120,16 @@ export default function SubscriptionShow({
     const handleProcessPayment = async () => {
         if (!subscription) return;
 
-        // Optimistically update
+        setIsProcessingPayment(true);
         const toastId = toast.loading('Processing payment...');
 
         try {
-            await api.post(`/subscriptions/${subscription.id}/process`);
+            await api.post(`/subscriptions/${subscription.id}/process`, {
+                transaction_date: paymentDate,
+            });
             toast.dismiss(toastId);
             toast.success('Payment processed successfully');
+            setIsPayDialogOpen(false);
             await fetchData();
         } catch (error: unknown) {
             toast.dismiss(toastId);
@@ -106,6 +140,8 @@ export default function SubscriptionShow({
             } else {
                 toast.error('Failed to process payment');
             }
+        } finally {
+            setIsProcessingPayment(false);
         }
     };
 
@@ -214,12 +250,12 @@ export default function SubscriptionShow({
                     <div className="flex gap-2">
                         <Button
                             variant="outline"
-                            onClick={handleProcessPayment}
+                            onClick={() => setIsPayDialogOpen(true)}
                             disabled={!subscription.is_active}
                             title={
                                 !subscription.is_active
                                     ? 'Activate subscription to process payment'
-                                    : 'Manually record a payment'
+                                    : 'Choose how to record a payment'
                             }
                         >
                             <CreditCard className="mr-2 h-4 w-4" />
@@ -475,6 +511,73 @@ export default function SubscriptionShow({
                     </Card>
                 </div>
             </div>
+
+            <Dialog open={isPayDialogOpen} onOpenChange={setIsPayDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Record Subscription Payment</DialogTitle>
+                        <DialogDescription>
+                            This payment will clear the cycle currently due on{' '}
+                            {subscription.next_billing_date
+                                ? new Date(
+                                      subscription.next_billing_date,
+                                  ).toLocaleDateString()
+                                : 'the next scheduled date'}
+                            .
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-4">
+                        <div className="rounded-lg bg-muted p-4">
+                            <p className="text-sm text-muted-foreground">
+                                Recording payment for
+                            </p>
+                            <p className="text-2xl font-bold">
+                                {formatCurrency(
+                                    subscription.amount,
+                                    subscription.currency,
+                                )}
+                            </p>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Next billing will advance from the due cycle, so
+                                backfilled payments do not skip a month.
+                            </p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="payment_date">Payment date</Label>
+                            <Input
+                                id="payment_date"
+                                type="date"
+                                value={paymentDate}
+                                onChange={(e) => setPaymentDate(e.target.value)}
+                            />
+                            <p className="text-sm text-muted-foreground">
+                                Use the real charge date if you are backfilling
+                                an older payment.
+                            </p>
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsPayDialogOpen(false)}
+                            disabled={isProcessingPayment}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleProcessPayment}
+                            disabled={isProcessingPayment || !paymentDate}
+                        >
+                            {isProcessingPayment
+                                ? 'Processing...'
+                                : 'Save Payment'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

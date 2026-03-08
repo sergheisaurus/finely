@@ -1,4 +1,5 @@
 import { TransactionItem } from '@/components/finance/transaction-item';
+import { TransactionSplitGroupItem } from '@/components/finance/transaction-split-group-item';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Transaction } from '@/types/finance';
 
@@ -8,6 +9,7 @@ interface TransactionListProps {
     onTransactionClick?: (transaction: Transaction) => void;
     onEdit?: (transaction: Transaction) => void;
     onDelete?: (transaction: Transaction) => void;
+    groupSplits?: boolean;
 }
 
 export function TransactionList({
@@ -16,6 +18,7 @@ export function TransactionList({
     onTransactionClick,
     onEdit,
     onDelete,
+    groupSplits = false,
 }: TransactionListProps) {
     if (isLoading) {
         return (
@@ -38,17 +41,60 @@ export function TransactionList({
         );
     }
 
+    const groupedTransactions = groupSplits
+        ? transactions.reduce<
+              Array<
+                  | { kind: 'single'; transaction: Transaction }
+                  | { kind: 'split'; transactions: Transaction[] }
+              >
+          >((items, transaction) => {
+              const groupId = transaction.metadata?.split?.group_id;
+
+              if (!groupId) {
+                  items.push({ kind: 'single', transaction });
+                  return items;
+              }
+
+              const existingGroup = items.find(
+                  (item) =>
+                      item.kind === 'split' &&
+                      item.transactions[0]?.metadata?.split?.group_id ===
+                          groupId,
+              );
+
+              if (existingGroup && existingGroup.kind === 'split') {
+                  existingGroup.transactions.push(transaction);
+                  return items;
+              }
+
+              items.push({ kind: 'split', transactions: [transaction] });
+              return items;
+          }, [])
+        : transactions.map((transaction) => ({
+              kind: 'single' as const,
+              transaction,
+          }));
+
     return (
         <div className="divide-y divide-border/70 rounded-[1.25rem] border border-border/70 bg-background/70">
-            {transactions.map((transaction) => (
-                <TransactionItem
-                    key={transaction.id}
-                    transaction={transaction}
-                    onClick={() => onTransactionClick?.(transaction)}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                />
-            ))}
+            {groupedTransactions.map((item) =>
+                item.kind === 'split' ? (
+                    <TransactionSplitGroupItem
+                        key={item.transactions[0]?.metadata?.split?.group_id}
+                        transactions={item.transactions}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                    />
+                ) : (
+                    <TransactionItem
+                        key={item.transaction.id}
+                        transaction={item.transaction}
+                        onClick={() => onTransactionClick?.(item.transaction)}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                    />
+                ),
+            )}
         </div>
     );
 }

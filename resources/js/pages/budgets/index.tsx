@@ -16,7 +16,6 @@ import {
     PiggyBank,
     Play,
     Plus,
-    RefreshCw,
     Trash2,
     TrendingUp,
     Wallet,
@@ -95,19 +94,6 @@ export default function BudgetsIndex() {
         } catch (error) {
             console.error('Failed to toggle budget:', error);
             toast.error('Failed to update budget');
-        }
-    };
-
-    const handleRefresh = async (budget: Budget) => {
-        try {
-            await api.post(`/budgets/${budget.id}/refresh`);
-            toast.success('Budget refreshed!', {
-                description: `Spending for ${budget.name} has been recalculated.`,
-            });
-            await fetchData();
-        } catch (error) {
-            console.error('Failed to refresh budget:', error);
-            toast.error('Failed to refresh budget');
         }
     };
 
@@ -286,7 +272,6 @@ export default function BudgetsIndex() {
                                             key={budget.id}
                                             budget={budget}
                                             onToggle={handleToggle}
-                                            onRefresh={handleRefresh}
                                             onDelete={handleDelete}
                                         />
                                     ))}
@@ -305,7 +290,6 @@ export default function BudgetsIndex() {
                                             key={budget.id}
                                             budget={budget}
                                             onToggle={handleToggle}
-                                            onRefresh={handleRefresh}
                                             onDelete={handleDelete}
                                         />
                                     ))}
@@ -322,12 +306,10 @@ export default function BudgetsIndex() {
 function BudgetCard({
     budget,
     onToggle,
-    onRefresh,
     onDelete,
 }: {
     budget: Budget;
     onToggle: (b: Budget) => void;
-    onRefresh: (b: Budget) => void;
     onDelete: (b: Budget) => void;
 }) {
     const progressColor = healthColors[budget.budget_health] || 'bg-gray-500';
@@ -474,14 +456,6 @@ function BudgetCard({
                         }
                     >
                         <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onRefresh(budget)}
-                        title="Refresh spending"
-                    >
-                        <RefreshCw className="h-4 w-4" />
                     </Button>
                     <Button
                         variant="ghost"

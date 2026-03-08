@@ -67,6 +67,26 @@ class TransactionController extends Controller
         return new TransactionResource($transaction);
     }
 
+    public function splitGroup(Request $request, Transaction $transaction): AnonymousResourceCollection
+    {
+        $this->authorize('view', $transaction);
+
+        $transactions = $this->transactionService
+            ->getSplitGroupTransactions($transaction)
+            ->load([
+                'category.parent',
+                'merchant',
+                'secretCategory.parent',
+                'secretMerchant',
+                'fromAccount',
+                'toAccount',
+                'fromCard',
+                'toCard',
+            ]);
+
+        return TransactionResource::collection($transactions);
+    }
+
     public function destroy(Request $request, Transaction $transaction): JsonResponse
     {
         $this->authorize('delete', $transaction);

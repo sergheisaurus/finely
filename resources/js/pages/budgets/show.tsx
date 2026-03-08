@@ -5,7 +5,12 @@ import AppLayout from '@/layouts/app-layout';
 import api from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import { type BreadcrumbItem } from '@/types';
-import type { Budget, BudgetBreakdown, Transaction } from '@/types/finance';
+import type {
+    Budget,
+    BudgetBreakdown,
+    BudgetHistoryPeriod,
+    Transaction,
+} from '@/types/finance';
 import { Head, router } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -16,7 +21,6 @@ import {
     Pause,
     PiggyBank,
     Play,
-    RefreshCw,
     Trash2,
     TrendingDown,
     TrendingUp,
@@ -64,9 +68,9 @@ const healthConfig: Record<
 export default function BudgetShow({ budgetId }: { budgetId: string }) {
     const [budget, setBudget] = useState<Budget | null>(null);
     const [breakdown, setBreakdown] = useState<BudgetBreakdown[]>([]);
+    const [history, setHistory] = useState<BudgetHistoryPeriod[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -81,12 +85,18 @@ export default function BudgetShow({ budgetId }: { budgetId: string }) {
 
     const fetchData = useCallback(async () => {
         try {
-            const [budgetRes, breakdownRes] = await Promise.all([
+            const [budgetRes, breakdownRes, historyRes] = await Promise.all([
                 api.get(`/budgets/${budgetId}`),
                 api.get(`/budgets/${budgetId}/breakdown`),
+                api.get(`/budgets/${budgetId}/history`, {
+                    params: { limit: 6 },
+                }),
             ]);
             setBudget(budgetRes.data.data);
-            setBreakdown(breakdownRes.data.data || []);
+            setBreakdown(
+                breakdownRes.data.data ?? breakdownRes.data.breakdown ?? [],
+            );
+            setHistory(historyRes.data.data || []);
 
             // Fetch recent transactions for this budget
             if (budgetRes.data.data) {
@@ -119,21 +129,6 @@ export default function BudgetShow({ budgetId }: { budgetId: string }) {
         } catch (error) {
             console.error('Failed to toggle budget:', error);
             toast.error('Failed to update budget');
-        }
-    };
-
-    const handleRefresh = async () => {
-        if (!budget) return;
-        setIsRefreshing(true);
-        try {
-            await api.post(`/budgets/${budget.id}/refresh`);
-            toast.success('Budget spending updated');
-            await fetchData();
-        } catch (error) {
-            console.error('Failed to refresh budget:', error);
-            toast.error('Failed to refresh budget');
-        } finally {
-            setIsRefreshing(false);
         }
     };
 
@@ -270,16 +265,6 @@ export default function BudgetShow({ budgetId }: { budgetId: string }) {
                         </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        <Button
-                            variant="outline"
-                            onClick={handleRefresh}
-                            disabled={isRefreshing}
-                        >
-                            <RefreshCw
-                                className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`}
-                            />
-                            Refresh
-                        </Button>
                         <Button variant="outline" onClick={handleToggle}>
                             {budget.is_active ? (
                                 <>
@@ -326,6 +311,9 @@ export default function BudgetShow({ budgetId }: { budgetId: string }) {
                             ({budget.days_left_in_period} days left)
                         </span>
                     )}
+                    <span className="ml-2">
+                        Updates automatically from transaction dates.
+                    </span>
                 </p>
 
                 {/* Stats Cards */}
@@ -664,8 +652,77 @@ export default function BudgetShow({ budgetId }: { budgetId: string }) {
                     </CardContent>
                 </Card>
 
-                {/* Recent Transactions */}
                 <Card className="animate-fade-in-up stagger-6 opacity-0">
+                    <CardHeader>
+                        <CardTitle>Period History</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {history.length === 0 ? (
+                            <p className="py-8 text-center text-muted-foreground">
+                                No budget history yet
+                            </p>
+                        ) : (
+                            <div className="space-y-3">
+                                {history.map((period) => (
+                                    <div
+                                        key={`${period.period_start}-${period.period_end}`}
+                                        className="flex flex-col gap-2 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
+                                    >
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-medium">
+                                                    {new Date(
+                                                        period.period_start,
+                                                    ).toLocaleDateString()}{' '}
+                                                    -{' '}
+                                                    {new Date(
+                                                        period.period_end,
+                                                    ).toLocaleDateString()}
+                                                </p>
+                                                {period.is_current && (
+                                                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                                                        Current
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-muted-foreground">
+                                                {period.transaction_count}{' '}
+                                                transaction
+                                                {period.transaction_count !== 1
+                                                    ? 's'
+                                                    : ''}
+                                            </p>
+                                        </div>
+                                        <div className="text-left sm:text-right">
+                                            <p className="font-semibold">
+                                                {formatCurrency(
+                                                    period.spent,
+                                                    budget.currency,
+                                                )}{' '}
+                                                /{' '}
+                                                {formatCurrency(
+                                                    period.budget_amount,
+                                                    budget.currency,
+                                                )}
+                                            </p>
+                                            <p
+                                                className={`text-sm ${period.is_over_budget ? 'text-red-600' : 'text-muted-foreground'}`}
+                                            >
+                                                {period.spent_percentage.toFixed(
+                                                    1,
+                                                )}
+                                                % used
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Recent Transactions */}
+                <Card className="animate-fade-in-up stagger-7 opacity-0">
                     <CardHeader>
                         <CardTitle>
                             Recent Transactions ({transactions.length})

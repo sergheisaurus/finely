@@ -2,6 +2,7 @@ import { AmountInput } from '@/components/finance/amount-input';
 import { BudgetIndicator } from '@/components/finance/budget-indicator';
 import { CategorySelect } from '@/components/finance/category-select';
 import { MerchantSelect } from '@/components/finance/merchant-select';
+import { TransactionSplitEditor } from '@/components/finance/transaction-split-editor';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -22,6 +23,10 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import api from '@/lib/api';
+import {
+    buildTransactionSplitsPayload,
+    type TransactionSplitDraft,
+} from '@/lib/transaction-splits';
 import type { BankAccount, Card, Category, Merchant } from '@/types/finance';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -81,6 +86,7 @@ export function TransactionCreateDialog({
     const [toCardId, setToCardId] = useState('');
     const [categoryId, setCategoryId] = useState('');
     const [merchantId, setMerchantId] = useState('');
+    const [splits, setSplits] = useState<TransactionSplitDraft[]>([]);
     const [paymentMethod, setPaymentMethod] = useState<'account' | 'card'>(
         'account',
     );
@@ -151,6 +157,7 @@ export function TransactionCreateDialog({
         setToCardId('');
         setCategoryId('');
         setMerchantId('');
+        setSplits([]);
         setPaymentMethod('account');
         setErrors({});
         setIsSubmitting(false);
@@ -187,6 +194,7 @@ export function TransactionCreateDialog({
         setFromCardId('');
         setToCardId('');
         setCategoryId('');
+        setSplits([]);
         setPaymentMethod('account');
         setErrors({});
 
@@ -254,11 +262,15 @@ export function TransactionCreateDialog({
                 if (fromCardId) payload.from_card_id = parseInt(fromCardId);
                 if (categoryId) payload.category_id = parseInt(categoryId);
                 if (merchantId) payload.merchant_id = parseInt(merchantId);
+                const splitPayload = buildTransactionSplitsPayload(splits);
+                if (splitPayload.length > 0) payload.splits = splitPayload;
             } else if (type === 'income') {
                 if (toAccountId) payload.to_account_id = parseInt(toAccountId);
                 if (toCardId) payload.to_card_id = parseInt(toCardId);
                 if (categoryId) payload.category_id = parseInt(categoryId);
                 if (merchantId) payload.merchant_id = parseInt(merchantId);
+                const splitPayload = buildTransactionSplitsPayload(splits);
+                if (splitPayload.length > 0) payload.splits = splitPayload;
             } else if (type === 'transfer') {
                 if (fromAccountId)
                     payload.from_account_id = parseInt(fromAccountId);
@@ -282,11 +294,22 @@ export function TransactionCreateDialog({
             handleOpenChange(false);
         } catch (error: unknown) {
             const err = error as {
-                response?: { data?: { errors?: Record<string, string> } };
+                response?: {
+                    data?: { errors?: Record<string, string | string[]> };
+                };
             };
 
             if (err.response?.data?.errors) {
-                setErrors(err.response.data.errors);
+                setErrors(
+                    Object.fromEntries(
+                        Object.entries(err.response.data.errors).map(
+                            ([key, value]) => [
+                                key,
+                                Array.isArray(value) ? value[0] : value,
+                            ],
+                        ),
+                    ),
+                );
             } else {
                 console.error('Failed to create transaction:', error);
                 toast.error('Failed to create transaction');
@@ -578,6 +601,22 @@ export function TransactionCreateDialog({
                                                 />
                                             </div>
 
+                                            <div className="space-y-2 md:col-span-2">
+                                                <TransactionSplitEditor
+                                                    amount={amount}
+                                                    currency={currency}
+                                                    type="expense"
+                                                    categories={categories}
+                                                    mainCategoryId={categoryId}
+                                                    splits={splits}
+                                                    errors={errors}
+                                                    onChange={setSplits}
+                                                    onCategoryCreated={
+                                                        handleCategoryCreated
+                                                    }
+                                                />
+                                            </div>
+
                                             <div className="space-y-2">
                                                 <Label htmlFor="merchant">
                                                     Merchant
@@ -738,6 +777,22 @@ export function TransactionCreateDialog({
                                                     categories={categories}
                                                     type="income"
                                                     error={errors.category_id}
+                                                    onCategoryCreated={
+                                                        handleCategoryCreated
+                                                    }
+                                                />
+                                            </div>
+
+                                            <div className="space-y-2 md:col-span-2">
+                                                <TransactionSplitEditor
+                                                    amount={amount}
+                                                    currency={currency}
+                                                    type="income"
+                                                    categories={categories}
+                                                    mainCategoryId={categoryId}
+                                                    splits={splits}
+                                                    errors={errors}
+                                                    onChange={setSplits}
                                                     onCategoryCreated={
                                                         handleCategoryCreated
                                                     }

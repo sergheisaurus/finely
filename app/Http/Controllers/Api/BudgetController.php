@@ -60,6 +60,8 @@ class BudgetController extends Controller
             ->orderBy('name')
             ->get();
 
+        $budgets = $this->budgetService->syncBudgets($budgets);
+
         return BudgetResource::collection($budgets);
     }
 
@@ -77,6 +79,7 @@ class BudgetController extends Controller
     {
         $this->authorize('view', $budget);
 
+        $budget = $this->budgetService->syncBudget($budget);
         $budget->load('category');
 
         return new BudgetResource($budget);
@@ -113,7 +116,7 @@ class BudgetController extends Controller
     {
         $this->authorize('update', $budget);
 
-        $budget = $this->budgetService->updateCurrentPeriodSpending($budget);
+        $budget = $this->budgetService->syncBudget($budget);
 
         return new BudgetResource($budget->load('category'));
     }
@@ -128,6 +131,7 @@ class BudgetController extends Controller
     public function health(Request $request): JsonResponse
     {
         $budgets = $request->user()->budgets()->active()->with('category')->get();
+        $budgets = $this->budgetService->syncBudgets($budgets);
 
         $healthData = $budgets->map(function ($budget) {
             return [
@@ -148,9 +152,11 @@ class BudgetController extends Controller
     {
         $this->authorize('view', $budget);
 
+        $budget = $this->budgetService->syncBudget($budget);
         $breakdown = $this->budgetService->getSpendingBreakdown($budget);
 
         return response()->json([
+            'data' => $breakdown,
             'breakdown' => $breakdown,
             'total' => (float) $budget->current_period_spent,
         ]);
@@ -163,6 +169,24 @@ class BudgetController extends Controller
         $comparison = $this->budgetService->getBudgetComparison($budget);
 
         return response()->json($comparison);
+    }
+
+    public function history(Request $request, Budget $budget): JsonResponse
+    {
+        $this->authorize('view', $budget);
+
+        $validated = $request->validate([
+            'limit' => ['nullable', 'integer', 'min:1', 'max:24'],
+        ]);
+
+        $history = $this->budgetService->getPeriodHistory(
+            $budget,
+            (int) ($validated['limit'] ?? 6),
+        );
+
+        return response()->json([
+            'data' => $history,
+        ]);
     }
 
     public function forCategory(Request $request): JsonResponse

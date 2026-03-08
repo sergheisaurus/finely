@@ -446,6 +446,18 @@ export interface BudgetComparison {
     trend: 'up' | 'down' | 'flat';
 }
 
+export interface BudgetHistoryPeriod {
+    period_start: string;
+    period_end: string;
+    budget_amount: number;
+    spent: number;
+    remaining: number;
+    spent_percentage: number;
+    transaction_count: number;
+    is_over_budget: boolean;
+    is_current: boolean;
+}
+
 export interface BudgetImpact {
     current_spent: number;
     transaction_amount: number;
@@ -476,8 +488,17 @@ export interface SalaryBreakdownMetadata {
     deductions: SalaryAdjustment[];
 }
 
+export interface TransactionSplitMetadata {
+    group_id: string;
+    index: number;
+    count: number;
+    total_amount: number;
+    allocated_amount: number;
+}
+
 export interface TransactionMetadata {
     salary_breakdown?: SalaryBreakdownMetadata;
+    split?: TransactionSplitMetadata;
 }
 
 export type OrderStatus =

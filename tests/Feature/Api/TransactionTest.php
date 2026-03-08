@@ -88,6 +88,195 @@ test('user can create an income transaction', function () {
     expect($this->account->balance)->toBe('8000.00');
 });
 
+test('user can create a split expense transaction', function () {
+    $giftCategory = Category::factory()->create([
+        'user_id' => $this->user->id,
+        'type' => 'expense',
+    ]);
+    $funCategory = Category::factory()->create([
+        'user_id' => $this->user->id,
+        'type' => 'expense',
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->postJson('/api/transactions', [
+            'type' => 'expense',
+            'amount' => 60.00,
+            'title' => 'Olivia Rodrigo records',
+            'transaction_date' => now()->format('Y-m-d'),
+            'from_account_id' => $this->account->id,
+            'category_id' => $giftCategory->id,
+            'merchant_id' => $this->merchant->id,
+            'splits' => [
+                [
+                    'amount' => 30.00,
+                    'category_id' => $funCategory->id,
+                ],
+            ],
+        ]);
+
+    $response->assertCreated()
+        ->assertJsonPath('data.amount', 30)
+        ->assertJsonPath('data.category_id', $giftCategory->id);
+
+    $transactions = Transaction::query()
+        ->where('user_id', $this->user->id)
+        ->orderBy('amount')
+        ->get();
+
+    expect($transactions)->toHaveCount(2);
+    expect($transactions->pluck('amount')->map(fn ($amount) => (float) $amount)->all())
+        ->toBe([30.0, 30.0]);
+    expect($transactions->pluck('category_id')->all())
+        ->toContain($giftCategory->id, $funCategory->id);
+
+    $this->account->refresh();
+    expect($this->account->balance)->toBe('4940.00');
+});
+
+test('split expense transaction must leave an amount on the main category', function () {
+    $giftCategory = Category::factory()->create([
+        'user_id' => $this->user->id,
+        'type' => 'expense',
+    ]);
+    $funCategory = Category::factory()->create([
+        'user_id' => $this->user->id,
+        'type' => 'expense',
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->postJson('/api/transactions', [
+            'type' => 'expense',
+            'amount' => 60.00,
+            'title' => 'Olivia Rodrigo records',
+            'transaction_date' => now()->format('Y-m-d'),
+            'from_account_id' => $this->account->id,
+            'category_id' => $giftCategory->id,
+            'merchant_id' => $this->merchant->id,
+            'splits' => [
+                [
+                    'amount' => 60.00,
+                    'category_id' => $funCategory->id,
+                ],
+            ],
+        ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['splits']);
+});
+
+test('user can update a split transaction group', function () {
+    $giftCategory = Category::factory()->create([
+        'user_id' => $this->user->id,
+        'type' => 'expense',
+    ]);
+    $funCategory = Category::factory()->create([
+        'user_id' => $this->user->id,
+        'type' => 'expense',
+    ]);
+    $friendsCategory = Category::factory()->create([
+        'user_id' => $this->user->id,
+        'type' => 'expense',
+    ]);
+
+    $createResponse = $this->actingAs($this->user)
+        ->postJson('/api/transactions', [
+            'type' => 'expense',
+            'amount' => 60.00,
+            'title' => 'Olivia Rodrigo records',
+            'transaction_date' => now()->format('Y-m-d'),
+            'from_account_id' => $this->account->id,
+            'category_id' => $giftCategory->id,
+            'merchant_id' => $this->merchant->id,
+            'splits' => [
+                [
+                    'amount' => 30.00,
+                    'category_id' => $funCategory->id,
+                ],
+            ],
+        ]);
+
+    $transactionId = $createResponse->json('data.id');
+
+    $response = $this->actingAs($this->user)
+        ->putJson("/api/transactions/{$transactionId}", [
+            'amount' => 60.00,
+            'title' => 'Olivia Rodrigo records',
+            'category_id' => $giftCategory->id,
+            'merchant_id' => $this->merchant->id,
+            'transaction_date' => now()->format('Y-m-d'),
+            'from_account_id' => $this->account->id,
+            'splits' => [
+                [
+                    'amount' => 15.00,
+                    'category_id' => $funCategory->id,
+                ],
+                [
+                    'amount' => 15.00,
+                    'category_id' => $friendsCategory->id,
+                ],
+            ],
+        ]);
+
+    $response->assertOk()
+        ->assertJsonPath('data.amount', 30)
+        ->assertJsonPath('data.category_id', $giftCategory->id);
+
+    $transactions = Transaction::query()
+        ->where('user_id', $this->user->id)
+        ->orderBy('amount')
+        ->get();
+
+    expect($transactions)->toHaveCount(3);
+    expect($transactions->pluck('amount')->map(fn ($amount) => (float) $amount)->all())
+        ->toBe([15.0, 15.0, 30.0]);
+    expect($transactions->pluck('category_id')->all())
+        ->toContain($giftCategory->id, $funCategory->id, $friendsCategory->id);
+
+    $this->account->refresh();
+    expect($this->account->balance)->toBe('4940.00');
+});
+
+test('deleting one split transaction deletes the whole split group', function () {
+    $giftCategory = Category::factory()->create([
+        'user_id' => $this->user->id,
+        'type' => 'expense',
+    ]);
+    $funCategory = Category::factory()->create([
+        'user_id' => $this->user->id,
+        'type' => 'expense',
+    ]);
+
+    $createResponse = $this->actingAs($this->user)
+        ->postJson('/api/transactions', [
+            'type' => 'expense',
+            'amount' => 60.00,
+            'title' => 'Olivia Rodrigo records',
+            'transaction_date' => now()->format('Y-m-d'),
+            'from_account_id' => $this->account->id,
+            'category_id' => $giftCategory->id,
+            'merchant_id' => $this->merchant->id,
+            'splits' => [
+                [
+                    'amount' => 30.00,
+                    'category_id' => $funCategory->id,
+                ],
+            ],
+        ]);
+
+    $transactionId = $createResponse->json('data.id');
+
+    $this->actingAs($this->user)
+        ->deleteJson("/api/transactions/{$transactionId}")
+        ->assertOk();
+
+    expect(Transaction::query()->where('user_id', $this->user->id)->count())
+        ->toBe(0);
+
+    $this->account->refresh();
+    expect($this->account->balance)->toBe('5000.00');
+});
+
 test('user can filter transactions by type', function () {
     Transaction::factory()->expense()->create([
         'user_id' => $this->user->id,

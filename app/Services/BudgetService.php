@@ -7,6 +7,8 @@ use App\Models\Category;
 use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\DB;
 
 class BudgetService
@@ -162,14 +164,70 @@ class BudgetService
      */
     public function updateCurrentPeriodSpending(Budget $budget): Budget
     {
+        return $this->syncBudget($budget);
+    }
+
+    /**
+     * Synchronize a budget to the correct current period and spending.
+     */
+    public function syncBudget(Budget $budget): Budget
+    {
+        if (! $budget->is_active) {
+            return $budget;
+        }
+
+        if ($budget->end_date && now()->startOfDay()->gt($budget->end_date)) {
+            $budget->is_active = false;
+            $budget->save();
+
+            return $budget;
+        }
+
+        if (! $budget->current_period_start || ! $budget->current_period_end) {
+            $period = $budget->calculateCurrentPeriod();
+            $budget->current_period_start = $period['start'];
+            $budget->current_period_end = $period['end'];
+            $budget->alert_sent = false;
+        } elseif ($budget->needsPeriodRollover()) {
+            $budget = $this->rolloverPeriod($budget);
+        }
+
+        $expectedPeriod = $budget->calculateCurrentPeriod();
+        if (
+            ! $budget->current_period_start
+            || ! $budget->current_period_end
+            || $budget->current_period_start->toDateString() !== $expectedPeriod['start']->toDateString()
+            || $budget->current_period_end->toDateString() !== $expectedPeriod['end']->toDateString()
+        ) {
+            $budget->current_period_start = $expectedPeriod['start'];
+            $budget->current_period_end = $expectedPeriod['end'];
+            $budget->alert_sent = false;
+        }
+
         $budget->current_period_spent = $this->calculateSpending(
             $budget,
             $budget->current_period_start,
-            $budget->current_period_end
+            $budget->current_period_end,
         );
-        $budget->save();
+
+        if ($budget->isDirty()) {
+            $budget->save();
+        }
 
         return $budget;
+    }
+
+    /**
+     * Synchronize a set of budgets.
+     *
+     * @param  EloquentCollection<int, Budget>  $budgets
+     * @return EloquentCollection<int, Budget>
+     */
+    public function syncBudgets(EloquentCollection $budgets): EloquentCollection
+    {
+        return $budgets->map(function (Budget $budget) {
+            return $this->syncBudget($budget);
+        });
     }
 
     /**
@@ -213,20 +271,7 @@ class BudgetService
             return 0;
         }
 
-        $query = Transaction::where('user_id', $budget->user_id)
-            ->where('type', 'expense')
-            ->forDateRange($start, $end);
-
-        // If category-specific budget, filter by category (and its children)
-        if ($budget->category_id) {
-            $categoryIds = Category::where('id', $budget->category_id)
-                ->orWhere('parent_id', $budget->category_id)
-                ->pluck('id');
-
-            $query->whereIn('category_id', $categoryIds);
-        }
-
-        return (float) $query->sum('amount');
+        return (float) $this->buildSpendingQuery($budget, $start, $end)->sum('amount');
     }
 
     /**
@@ -234,9 +279,13 @@ class BudgetService
      */
     public function getSpendingBreakdown(Budget $budget): array
     {
-        $query = Transaction::where('user_id', $budget->user_id)
-            ->where('type', 'expense')
-            ->forDateRange($budget->current_period_start, $budget->current_period_end);
+        $budget = $this->syncBudget($budget);
+
+        $query = $this->buildSpendingQuery(
+            $budget,
+            $budget->current_period_start,
+            $budget->current_period_end,
+        );
 
         if (! $budget->category_id) {
             // Overall budget - breakdown by category
@@ -291,10 +340,75 @@ class BudgetService
     }
 
     /**
+     * Get recent budget periods with spending totals.
+     */
+    public function getPeriodHistory(Budget $budget, int $limit = 6): array
+    {
+        $budget = $this->syncBudget($budget);
+
+        if (! $budget->current_period_start || ! $budget->current_period_end) {
+            return [];
+        }
+
+        $history = [];
+        $cursor = $budget->current_period_start->copy();
+
+        for ($i = 0; $i < $limit; $i++) {
+            $period = $budget->getPeriodBoundaries($cursor->copy());
+            $periodStart = $period['start']->copy();
+            $periodEnd = $period['end']->copy();
+
+            if ($periodEnd->lt($budget->start_date)) {
+                break;
+            }
+
+            if ($periodStart->lt($budget->start_date)) {
+                $periodStart = $budget->start_date->copy();
+            }
+
+            if ($budget->end_date && $periodStart->gt($budget->end_date)) {
+                $cursor = $this->getPreviousPeriodStart($cursor, $budget->period);
+
+                continue;
+            }
+
+            if ($budget->end_date && $periodEnd->gt($budget->end_date)) {
+                $periodEnd = $budget->end_date->copy();
+            }
+
+            $query = $this->buildSpendingQuery($budget, $periodStart, $periodEnd);
+            $spent = (float) (clone $query)->sum('amount');
+            $transactionCount = (clone $query)->count();
+            $budgetAmount = (float) $budget->amount;
+            $spentPercentage = $budgetAmount > 0
+                ? round(($spent / $budgetAmount) * 100, 1)
+                : 0;
+
+            $history[] = [
+                'period_start' => $periodStart->toDateString(),
+                'period_end' => $periodEnd->toDateString(),
+                'budget_amount' => round($budgetAmount, 2),
+                'spent' => round($spent, 2),
+                'remaining' => round($budgetAmount - $spent, 2),
+                'spent_percentage' => $spentPercentage,
+                'transaction_count' => $transactionCount,
+                'is_over_budget' => $budgetAmount > 0 && $spent >= $budgetAmount,
+                'is_current' => $periodStart->toDateString() === $budget->current_period_start->toDateString(),
+            ];
+
+            $cursor = $this->getPreviousPeriodStart($cursor, $budget->period);
+        }
+
+        return $history;
+    }
+
+    /**
      * Get budget comparison with previous period.
      */
     public function getBudgetComparison(Budget $budget): array
     {
+        $budget = $this->syncBudget($budget);
+
         // Calculate previous period boundaries
         $previousStart = match ($budget->period) {
             'monthly' => $budget->current_period_start->copy()->subMonth(),
@@ -369,7 +483,7 @@ class BudgetService
      */
     public function getUserBudgetStats(User $user): array
     {
-        $activeBudgets = $user->budgets()->active()->get();
+        $activeBudgets = $this->syncBudgets($user->budgets()->active()->get());
 
         $totalBudgeted = $activeBudgets->sum(fn ($b) => $b->getEffectiveBudget());
         $totalSpent = $activeBudgets->sum('current_period_spent');
@@ -399,10 +513,16 @@ class BudgetService
      */
     public function getBudgetForCategory(int $userId, ?int $categoryId): ?Budget
     {
-        return Budget::where('user_id', $userId)
+        $budget = Budget::where('user_id', $userId)
             ->byCategory($categoryId)
             ->active()
             ->first();
+
+        if (! $budget) {
+            return null;
+        }
+
+        return $this->syncBudget($budget);
     }
 
     /**
@@ -410,6 +530,8 @@ class BudgetService
      */
     public function checkTransactionImpact(Budget $budget, float $transactionAmount): array
     {
+        $budget = $this->syncBudget($budget);
+
         $currentSpent = (float) $budget->current_period_spent;
         $effectiveBudget = $budget->getEffectiveBudget();
         $projectedSpent = $currentSpent + $transactionAmount;
@@ -431,5 +553,33 @@ class BudgetService
             'will_be_over_budget' => $willBeOverBudget,
             'exceeds_by' => round($exceedsBy, 2),
         ];
+    }
+
+    private function buildSpendingQuery(Budget $budget, Carbon $start, Carbon $end): Builder
+    {
+        $query = Transaction::query()
+            ->where('user_id', $budget->user_id)
+            ->where('type', 'expense')
+            ->forDateRange($start, $end);
+
+        if ($budget->category_id) {
+            $categoryIds = Category::where('id', $budget->category_id)
+                ->orWhere('parent_id', $budget->category_id)
+                ->pluck('id');
+
+            $query->whereIn('category_id', $categoryIds);
+        }
+
+        return $query;
+    }
+
+    private function getPreviousPeriodStart(Carbon $periodStart, string $period): Carbon
+    {
+        return match ($period) {
+            'monthly' => $periodStart->copy()->subMonth(),
+            'quarterly' => $periodStart->copy()->subMonths(3),
+            'yearly' => $periodStart->copy()->subYear(),
+            default => $periodStart->copy()->subMonth(),
+        };
     }
 }

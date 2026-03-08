@@ -11,6 +11,12 @@ class StoreTransactionRequest extends FormRequest
 {
     public function prepareForValidation(): void
     {
+        $splits = array_values(array_filter(
+            $this->input('splits', []),
+            fn ($split) => is_array($split)
+                && (filled($split['amount'] ?? null) || filled($split['category_id'] ?? null)),
+        ));
+
         $secretCategory = $this->secret_category_id
             ? Category::find($this->secret_category_id)
             : null;
@@ -33,6 +39,7 @@ class StoreTransactionRequest extends FormRequest
             'title' => filled($this->title) ? $this->title : ($hasSecretDetails ? $fallbackTitle : $this->title),
             'category_id' => $this->category_id ?: $secretCategory?->cover_category_id,
             'merchant_id' => $this->merchant_id ?: $secretMerchant?->cover_merchant_id,
+            'splits' => $splits,
         ]);
     }
 
@@ -76,6 +83,14 @@ class StoreTransactionRequest extends FormRequest
             'secret_merchant_id' => [
                 'nullable',
                 Rule::exists('merchants', 'id')->where(
+                    fn ($query) => $query->where('user_id', $this->user()->id)
+                ),
+            ],
+            'splits' => ['sometimes', 'array'],
+            'splits.*.amount' => ['required', 'numeric', 'min:0.01'],
+            'splits.*.category_id' => [
+                'required',
+                Rule::exists('categories', 'id')->where(
                     fn ($query) => $query->where('user_id', $this->user()->id)
                 ),
             ],
@@ -124,6 +139,7 @@ class StoreTransactionRequest extends FormRequest
             $secretCategory = $this->secret_category_id ? Category::find($this->secret_category_id) : null;
             $merchant = $this->merchant_id ? Merchant::find($this->merchant_id) : null;
             $secretMerchant = $this->secret_merchant_id ? Merchant::find($this->secret_merchant_id) : null;
+            $splits = $this->input('splits', []);
 
             if ($category?->is_secret) {
                 $validator->errors()->add('category_id', 'Use the secret category field for secret categories.');
@@ -147,6 +163,40 @@ class StoreTransactionRequest extends FormRequest
 
             if ($merchant && $secretMerchant && $merchant->type !== $secretMerchant->type) {
                 $validator->errors()->add('secret_merchant_id', 'The cover merchant and secret merchant must have the same type.');
+            }
+
+            if ($splits !== []) {
+                if (! in_array($type, ['expense', 'income'], true)) {
+                    $validator->errors()->add('splits', 'Only income and expense transactions can be split.');
+                }
+
+                if (! $this->category_id) {
+                    $validator->errors()->add('category_id', 'Choose a main category before adding splits.');
+                }
+
+                $splitTotal = round(array_reduce(
+                    $splits,
+                    fn (float $total, array $split) => $total + (float) ($split['amount'] ?? 0),
+                    0.0,
+                ), 2);
+
+                if ($splitTotal >= round((float) $this->amount, 2)) {
+                    $validator->errors()->add('splits', 'Split amounts must leave some of the total on the main category.');
+                }
+
+                foreach ($splits as $index => $split) {
+                    $splitCategory = isset($split['category_id'])
+                        ? Category::find($split['category_id'])
+                        : null;
+
+                    if ($splitCategory?->is_secret) {
+                        $validator->errors()->add("splits.{$index}.category_id", 'Split categories cannot be secret categories.');
+                    }
+
+                    if ($splitCategory && $splitCategory->type !== $type) {
+                        $validator->errors()->add("splits.{$index}.category_id", 'Split category type must match the transaction type.');
+                    }
+                }
             }
         });
     }

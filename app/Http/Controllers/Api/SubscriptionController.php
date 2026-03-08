@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\ProcessSubscriptionPaymentRequest;
 use App\Http\Requests\Api\StoreSubscriptionRequest;
 use App\Http\Requests\Api\UpdateSubscriptionRequest;
 use App\Http\Resources\SubscriptionResource;
 use App\Http\Resources\TransactionResource;
 use App\Models\Subscription;
 use App\Services\SubscriptionService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -95,11 +97,15 @@ class SubscriptionController extends Controller
         return new SubscriptionResource($subscription->load(['merchant', 'category', 'paymentMethod']));
     }
 
-    public function process(Request $request, Subscription $subscription): JsonResponse
+    public function process(ProcessSubscriptionPaymentRequest $request, Subscription $subscription): JsonResponse
     {
         $this->authorize('update', $subscription);
 
-        $transaction = $this->subscriptionService->processPayment($subscription);
+        $transactionDate = $request->filled('transaction_date')
+            ? Carbon::parse($request->validated('transaction_date'))
+            : null;
+
+        $transaction = $this->subscriptionService->processPayment($subscription, $transactionDate);
 
         if ($transaction) {
             return response()->json([

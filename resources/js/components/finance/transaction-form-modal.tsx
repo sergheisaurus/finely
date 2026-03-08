@@ -4,6 +4,7 @@ import { CategorySelect } from '@/components/finance/category-select';
 import { MerchantSelect } from '@/components/finance/merchant-select';
 import { QuickCreateCategoryModal } from '@/components/finance/quick-create-category-modal';
 import { QuickCreateMerchantModal } from '@/components/finance/quick-create-merchant-modal';
+import { TransactionSplitEditor } from '@/components/finance/transaction-split-editor';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -22,6 +23,10 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import api from '@/lib/api';
+import {
+    buildTransactionSplitsPayload,
+    type TransactionSplitDraft,
+} from '@/lib/transaction-splits';
 import { useSecretStore } from '@/stores/useSecretStore';
 import type {
     BankAccount,
@@ -31,7 +36,7 @@ import type {
     Transaction,
 } from '@/types/finance';
 import { Plus } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 type TransactionType = 'income' | 'expense' | 'transfer' | 'card_payment';
@@ -60,8 +65,12 @@ export function TransactionFormModal({
     const [categories, setCategories] = useState<Category[]>([]);
     const [merchants, setMerchants] = useState<Merchant[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(false);
+    const [isLoadingSplitGroup, setIsLoadingSplitGroup] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [splitGroupTransactions, setSplitGroupTransactions] = useState<
+        Transaction[] | null
+    >(null);
 
     const { isSecretModeActive } = useSecretStore();
 
@@ -83,6 +92,7 @@ export function TransactionFormModal({
     const [secretCategoryId, setSecretCategoryId] = useState('');
     const [merchantId, setMerchantId] = useState('');
     const [secretMerchantId, setSecretMerchantId] = useState('');
+    const [splits, setSplits] = useState<TransactionSplitDraft[]>([]);
     const [paymentMethod, setPaymentMethod] = useState<'account' | 'card'>(
         'account',
     );
@@ -90,6 +100,17 @@ export function TransactionFormModal({
     // Sub-modal state
     const [showCreateCategory, setShowCreateCategory] = useState(false);
     const [showCreateMerchant, setShowCreateMerchant] = useState(false);
+
+    const effectiveEditTransactions = useMemo(
+        () =>
+            transaction
+                ? splitGroupTransactions && splitGroupTransactions.length > 0
+                    ? splitGroupTransactions
+                    : [transaction]
+                : [],
+        [splitGroupTransactions, transaction],
+    );
+    const isSplitGroupEditMode = effectiveEditTransactions.length > 1;
 
     // Load reference data when modal opens
     useEffect(() => {
@@ -129,49 +150,123 @@ export function TransactionFormModal({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
 
+    useEffect(() => {
+        if (!open || !transaction?.metadata?.split?.group_id) {
+            setSplitGroupTransactions(null);
+            setIsLoadingSplitGroup(false);
+            return;
+        }
+
+        let isActive = true;
+
+        const fetchSplitGroup = async () => {
+            setIsLoadingSplitGroup(true);
+
+            try {
+                const response = await api.get(
+                    `/transactions/${transaction.id}/split-group`,
+                );
+
+                if (!isActive) {
+                    return;
+                }
+
+                setSplitGroupTransactions(
+                    response?.data?.data || [transaction],
+                );
+            } catch {
+                if (!isActive) {
+                    return;
+                }
+
+                toast.error('Failed to load split transaction');
+                setSplitGroupTransactions([transaction]);
+            } finally {
+                if (isActive) {
+                    setIsLoadingSplitGroup(false);
+                }
+            }
+        };
+
+        void fetchSplitGroup();
+
+        return () => {
+            isActive = false;
+        };
+    }, [open, transaction]);
+
     // Populate form from transaction in edit mode
     useEffect(() => {
         if (!open || !transaction) return;
+        if (transaction.metadata?.split?.group_id && isLoadingSplitGroup)
+            return;
 
-        setType(transaction.type);
-        setAmount(parseFloat(String(transaction.amount ?? 0)).toFixed(2));
-        setCurrency(transaction.currency);
-        setTitle(transaction.real_title ?? transaction.title);
-        setSecretTitle(transaction.secret_title ?? '');
-        setDescription(transaction.description ?? '');
-        setTransactionDate(transaction.transaction_date);
-        setFromAccountId(transaction.from_account_id?.toString() ?? '');
-        setFromCardId(transaction.from_card_id?.toString() ?? '');
-        setToAccountId(transaction.to_account_id?.toString() ?? '');
-        setToCardId(transaction.to_card_id?.toString() ?? '');
+        const orderedTransactions = [...effectiveEditTransactions].sort(
+            (a, b) =>
+                (a.metadata?.split?.index ?? 1) -
+                (b.metadata?.split?.index ?? 1),
+        );
+        const mainTransaction = orderedTransactions[0];
 
-        // Use the explicit 'real' properties sent by the resource for forms
+        setType(mainTransaction.type);
+        setAmount(
+            orderedTransactions
+                .reduce((total, item) => total + item.amount, 0)
+                .toFixed(2),
+        );
+        setCurrency(mainTransaction.currency);
+        setTitle(mainTransaction.real_title ?? mainTransaction.title);
+        setSecretTitle(mainTransaction.secret_title ?? '');
+        setDescription(mainTransaction.description ?? '');
+        setTransactionDate(mainTransaction.transaction_date);
+        setFromAccountId(mainTransaction.from_account_id?.toString() ?? '');
+        setFromCardId(mainTransaction.from_card_id?.toString() ?? '');
+        setToAccountId(mainTransaction.to_account_id?.toString() ?? '');
+        setToCardId(mainTransaction.to_card_id?.toString() ?? '');
         setCategoryId(
-            transaction.real_category_id?.toString() ??
-                transaction.category_id?.toString() ??
+            mainTransaction.real_category_id?.toString() ??
+                mainTransaction.category_id?.toString() ??
                 '',
         );
-        setSecretCategoryId(transaction.secret_category_id?.toString() ?? '');
+        setSecretCategoryId(
+            mainTransaction.secret_category_id?.toString() ?? '',
+        );
         setMerchantId(
-            transaction.real_merchant_id?.toString() ??
-                transaction.merchant_id?.toString() ??
+            mainTransaction.real_merchant_id?.toString() ??
+                mainTransaction.merchant_id?.toString() ??
                 '',
         );
-        setSecretMerchantId(transaction.secret_merchant_id?.toString() ?? '');
+        setSecretMerchantId(
+            mainTransaction.secret_merchant_id?.toString() ?? '',
+        );
+        setSplits(
+            orderedTransactions.slice(1).map((item) => ({
+                id: item.id.toString(),
+                amount: item.amount.toFixed(2),
+                categoryId:
+                    item.real_category_id?.toString() ??
+                    item.category_id?.toString() ??
+                    '',
+            })),
+        );
 
-        if (transaction.type === 'expense' || transaction.type === 'income') {
+        if (
+            mainTransaction.type === 'expense' ||
+            mainTransaction.type === 'income'
+        ) {
             setPaymentMethod(
-                transaction.from_card_id || transaction.to_card_id
+                mainTransaction.from_card_id || mainTransaction.to_card_id
                     ? 'card'
                     : 'account',
             );
         }
-    }, [open, transaction]);
+    }, [effectiveEditTransactions, isLoadingSplitGroup, open, transaction]);
 
     // Reset when modal closes
     const handleOpenChange = (v: boolean) => {
         if (!v) {
             setErrors({});
+            setSplitGroupTransactions(null);
             if (!isEditMode) {
                 setType(defaultType);
                 setAmount('0');
@@ -188,6 +283,7 @@ export function TransactionFormModal({
                 setSecretCategoryId('');
                 setMerchantId('');
                 setSecretMerchantId('');
+                setSplits([]);
                 setPaymentMethod('account');
             }
         }
@@ -208,6 +304,12 @@ export function TransactionFormModal({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [paymentMethod]);
 
+    const handleCategoryCreated = (newCategory: Category) => {
+        setCategories((prev) =>
+            [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)),
+        );
+    };
+
     const buildPayload = () => {
         const payload: Record<string, unknown> = {
             type,
@@ -226,6 +328,13 @@ export function TransactionFormModal({
             payload.from_card_id = fromCardId ? parseInt(fromCardId) : null;
             payload.category_id = categoryId ? parseInt(categoryId) : null;
             payload.merchant_id = merchantId ? parseInt(merchantId) : null;
+            const splitPayload = buildTransactionSplitsPayload(splits);
+            if (
+                !isSecretModeActive &&
+                (splitPayload.length > 0 || isSplitGroupEditMode)
+            ) {
+                payload.splits = splitPayload;
+            }
             if (isSecretModeActive) {
                 payload.secret_category_id = secretCategoryId
                     ? parseInt(secretCategoryId)
@@ -239,6 +348,13 @@ export function TransactionFormModal({
             payload.to_card_id = toCardId ? parseInt(toCardId) : null;
             payload.category_id = categoryId ? parseInt(categoryId) : null;
             payload.merchant_id = merchantId ? parseInt(merchantId) : null;
+            const splitPayload = buildTransactionSplitsPayload(splits);
+            if (
+                !isSecretModeActive &&
+                (splitPayload.length > 0 || isSplitGroupEditMode)
+            ) {
+                payload.splits = splitPayload;
+            }
             if (isSecretModeActive) {
                 payload.secret_category_id = secretCategoryId
                     ? parseInt(secretCategoryId)
@@ -481,7 +597,7 @@ export function TransactionFormModal({
                         <DialogTitle>{modalTitle}</DialogTitle>
                     </DialogHeader>
 
-                    {isLoadingData ? (
+                    {isLoadingData || isLoadingSplitGroup ? (
                         <div className="space-y-3 py-6">
                             {[1, 2, 3, 4].map((i) => (
                                 <div
@@ -510,6 +626,7 @@ export function TransactionFormModal({
                                             setToAccountId('');
                                             setToCardId('');
                                             setCategoryId('');
+                                            setSplits([]);
                                             setPaymentMethod('account');
                                             setErrors({});
                                         }}
@@ -756,6 +873,22 @@ export function TransactionFormModal({
                                         <MerchantSelectField />
                                     </div>
 
+                                    {!isSecretModeActive && (
+                                        <TransactionSplitEditor
+                                            amount={amount}
+                                            currency={currency}
+                                            type="expense"
+                                            categories={categories}
+                                            mainCategoryId={categoryId}
+                                            splits={splits}
+                                            errors={errors}
+                                            onChange={setSplits}
+                                            onCategoryCreated={
+                                                handleCategoryCreated
+                                            }
+                                        />
+                                    )}
+
                                     <BudgetIndicator
                                         categoryId={
                                             isSecretModeActive &&
@@ -878,6 +1011,22 @@ export function TransactionFormModal({
                                         <CategorySelectField />
                                         <MerchantSelectField />
                                     </div>
+
+                                    {!isSecretModeActive && (
+                                        <TransactionSplitEditor
+                                            amount={amount}
+                                            currency={currency}
+                                            type="income"
+                                            categories={categories}
+                                            mainCategoryId={categoryId}
+                                            splits={splits}
+                                            errors={errors}
+                                            onChange={setSplits}
+                                            onCategoryCreated={
+                                                handleCategoryCreated
+                                            }
+                                        />
+                                    )}
                                 </>
                             )}
 

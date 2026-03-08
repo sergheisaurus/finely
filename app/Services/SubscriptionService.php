@@ -14,13 +14,9 @@ class SubscriptionService
         return DB::transaction(function () use ($data) {
             $subscription = new Subscription($data);
 
-            // Calculate next billing date
-            $startDate = Carbon::parse($data['start_date']);
-            if ($startDate->isFuture() || $startDate->isToday()) {
-                $subscription->next_billing_date = $startDate;
-            } else {
-                $subscription->next_billing_date = $subscription->calculateNextBillingDate($startDate);
-            }
+            $subscription->next_billing_date = $subscription->calculateInitialBillingDate(
+                Carbon::parse($data['start_date'])
+            );
 
             $subscription->save();
 
@@ -35,8 +31,12 @@ class SubscriptionService
 
             // Recalculate next billing date if billing cycle changed
             if ($subscription->isDirty(['billing_cycle', 'billing_day', 'billing_month', 'start_date'])) {
-                $baseDate = $subscription->last_billed_date ?? Carbon::parse($data['start_date'] ?? $subscription->start_date);
-                $subscription->next_billing_date = $subscription->calculateNextBillingDate($baseDate);
+                $baseDate = $subscription->last_billed_date
+                    ?? Carbon::parse($data['start_date'] ?? $subscription->start_date);
+
+                $subscription->next_billing_date = $subscription->last_billed_date
+                    ? $subscription->calculateNextBillingDate($baseDate)
+                    : $subscription->calculateInitialBillingDate($baseDate);
             }
 
             $subscription->save();
@@ -51,8 +51,9 @@ class SubscriptionService
 
         // If activating, recalculate next billing date
         if ($subscription->is_active) {
-            $baseDate = $subscription->last_billed_date ?? $subscription->start_date;
-            $nextDate = $subscription->calculateNextBillingDate($baseDate);
+            $nextDate = $subscription->last_billed_date
+                ? $subscription->calculateNextBillingDate($subscription->last_billed_date)
+                : $subscription->calculateInitialBillingDate($subscription->start_date);
 
             // If next date is in the past, find the next upcoming date
             while ($nextDate->isPast()) {
@@ -75,6 +76,7 @@ class SubscriptionService
 
         return DB::transaction(function () use ($subscription, $transactionDate) {
             $transactionDate = $transactionDate ?? now();
+            $billingDate = $subscription->next_billing_date?->copy() ?? $transactionDate->copy();
 
             // Create the transaction
             $transaction = Transaction::create([
@@ -101,8 +103,8 @@ class SubscriptionService
             }
 
             // Update subscription dates
-            $subscription->last_billed_date = $transactionDate;
-            $subscription->next_billing_date = $subscription->calculateNextBillingDate($transactionDate);
+            $subscription->last_billed_date = $billingDate;
+            $subscription->next_billing_date = $subscription->calculateNextBillingDate($billingDate);
 
             // Check if subscription has ended
             if ($subscription->end_date && $subscription->next_billing_date->gt($subscription->end_date)) {

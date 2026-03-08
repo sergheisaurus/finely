@@ -167,9 +167,14 @@ export default function JournalIndex() {
     };
 
     const handleDelete = async (transaction: Transaction) => {
+        const isSplitGroup = !!transaction.metadata?.split?.group_id;
+        const label = isSplitGroup
+            ? 'this split transaction group'
+            : `"${transaction.title}"`;
+
         if (
             !confirm(
-                `Are you sure you want to delete "${transaction.title}"? This action cannot be undone.`,
+                `Are you sure you want to delete ${label}? This action cannot be undone.`,
             )
         ) {
             return;
@@ -177,8 +182,11 @@ export default function JournalIndex() {
 
         try {
             await api.delete(`/transactions/${transaction.id}`);
+
             toast.success('Transaction deleted!', {
-                description: `${transaction.title} has been removed.`,
+                description: isSplitGroup
+                    ? `${transaction.title} split group has been removed.`
+                    : `${transaction.title} has been removed.`,
             });
             await fetchTransactions();
         } catch (error) {
@@ -405,6 +413,7 @@ export default function JournalIndex() {
                         isLoading={isLoading}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
+                        groupSplits
                     />
 
                     {!isLoading && transactions.length > 0 && lastPage > 1 && (

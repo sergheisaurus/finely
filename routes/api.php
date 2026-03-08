@@ -43,6 +43,7 @@ Route::name('api.')->middleware('auth:sanctum')->group(function () {
     Route::get('merchants/{merchant}/transactions', [MerchantController::class, 'transactions'])->name('merchants.transactions');
 
     // Transactions
+    Route::get('transactions/{transaction}/split-group', [TransactionController::class, 'splitGroup'])->name('transactions.split-group');
     Route::apiResource('transactions', TransactionController::class);
 
     // Transfers
@@ -107,6 +108,7 @@ Route::name('api.')->middleware('auth:sanctum')->group(function () {
     Route::post('budgets/{budget}/toggle', [BudgetController::class, 'toggle'])->name('budgets.toggle');
     Route::post('budgets/{budget}/refresh', [BudgetController::class, 'refresh'])->name('budgets.refresh');
     Route::get('budgets/{budget}/breakdown', [BudgetController::class, 'breakdown'])->name('budgets.breakdown');
+    Route::get('budgets/{budget}/history', [BudgetController::class, 'history'])->name('budgets.history');
     Route::get('budgets/{budget}/comparison', [BudgetController::class, 'comparison'])->name('budgets.comparison');
     Route::get('budgets/{budget}/check-impact', [BudgetController::class, 'checkImpact'])->name('budgets.check-impact');
 
